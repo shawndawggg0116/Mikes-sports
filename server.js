@@ -53,7 +53,7 @@ app.post('/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send('Invalid credentials.');
     }
-
+console.user
     const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, { httpOnly: true }).redirect('/dashboard');
   } catch (error) {
