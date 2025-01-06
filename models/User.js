@@ -5,22 +5,22 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
-    unique: true,
-    trim: true
+    unique: true, // Ensures no duplicate usernames
+    trim: true // Removes extra spaces
   },
   password: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 6 // Minimum password length
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    enum: ['user', 'admin'], // Allows only "user" or "admin"
+    default: 'user' // Default role is "user"
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now // Automatically sets the creation date
   }
 });
 
