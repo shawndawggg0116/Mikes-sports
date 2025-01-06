@@ -37,6 +37,7 @@ app.get('/', (req, res) => {
 // Login API
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log (req.body)
 
   if (!username || !password) {
     return res.status(400).send('Username and password are required.');
