@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 
+const adminRoutes = require('./routes/admin'); // Import the admin routes
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = "2fdb6b5a5bfafa5ede903eb75d98bc90dd61e540061ed7836a64e42d7d871b08";
@@ -59,6 +61,9 @@ app.post('/login', async (req, res) => {
     res.status(500).send('Error logging in.');
   }
 });
+
+// Admin Routes
+app.use('/api/admin', adminRoutes); // Use the admin routes
 
 // Dashboard (Black Screen)
 app.get('/dashboard', (req, res) => {
