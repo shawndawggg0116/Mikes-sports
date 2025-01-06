@@ -23,6 +23,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// Serve register.html on the /register route
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
 const User = require('./models/User');
 
 app.post('/login', async (req, res) => {
@@ -61,4 +66,3 @@ app.post('/register', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
