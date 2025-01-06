@@ -1,8 +1,8 @@
 
 {
-  "name": "simple-login",
+  "name": "simple-login-football",
   "version": "1.0.0",
-  "description": "Simple login and registration system",
+  "description": "A simple login system with football team selection and points tracking",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
