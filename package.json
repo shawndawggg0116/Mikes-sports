@@ -1,0 +1,15 @@
+
+{
+  "name": "simple-login",
+  "version": "1.0.0",
+  "description": "Simple login and registration system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.3"
+  }
+}
