@@ -99,6 +99,27 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
+// Fetch user's picked teams
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).send({ success: false, message: 'Username is required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    res.send({ success: true, pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
+});
+
 // Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;

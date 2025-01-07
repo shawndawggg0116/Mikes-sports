@@ -54,7 +54,7 @@
 <body>
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" with logged-in username -->
+  <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" dynamically with logged-in username -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
@@ -67,29 +67,41 @@
     ];
 
     let selectedTeam = null;
-    const pickedTeams = [];
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const username = document.getElementById('username').value;
 
-    teams.forEach(team => {
-      const teamDiv = document.createElement('div');
-      teamDiv.textContent = team;
-      teamDiv.classList.add('team');
-      if (pickedTeams.includes(team)) {
-        teamDiv.classList.add('disabled');
-      }
-      teamDiv.addEventListener('click', () => {
-        if (!teamDiv.classList.contains('disabled')) {
-          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-          teamDiv.classList.add('selected');
-          selectedTeam = team;
-          submitButton.disabled = false;
-        }
-      });
-      teamList.appendChild(teamDiv);
-    });
+    // Fetch the user's picked teams from the server
+    fetch(`/get-picked-teams?username=${username}`)
+      .then(response => response.json())
+      .then(data => {
+        const pickedTeams = data.pickedTeams || []; // Array of teams already picked
 
+        // Render teams
+        teams.forEach(team => {
+          const teamDiv = document.createElement('div');
+          teamDiv.textContent = team;
+          teamDiv.classList.add('team');
+
+          // If the team is already picked, disable it
+          if (pickedTeams.includes(team)) {
+            teamDiv.classList.add('disabled');
+          }
+
+          teamDiv.addEventListener('click', () => {
+            if (!teamDiv.classList.contains('disabled')) {
+              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+              teamDiv.classList.add('selected');
+              selectedTeam = team;
+              submitButton.disabled = false;
+            }
+          });
+
+          teamList.appendChild(teamDiv);
+        });
+      });
+
+    // Submit the selected team
     submitButton.addEventListener('click', () => {
       if (selectedTeam && username) {
         fetch('/select-team', {
@@ -100,8 +112,12 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              const selectedDiv = document.querySelector(`.team:contains(${selectedTeam})`);
-              selectedDiv.classList.add('disabled');
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
               submitButton.disabled = true;
             } else {
               alert(data.message);
