@@ -3,144 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Selection</title>
+  <title>Leaderboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      text-align: center;
+      background-color: #f0f0f0;
       margin: 0;
       padding: 0;
     }
-
-    .navbar {
-      background-color: #4CAF50;
-      overflow: hidden;
+    .header {
+      background-color: #28a745;
+      color: white;
+      padding: 1rem;
+      font-size: 1.5rem;
+    }
+    .nav {
       display: flex;
       justify-content: center;
-      padding: 1em 0;
+      background-color: #333;
+      padding: 0.5rem 0;
     }
-
-    .navbar a {
+    .nav a {
       color: white;
       text-decoration: none;
-      padding: 0 20px;
-      font-size: 1.2em;
+      margin: 0 1rem;
+      font-weight: bold;
     }
-
-    .navbar a:hover {
-      background-color: #3e8e41;
-      padding: 0.5em 1.5em;
-      border-radius: 5px;
+    .nav a:hover {
+      text-decoration: underline;
     }
-
     .container {
       max-width: 800px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin: 2rem auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-
-    h1 {
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 1rem;
       text-align: center;
-      color: #333;
     }
-
-    .team-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .team-buttons button {
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 1em;
-      cursor: pointer;
-      background-color: #4CAF50;
+    th {
+      background-color: #28a745;
       color: white;
-    }
-
-    .team-buttons button:disabled {
-      background-color: #d9534f;
-      cursor: not-allowed;
-    }
-
-    .team-buttons button.selected {
-      background-color: #d9534f;
-    }
-
-    .submit-button {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 1.2em;
-      color: white;
-      background-color: #4CAF50;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .submit-button:hover {
-      background-color: #45a049;
     }
   </style>
 </head>
 <body>
-  <div class="navbar">
+  <div class="header">Leaderboard</div>
+  <div class="nav">
     <a href="/teams">Team Selection</a>
     <a href="/leaderboard">Leaderboard</a>
   </div>
-
   <div class="container">
-    <h1>Select Your Team</h1>
-    <div class="team-buttons">
-      <button onclick="selectTeam('49ers')" id="49ers">49ers</button>
-      <button onclick="selectTeam('Cardinals')" id="Cardinals">Cardinals</button>
-      <button onclick="selectTeam('Eagles')" id="Eagles">Eagles</button>
-      <button onclick="selectTeam('Cowboys')" id="Cowboys">Cowboys</button>
-      <!-- Add more teams as needed -->
-    </div>
-
-    <button class="submit-button" onclick="submitTeam()">Submit Team</button>
+    <h1>Leaderboard</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Points</th>
+          <th>Picked Teams</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-data"></tbody>
+    </table>
   </div>
-
   <script>
-    let selectedTeam = null;
-
-    function selectTeam(team) {
-      if (selectedTeam) {
-        document.getElementById(selectedTeam).classList.remove('selected');
-      }
-      selectedTeam = team;
-      document.getElementById(team).classList.add('selected');
-    }
-
-    function submitTeam() {
-      if (!selectedTeam) {
-        alert('Please select a team before submitting.');
-        return;
-      }
-
-      fetch('/select-team', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'shawn', team: selectedTeam })
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert(`You have selected ${selectedTeam}.`);
-          } else {
-            alert(data.message || 'An error occurred.');
-          }
-        })
-        .catch(error => console.error('Error:', error));
-    }
+    // Fetch leaderboard data
+    fetch('/leaderboard')
+      .then(response => response.json())
+      .then(data => {
+        const leaderboardData = document.getElementById("leaderboard-data");
+        data.forEach(user => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.points}</td>
+            <td>${user.pickedTeams.join(", ")}</td>
+          `;
+          leaderboardData.appendChild(row);
+        });
+      });
   </script>
 </body>
 </html>
