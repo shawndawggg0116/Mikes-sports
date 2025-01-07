@@ -53,9 +53,8 @@
 </head>
 <body>
   <h1>Select Your Team</h1>
-  <div class="team-list">
-    <!-- Teams will be dynamically rendered here -->
-  </div>
+  <div class="team-list"></div>
+  <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" with logged-in username -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
@@ -67,12 +66,12 @@
       'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
     ];
 
-    let selectedTeam = null; // Store the currently selected team
-    const pickedTeams = []; // Replace this with data from the server
+    let selectedTeam = null;
+    const pickedTeams = [];
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
+    const username = document.getElementById('username').value;
 
-    // Render teams
     teams.forEach(team => {
       const teamDiv = document.createElement('div');
       teamDiv.textContent = team;
@@ -84,31 +83,26 @@
         if (!teamDiv.classList.contains('disabled')) {
           document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
           teamDiv.classList.add('selected');
-          selectedTeam = team; // Store selected team
-          submitButton.disabled = false; // Enable the submit button
+          selectedTeam = team;
+          submitButton.disabled = false;
         }
       });
       teamList.appendChild(teamDiv);
     });
 
-    // Submit the selected team
     submitButton.addEventListener('click', () => {
-      if (selectedTeam) {
+      if (selectedTeam && username) {
         fetch('/select-team', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: selectedTeam })
+          body: JSON.stringify({ username, team: selectedTeam })
         }).then(response => response.json())
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
-              }
-              selectedTeam = null; // Clear the selected team
-              submitButton.disabled = true; // Disable the button again
+              const selectedDiv = document.querySelector(`.team:contains(${selectedTeam})`);
+              selectedDiv.classList.add('disabled');
+              submitButton.disabled = true;
             } else {
               alert(data.message);
             }
