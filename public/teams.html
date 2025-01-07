@@ -10,6 +10,21 @@
       text-align: center;
       background-color: #f0f8ff;
     }
+    nav {
+      background-color: #333;
+      color: white;
+      padding: 10px 0;
+      margin-bottom: 20px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      font-size: 18px;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
     h1 {
       color: #333;
     }
@@ -52,6 +67,10 @@
   </style>
 </head>
 <body>
+  <nav>
+    <a href="/teams">Select Team</a>
+    <a href="/leaderboard">Leaderboard</a>
+  </nav>
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
   <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" dynamically with logged-in username -->
@@ -71,23 +90,17 @@
     const submitButton = document.getElementById('submitButton');
     const username = document.getElementById('username').value;
 
-    // Fetch the user's picked teams from the server
     fetch(`/get-picked-teams?username=${username}`)
       .then(response => response.json())
       .then(data => {
-        const pickedTeams = data.pickedTeams || []; // Array of teams already picked
-
-        // Render teams
+        const pickedTeams = data.pickedTeams || [];
         teams.forEach(team => {
           const teamDiv = document.createElement('div');
           teamDiv.textContent = team;
           teamDiv.classList.add('team');
-
-          // If the team is already picked, disable it
           if (pickedTeams.includes(team)) {
             teamDiv.classList.add('disabled');
           }
-
           teamDiv.addEventListener('click', () => {
             if (!teamDiv.classList.contains('disabled')) {
               document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
@@ -96,12 +109,10 @@
               submitButton.disabled = false;
             }
           });
-
           teamList.appendChild(teamDiv);
         });
       });
 
-    // Submit the selected team
     submitButton.addEventListener('click', () => {
       if (selectedTeam && username) {
         fetch('/select-team', {

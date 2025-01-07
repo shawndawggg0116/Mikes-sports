@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const axios = require('axios');
 const path = require('path');
 
 const app = express();
@@ -156,5 +157,56 @@ app.post('/select-team', async (req, res) => {
   }
 });
 
+// Get leaderboard data
+app.get('/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find().sort({ points: -1 }); // Sort by points
+    res.send(users.map(user => ({
+      username: user.username,
+      points: user.points,
+      pickedTeams: user.pickedTeams
+    })));
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send({ success: false, message: 'Error fetching leaderboard.' });
+  }
+});
+
+// Update points for all users based on game results
+app.post('/update-points', async (req, res) => {
+  const API_KEY = "YOUR_API_KEY_HERE"; // Replace with your NFL API key
+  const SEASON = "2024REG";
+  const WEEK = "18";
+
+  try {
+    const response = await axios.get(
+      `https://api.sportsdata.io/v3/nfl/scores/json/ScoresByWeek/${SEASON}/${WEEK}`,
+      {
+        headers: { "Ocp-Apim-Subscription-Key": API_KEY },
+      }
+    );
+
+    const games = response.data;
+    const winningTeams = games
+      .filter(game => game.Status === "Final")
+      .map(game => game.HomeScore > game.AwayScore ? game.HomeTeam : game.AwayTeam);
+
+    const users = await User.find();
+    for (let user of users) {
+      if (user.selectedTeam && winningTeams.includes(user.selectedTeam)) {
+        user.points += 1; // Increment points
+        user.selectedTeam = null; // Reset selected team
+        await user.save();
+      }
+    }
+
+    res.send({ success: true, message: 'Points updated for all users!' });
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send({ success: false, message: 'Error updating points.' });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
