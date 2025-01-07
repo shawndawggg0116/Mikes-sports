@@ -71,5 +71,37 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Login Route
+app.post('/login', async (req, res) => {
+  console.log('Login request body:', req.body); // Log incoming data
+
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(404).send('User not found.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
+      return res.status(401).send('Invalid credentials.');
+    }
+
+    console.log('User logged in successfully:', username);
+    res.status(200).send('Login successful');
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
