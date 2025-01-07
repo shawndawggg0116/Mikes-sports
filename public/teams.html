@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Team</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+    }
+    h1 {
+      color: #333;
+    }
+    .team-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .team {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    .team.disabled {
+      background-color: red;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Select Your Team</h1>
+  <div class="team-list">
+    <!-- Teams will be dynamically rendered here -->
+  </div>
+
+  <script>
+    const teams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+    ];
+
+    const pickedTeams = []; // Replace this with data from the server
+    const teamList = document.querySelector('.team-list');
+
+    // Render teams
+    teams.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = team;
+      teamDiv.classList.add('team');
+      if (pickedTeams.includes(team)) {
+        teamDiv.classList.add('disabled');
+      }
+      teamDiv.addEventListener('click', () => {
+        if (!teamDiv.classList.contains('disabled')) {
+          alert(`You picked ${team}`);
+          // Send the pick to the server
+          fetch('/select-team', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ team })
+          }).then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                teamDiv.classList.add('disabled');
+              } else {
+                alert(data.message);
+              }
+            });
+        }
+      });
+      teamList.appendChild(teamDiv);
+    });
+  </script>
+</body>
+</html>
