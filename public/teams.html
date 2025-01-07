@@ -18,6 +18,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
+      margin-bottom: 20px;
     }
     .team {
       padding: 10px 20px;
@@ -27,8 +28,25 @@
       color: white;
       cursor: pointer;
     }
+    .team.selected {
+      background-color: #007bff;
+      color: white;
+    }
     .team.disabled {
       background-color: red;
+      cursor: not-allowed;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #4caf50;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
       cursor: not-allowed;
     }
   </style>
@@ -38,6 +56,7 @@
   <div class="team-list">
     <!-- Teams will be dynamically rendered here -->
   </div>
+  <button id="submitButton" disabled>Submit</button>
 
   <script>
     const teams = [
@@ -48,8 +67,10 @@
       'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
     ];
 
+    let selectedTeam = null; // Store the currently selected team
     const pickedTeams = []; // Replace this with data from the server
     const teamList = document.querySelector('.team-list');
+    const submitButton = document.getElementById('submitButton');
 
     // Render teams
     teams.forEach(team => {
@@ -61,23 +82,38 @@
       }
       teamDiv.addEventListener('click', () => {
         if (!teamDiv.classList.contains('disabled')) {
-          alert(`You picked ${team}`);
-          // Send the pick to the server
-          fetch('/select-team', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team })
-          }).then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                teamDiv.classList.add('disabled');
-              } else {
-                alert(data.message);
-              }
-            });
+          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+          teamDiv.classList.add('selected');
+          selectedTeam = team; // Store selected team
+          submitButton.disabled = false; // Enable the submit button
         }
       });
       teamList.appendChild(teamDiv);
+    });
+
+    // Submit the selected team
+    submitButton.addEventListener('click', () => {
+      if (selectedTeam) {
+        fetch('/select-team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ team: selectedTeam })
+        }).then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(`You picked ${selectedTeam}`);
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null; // Clear the selected team
+              submitButton.disabled = true; // Disable the button again
+            } else {
+              alert(data.message);
+            }
+          });
+      }
     });
   </script>
 </body>
