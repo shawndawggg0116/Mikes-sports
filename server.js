@@ -31,6 +31,11 @@ const User = mongoose.model('User', userSchema);
 
 // Routes
 
+// Root Route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 // Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
