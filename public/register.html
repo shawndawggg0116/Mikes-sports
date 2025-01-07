@@ -1,20 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register</title>
-</head>
-<body>
-  <h1>Register</h1>
-  <form action="/register" method="POST">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
-    <br>
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-    <br>
-    <button type="submit">Register</button>
-  </form>
-</body>
-</html>
+app.post('/register', async (req, res) => {
+  // Log the incoming request body
+  console.log('Request body:', req.body);
+
+  const { username, password } = req.body;
+
+  // Check if username and password are provided
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    // Check if the username already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      console.log('Username already exists:', username);
+      return res.status(400).send('Username already exists.');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+
+    // Save the new user to the database
+    await newUser.save();
+
+    // Log the saved user
+    console.log('New user registered:', newUser);
+
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    // Log any errors during registration
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
+  }
+});
