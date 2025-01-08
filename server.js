@@ -155,19 +155,16 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
-    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
-    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
-    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
@@ -180,6 +177,72 @@ app.post('/select-team', async (req, res) => {
   }
 });
 
+// Admin Routes
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Fetch all users for admin
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
+  }
+});
+
+// Edit user points
+app.post('/admin/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.points = points;
+    await user.save();
+    res.send('Points updated successfully!');
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send('Error updating points.');
+  }
+});
+
+// Unlock a user's picked teams
+app.post('/admin/unlock-teams', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.pickedTeams = [];
+    await user.save();
+    res.send('Teams unlocked successfully!');
+  } catch (error) {
+    console.error('Error unlocking teams:', error);
+    res.status(500).send('Error unlocking teams.');
+  }
+});
+
+// Delete a user
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    await User.deleteOne({ username });
+    res.send('User deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
