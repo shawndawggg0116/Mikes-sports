@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Hardcoded admin credentials (You can replace this with database-driven logic if needed)
+const ADMIN_CREDENTIALS = {
+  username: "admin",
+  password: "adminpassword" // Use bcrypt hash for better security in production
+};
+
 // Routes
 
 // Root Route
@@ -41,6 +47,29 @@ app.get('/', (req, res) => {
 // Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Admin login route
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (
+      username === ADMIN_CREDENTIALS.username &&
+      password === ADMIN_CREDENTIALS.password
+    ) {
+      res.send('Admin login successful! You can now register users.');
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
+  }
 });
 
 // Register a user
@@ -99,16 +128,6 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// Serve the rules page
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
 // Fetch user's picked teams
 app.get('/get-picked-teams', async (req, res) => {
   const { username } = req.query;
@@ -130,17 +149,6 @@ app.get('/get-picked-teams', async (req, res) => {
   }
 });
 
-// Get leaderboard data
-app.get('/get-leaderboard', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Error fetching leaderboard.');
-  }
-});
-
 // Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
@@ -155,19 +163,16 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
-    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
-    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
-    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
@@ -182,4 +187,3 @@ app.post('/select-team', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
