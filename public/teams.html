@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
+  <link rel="stylesheet" href="navbar.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -55,6 +56,12 @@
   </style>
 </head>
 <body>
+  <div class="navbar">
+    <a href="/teams" class="active">Team Selection</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/rules">Rules</a>
+  </div>
+
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
   <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" dynamically with logged-in username -->
