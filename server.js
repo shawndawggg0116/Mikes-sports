@@ -31,12 +31,6 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Hardcoded admin credentials
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "adminpassword" // Use bcrypt hash for better security in production
-};
-
 // Routes
 
 // Root Route
@@ -47,29 +41,6 @@ app.get('/', (req, res) => {
 // Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Admin login route
-app.post('/admin-login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    if (
-      username === ADMIN_CREDENTIALS.username &&
-      password === ADMIN_CREDENTIALS.password
-    ) {
-      res.send('Admin login successful! You can now register users.');
-    } else {
-      res.status(401).send('Invalid admin credentials.');
-    }
-  } catch (error) {
-    console.error('Error during admin login:', error);
-    res.status(500).send('Error during admin login.');
-  }
 });
 
 // Register a user
@@ -141,7 +112,7 @@ app.get('/rules', (req, res) => {
 // Fetch leaderboard data
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    const users = await User.find({}, 'username points selectedTeam');
+    const users = await User.find({}, 'username points selectedTeam pickedTeams').lean();
     res.json(users);
   } catch (error) {
     console.error('Error fetching leaderboard data:', error);
