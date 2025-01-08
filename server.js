@@ -99,6 +99,16 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Serve the rules page
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
 // Fetch user's picked teams
 app.get('/get-picked-teams', async (req, res) => {
   const { username } = req.query;
@@ -153,22 +163,6 @@ app.post('/select-team', async (req, res) => {
   } catch (error) {
     console.error('Error selecting team:', error);
     res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// Get leaderboard data
-app.get('/get-leaderboard', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Error fetching leaderboard.');
   }
 });
 
