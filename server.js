@@ -113,7 +113,7 @@ app.get('/rules', (req, res) => {
 app.get('/leaderboard-data', async (req, res) => {
   try {
     const users = await User.find({}, 'username points pickedTeams').lean();
-    res.json(users);
+    res.json(users); // Return user data for leaderboard
   } catch (error) {
     console.error('Error fetching leaderboard data:', error);
     res.status(500).send('Error fetching leaderboard data.');
