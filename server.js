@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   selectedTeam: { type: String, default: null },
   pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
@@ -127,6 +126,17 @@ app.get('/get-picked-teams', async (req, res) => {
   } catch (error) {
     console.error('Error fetching picked teams:', error);
     res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
+});
+
+// Get leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
   }
 });
 
