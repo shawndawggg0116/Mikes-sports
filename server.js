@@ -48,6 +48,34 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Admin Login Route
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    // Check if the admin exists
+    const admin = await User.findOne({ username });
+    if (!admin) {
+      return res.status(404).send('Admin not found.');
+    }
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid admin credentials.');
+    }
+
+    res.redirect('/admin'); // Redirect to the admin panel
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error logging in as admin.');
+  }
+});
+
 // Register a user
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
@@ -135,53 +163,6 @@ app.get('/get-picked-teams', async (req, res) => {
   }
 });
 
-// Get leaderboard data
-app.get('/get-leaderboard', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Error fetching leaderboard.');
-  }
-});
-
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    user.lastPickDate = now;
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
 // Admin Routes
 
 // Fetch all users for admin
@@ -225,10 +206,8 @@ app.post('/admin/unlock-teams', async (req, res) => {
     }
 
     if (team) {
-      // Unlock a specific team
       user.pickedTeams = user.pickedTeams.filter(t => t !== team);
     } else {
-      // Unlock all teams
       user.pickedTeams = [];
     }
     await user.save();
