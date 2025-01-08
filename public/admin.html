@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="navbar.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .admin-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #4caf50;
+      color: white;
+    }
+    .form-container {
+      margin: 20px 0;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="/teams">Team Selection</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/rules">Rules</a>
+  </div>
+
+  <h1>Admin Dashboard</h1>
+
+  <!-- User Management -->
+  <div class="form-container">
+    <h3>Update User Points</h3>
+    <form id="updatePointsForm">
+      <input type="text" id="updateUsername" placeholder="Username" required>
+      <input type="number" id="updatePoints" placeholder="Points" required>
+      <button type="submit">Update Points</button>
+    </form>
+  </div>
+
+  <div class="form-container">
+    <h3>Unlock User Teams</h3>
+    <form id="unlockTeamsForm">
+      <input type="text" id="unlockUsername" placeholder="Username" required>
+      <button type="submit">Unlock Teams</button>
+    </form>
+  </div>
+
+  <div class="form-container">
+    <h3>Delete User</h3>
+    <form id="deleteUserForm">
+      <input type="text" id="deleteUsername" placeholder="Username" required>
+      <button type="submit">Delete User</button>
+    </form>
+  </div>
+
+  <!-- User Table -->
+  <h2>All Users</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Points</th>
+        <th>Picked Teams</th>
+      </tr>
+    </thead>
+    <tbody id="usersTable"></tbody>
+  </table>
+
+  <script>
+    // Fetch all users and display them in the table
+    function loadUsers() {
+      fetch('/admin/users')
+        .then(response => response.json())
+        .then(users => {
+          const usersTable = document.getElementById('usersTable');
+          usersTable.innerHTML = '';
+          users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${user.username}</td>
+              <td>${user.points}</td>
+              <td>${user.pickedTeams.join(', ') || 'No picks yet'}</td>
+            `;
+            usersTable.appendChild(row);
+          });
+        });
+    }
+
+    // Update user points
+    document.getElementById('updatePointsForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const username = document.getElementById('updateUsername').value;
+      const points = document.getElementById('updatePoints').value;
+
+      fetch('/admin/update-points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, points })
+      })
+        .then(response => response.text())
+        .then(message => {
+          alert(message);
+          loadUsers();
+        });
+    });
+
+    // Unlock user teams
+    document.getElementById('unlockTeamsForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const username = document.getElementById('unlockUsername').value;
+
+      fetch('/admin/unlock-teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      })
+        .then(response => response.text())
+        .then(message => {
+          alert(message);
+          loadUsers();
+        });
+    });
+
+    // Delete a user
+    document.getElementById('deleteUserForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const username = document.getElementById('deleteUsername').value;
+
+      fetch('/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      })
+        .then(response => response.text())
+        .then(message => {
+          alert(message);
+          loadUsers();
+        });
+    });
+
+    // Load users when the page is loaded
+    window.onload = loadUsers;
+  </script>
+</body>
+</html>
