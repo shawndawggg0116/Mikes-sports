@@ -7,120 +7,76 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       background-color: #f0f0f0;
       margin: 0;
-      padding: 0;
-    }
-    .header {
-      background-color: #28a745;
-      color: white;
-      padding: 1rem;
-      font-size: 1.5rem;
-    }
-    .nav {
-      display: flex;
-      justify-content: center;
-      background-color: #333;
-      padding: 0.5rem 0;
-    }
-    .nav a {
-      color: white;
-      text-decoration: none;
-      margin: 0 1rem;
-      font-weight: bold;
-    }
-    .nav a:hover {
-      text-decoration: underline;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background-color: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
     }
     .team-button {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 0.8rem 1.2rem;
-      border: none;
-      border-radius: 4px;
-      background-color: #28a745;
+      background-color: green;
       color: white;
-      font-size: 1rem;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    .team-button:hover {
-      background-color: #218838;
-    }
-    .team-button.disabled {
+    .team-button:disabled {
       background-color: red;
       cursor: not-allowed;
-    }
-    #submit {
-      margin-top: 1rem;
-      padding: 0.8rem 2rem;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 4px;
-      background-color: #28a745;
-      color: white;
-      cursor: pointer;
-    }
-    #submit:hover {
-      background-color: #218838;
     }
   </style>
 </head>
 <body>
-  <div class="header">Team Selection</div>
-  <div class="nav">
-    <a href="/teams">Team Selection</a>
-    <a href="/leaderboard">Leaderboard</a>
-  </div>
-  <div class="container">
-    <h1>Select Your Team</h1>
-    <div id="team-buttons"></div>
-    <button id="submit">Submit Team</button>
-  </div>
+  <h1>Select Your Team</h1>
+  <div id="teams-container"></div>
   <script>
-    const teams = [
-      "49ers", "Cardinals", "Eagles", "Cowboys", "Falcons", "Ravens", "Bills",
-      "Panthers", "Bears", "Bengals", "Browns", "Texans", "Colts", "Jaguars",
-      "Chiefs", "Raiders", "Chargers", "Rams", "Dolphins", "Vikings", "Patriots",
-      "Saints", "Giants", "Jets", "Seahawks", "Buccaneers", "Titans", "Commanders",
-      "Lions", "Packers", "Steelers", "Broncos"
-    ];
-    const pickedTeams = JSON.parse(localStorage.getItem("pickedTeams")) || [];
-    const teamButtonsContainer = document.getElementById("team-buttons");
-    const submitButton = document.getElementById("submit");
+    const username = "shawn"; // Replace with the logged-in username dynamically
 
-    // Render team buttons
-    teams.forEach(team => {
-      const button = document.createElement("button");
-      button.textContent = team;
-      button.className = "team-button";
-      if (pickedTeams.includes(team)) {
-        button.classList.add("disabled");
-        button.disabled = true;
-      }
-      button.addEventListener("click", () => {
-        if (!pickedTeams.includes(team)) {
-          pickedTeams.push(team);
-          localStorage.setItem("pickedTeams", JSON.stringify(pickedTeams));
-          button.classList.add("disabled");
+    async function fetchTeams() {
+      const response = await fetch(`/api/user?username=${username}`);
+      const user = await response.json();
+
+      const teams = [
+        "49ers", "Cardinals", "Eagles", "Cowboys", "Bears", "Ravens",
+        "Steelers", "Seahawks", "Patriots", "Packers", "Jets", "Giants",
+        "Buccaneers", "Texans", "Chargers", "Rams", "Chiefs", "Broncos",
+        "Vikings", "Browns", "Lions", "Panthers", "Saints", "Dolphins",
+        "Colts", "Jaguars", "Titans", "Bengals", "Bills", "Raiders", "Falcons",
+        "Commanders"
+      ];
+
+      const container = document.getElementById('teams-container');
+      container.innerHTML = '';
+
+      teams.forEach(team => {
+        const button = document.createElement('button');
+        button.textContent = team;
+        button.className = 'team-button';
+        if (user.pickedTeams.includes(team)) {
           button.disabled = true;
         }
+        button.addEventListener('click', () => pickTeam(team));
+        container.appendChild(button);
       });
-      teamButtonsContainer.appendChild(button);
-    });
+    }
 
-    // Submit button logic
-    submitButton.addEventListener("click", () => {
-      alert("Team selection submitted!");
-    });
+    async function pickTeam(team) {
+      const response = await fetch('/api/pick-team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, team })
+      });
+
+      if (response.ok) {
+        alert('Team picked successfully!');
+        fetchTeams();
+      } else {
+        alert('Error picking team.');
+      }
+    }
+
+    fetchTeams();
   </script>
 </body>
 </html>
