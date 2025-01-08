@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Hardcoded admin credentials (You can replace this with database-driven logic if needed)
+// Hardcoded admin credentials
 const ADMIN_CREDENTIALS = {
   username: "admin",
   password: "adminpassword" // Use bcrypt hash for better security in production
@@ -126,6 +126,27 @@ app.post('/login', async (req, res) => {
 // Serve the team selection page
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Serve the rules page
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+// Fetch leaderboard data
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username points selectedTeam');
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard data:', error);
+    res.status(500).send('Error fetching leaderboard data.');
+  }
 });
 
 // Fetch user's picked teams
