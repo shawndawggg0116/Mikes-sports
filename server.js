@@ -109,17 +109,6 @@ app.get('/rules', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
-// Fetch leaderboard data
-app.get('/leaderboard-data', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username points pickedTeams').lean();
-    res.json(users); // Return user data for leaderboard
-  } catch (error) {
-    console.error('Error fetching leaderboard data:', error);
-    res.status(500).send('Error fetching leaderboard data.');
-  }
-});
-
 // Fetch user's picked teams
 app.get('/get-picked-teams', async (req, res) => {
   const { username } = req.query;
@@ -141,6 +130,17 @@ app.get('/get-picked-teams', async (req, res) => {
   }
 });
 
+// Get leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
+});
+
 // Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
@@ -155,16 +155,19 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
+    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
+    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
+    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
@@ -179,3 +182,4 @@ app.post('/select-team', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
