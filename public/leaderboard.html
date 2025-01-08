@@ -4,65 +4,106 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaderboard</title>
-  <link rel="stylesheet" href="navbar.css">
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       background-color: #f0f8ff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
+
+    .navbar {
+      display: flex;
+      justify-content: center;
+      background-color: #4caf50;
+      padding: 10px 0;
+      margin-bottom: 20px;
+    }
+
+    .navbar a {
+      text-decoration: none;
+      color: white;
+      font-size: 18px;
+      margin: 0 15px;
+      font-weight: bold;
+    }
+
+    .navbar a:hover {
+      text-decoration: underline;
+    }
+
     h1 {
       color: #333;
+      margin-bottom: 20px;
     }
-    table {
+
+    .leaderboard-table {
       width: 80%;
-      margin: 20px auto;
+      margin: 0 auto;
       border-collapse: collapse;
-      text-align: left;
     }
-    th, td {
-      padding: 10px;
+
+    .leaderboard-table th, .leaderboard-table td {
       border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
     }
-    th {
+
+    .leaderboard-table th {
       background-color: #4caf50;
       color: white;
+    }
+
+    .leaderboard-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .leaderboard-table tr:hover {
+      background-color: #f1f1f1;
     }
   </style>
 </head>
 <body>
   <div class="navbar">
     <a href="/teams">Team Selection</a>
-    <a href="/leaderboard" class="active">Leaderboard</a>
+    <a href="/leaderboard">Leaderboard</a>
     <a href="/rules">Rules</a>
   </div>
 
   <h1>Leaderboard</h1>
-  <table>
+  <table class="leaderboard-table">
     <thead>
       <tr>
         <th>Username</th>
+        <th>Team Picked</th>
         <th>Points</th>
-        <th>Picked Teams</th>
       </tr>
     </thead>
-    <tbody id="leaderboard"></tbody>
+    <tbody id="leaderboardBody">
+      <!-- Data will be dynamically added here -->
+    </tbody>
   </table>
 
   <script>
-    fetch('/leaderboard')
+    // Fetch leaderboard data from the server
+    fetch('/get-leaderboard')
       .then(response => response.json())
       .then(data => {
-        const leaderboard = document.getElementById('leaderboard');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+
         data.forEach(user => {
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${user.username}</td>
+            <td>${user.selectedTeam || 'No pick yet'}</td>
             <td>${user.points}</td>
-            <td>${user.pickedTeams.join(', ')}</td>
           `;
-          leaderboard.appendChild(row);
+          leaderboardBody.appendChild(row);
         });
+      })
+      .catch(error => {
+        console.error('Error fetching leaderboard data:', error);
       });
   </script>
 </body>

@@ -156,5 +156,21 @@ app.post('/select-team', async (req, res) => {
   }
 });
 
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Get leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
