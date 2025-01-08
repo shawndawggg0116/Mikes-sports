@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   selectedTeam: { type: String, default: null },
   pickedTeams: { type: [String], default: [] },
+  lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
@@ -154,16 +155,19 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
+    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
+    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
+    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
@@ -178,3 +182,4 @@ app.post('/select-team', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
