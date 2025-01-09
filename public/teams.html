@@ -40,11 +40,6 @@
       background-color: red;
       cursor: not-allowed;
     }
-    .team.yellow {
-      background-color: yellow;
-      color: black;
-      cursor: not-allowed;
-    }
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -87,46 +82,40 @@
     const usernameField = document.getElementById('username');
 
     // Fetch the logged-in username
-    fetch('/get-logged-in-user')
+    fetch('/get-logged-in-user') // Fetch username dynamically from the server
       .then(response => response.json())
       .then(data => {
         usernameField.value = data.username;
 
-        // Fetch the user's picked teams and available teams
-        Promise.all([
-          fetch(`/get-picked-teams?username=${data.username}`).then(res => res.json()),
-          fetch('/available-teams').then(res => res.json())
-        ])
-        .then(([pickedData, availableData]) => {
-          const pickedTeams = pickedData.pickedTeams || [];
-          const availableTeams = availableData.availableTeams || [];
+        // Fetch the user's picked teams from the server
+        fetch(`/get-picked-teams?username=${data.username}`)
+          .then(response => response.json())
+          .then(data => {
+            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
 
-          // Render teams
-          teams.forEach(team => {
-            const teamDiv = document.createElement('div');
-            teamDiv.textContent = team;
-            teamDiv.classList.add('team');
+            // Render teams
+            teams.forEach(team => {
+              const teamDiv = document.createElement('div');
+              teamDiv.textContent = team;
+              teamDiv.classList.add('team');
 
-            if (!availableTeams.includes(team)) {
-              // Team is unavailable (game already started or finished)
-              teamDiv.classList.add('yellow');
-            } else if (pickedTeams.includes(team)) {
-              // Team is already picked by the user
-              teamDiv.classList.add('disabled');
-            } else {
-              // Team is selectable
+              // If the team is already picked, disable it
+              if (pickedTeams.includes(team)) {
+                teamDiv.classList.add('disabled');
+              }
+
               teamDiv.addEventListener('click', () => {
-                document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                teamDiv.classList.add('selected');
-                selectedTeam = team;
-                submitButton.disabled = false;
+                if (!teamDiv.classList.contains('disabled')) {
+                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                  teamDiv.classList.add('selected');
+                  selectedTeam = team;
+                  submitButton.disabled = false;
+                }
               });
-            }
 
-            teamList.appendChild(teamDiv);
+              teamList.appendChild(teamDiv);
+            });
           });
-        })
-        .catch(err => console.error('Error fetching team data:', err));
       })
       .catch(err => {
         console.error('Error fetching username:', err);
@@ -141,22 +130,21 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, team: selectedTeam })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert(`You picked ${selectedTeam}`);
-            const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-            if (selectedDiv) {
-              selectedDiv.classList.add('disabled');
-              selectedDiv.classList.remove('selected');
+        }).then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(`You picked ${selectedTeam}`);
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
+              submitButton.disabled = true;
+            } else {
+              alert(data.message);
             }
-            selectedTeam = null;
-            submitButton.disabled = true;
-          } else {
-            alert(data.message);
-          }
-        });
+          });
       }
     });
   </script>
