@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -156,16 +155,19 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
+    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
+    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
+    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
