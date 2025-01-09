@@ -100,13 +100,6 @@ cron.schedule('0 0 * * *', async () => {
   await fetchNFLGames(week, season);
 });
 
-// Helper: Get current NFL week
-function getCurrentNFLWeek() {
-  const now = new Date();
-  const seasonStart = new Date(now.getFullYear(), 8, 7); // Example: Sept 7th
-  return Math.ceil((now - seasonStart) / (7 * 24 * 60 * 60 * 1000));
-}
-
 // Cron job to reset weekly team selections
 cron.schedule('0 0 * * 2', async () => {
   try {
@@ -122,6 +115,13 @@ cron.schedule('0 0 * * 2', async () => {
   }
 });
 
+// Helper: Get current NFL week
+function getCurrentNFLWeek() {
+  const now = new Date();
+  const seasonStart = new Date(now.getFullYear(), 8, 7); // Example: Sept 7th
+  return Math.ceil((now - seasonStart) / (7 * 24 * 60 * 60 * 1000));
+}
+
 // Routes
 
 // Root Route
@@ -134,69 +134,40 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Register a user
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('Username already exists.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).send('User registered successfully!');
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
-// Login Route
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).send('Invalid credentials.');
-    }
-
-    req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Error logging in.');
-  }
-});
-
-// Fetch logged-in username
-app.get('/get-logged-in-user', (req, res) => {
-  if (!req.session || !req.session.username) {
-    return res.status(401).send({ error: 'User not logged in' });
-  }
-  res.send({ username: req.session.username });
+// Serve the rules page
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
 // Serve the team selection page
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Fetch user's picked teams
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).send({ success: false, message: 'Username is required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    res.send({ success: true, pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
 });
 
 // Fetch available teams
@@ -215,6 +186,17 @@ app.get('/available-teams', async (req, res) => {
   } catch (error) {
     console.error('Error fetching available teams:', error);
     res.status(500).send({ success: false, message: 'Failed to fetch available teams.' });
+  }
+});
+
+// Fetch leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
   }
 });
 
