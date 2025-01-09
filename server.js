@@ -107,6 +107,73 @@ cron.schedule('0 0 * * *', async () => {
   await fetchNFLGames(week, season);
 });
 
+// Root Route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Serve the registration page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Register a user
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).send('Username already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
+  }
+});
+
+// Login Route
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid credentials.');
+    }
+
+    req.session.username = username; // Save username in session
+    res.redirect('/teams'); // Redirect to the team selection page
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
+  }
+});
+
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
 // Fetch available teams
 app.get('/available-teams', async (req, res) => {
   const now = new Date();
@@ -126,42 +193,5 @@ app.get('/available-teams', async (req, res) => {
   }
 });
 
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).json({ success: false, message: 'Username and team are required.' });
-  }
-
-  const now = new Date();
-
-  try {
-    const game = await Game.findOne({
-      $or: [{ team1: team }, { team2: team }],
-      startTime: { $lte: now }
-    });
-
-    if (game) {
-      return res.status(400).json({ success: false, message: 'This game has already started.' });
-    }
-
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    await user.save();
-
-    res.json({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).json({ success: false, message: 'Failed to select team.' });
-  }
-});
-
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
