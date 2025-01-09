@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -133,13 +134,8 @@ app.get('/get-picked-teams', async (req, res) => {
 // Get leaderboard data
 app.get('/get-leaderboard', async (req, res) => {
   try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points in descending order
-    const leaderboard = users.map(user => ({
-      username: user.username,
-      points: user.points,
-      selectedTeam: user.selectedTeam || "No pick yet",
-    }));
-    res.json(leaderboard);
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    res.json(users);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).send('Error fetching leaderboard.');
@@ -179,73 +175,6 @@ app.post('/select-team', async (req, res) => {
   } catch (error) {
     console.error('Error selecting team:', error);
     res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-// Admin Routes
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Fetch all users for admin
-app.get('/admin/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
-  }
-});
-
-// Edit user points
-app.post('/admin/update-points', async (req, res) => {
-  const { username, points } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.points = points;
-    await user.save();
-    res.send('Points updated successfully!');
-  } catch (error) {
-    console.error('Error updating points:', error);
-    res.status(500).send('Error updating points.');
-  }
-});
-
-// Unlock a user's picked teams
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
-// Delete a user
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    await User.deleteOne({ username });
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
   }
 });
 
