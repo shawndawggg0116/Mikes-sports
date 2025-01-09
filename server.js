@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,13 @@ mongoose.connect(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(
+  session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
 // User schema
 const userSchema = new mongoose.Schema({
@@ -87,11 +95,20 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
+    req.session.username = username; // Set username in session
     res.redirect('/teams'); // Redirect to the team selection page
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
   }
+});
+
+// Fetch logged-in username
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
 });
 
 // Serve the team selection page
@@ -155,19 +172,16 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
-    // Ensure the user has not already picked this team
     if (user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
-    // Ensure the user can only pick one team per week
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
     if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
       return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
     }
 
-    // Update the user's selected team and picked teams
     user.selectedTeam = team;
     user.pickedTeams.push(team);
     user.lastPickDate = now;
