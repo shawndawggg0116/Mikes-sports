@@ -235,4 +235,40 @@ app.post('/select-team', async (req, res) => {
     }
 
     const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).
