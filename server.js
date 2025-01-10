@@ -341,29 +341,58 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-app.get('/fetch-schedule', async (req, res) => {
+const axios = require('axios'); // Ensure Axios is imported at the top of your file
+
+// Function to fetch NFL teams from RapidAPI
+async function fetchNFLTeams() {
   try {
-    console.log('Fetching NFL schedule...');
-    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
-      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your key
+      },
+    });
+    console.log('NFL teams fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error);
+    throw error;
+  }
+}
+// Define NFL Team schema
+const teamSchema = new mongoose.Schema({
+  id: String,
+  abbreviation: String,
+  name: String,
+  conference: String,
+  division: String,
+});
+
+const Team = mongoose.model('Team', teamSchema);
+// Route to fetch and store NFL teams
+app.get('/fetch-teams', async (req, res) => {
+  try {
+    console.log('Fetching NFL teams...');
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Your API key
+      },
     });
 
-    const schedule = response.data.map(game => ({
-      gameId: game.id,
-      week: game.week,
-      team1: game.home_team.abbreviation,
-      team2: game.visitor_team.abbreviation,
-      startTime: new Date(game.date),
-      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // 3-hour duration
-      status: 'scheduled',
+    const teams = response.data.map(team => ({
+      id: team.id,
+      abbreviation: team.abbreviation,
+      name: team.name,
+      conference: team.conference,
+      division: team.division,
     }));
-    console.log('Transformed schedule:', schedule);
 
-    await Game.insertMany(schedule, { ordered: false }); // Prevent duplication errors
-    console.log('NFL schedule successfully stored.');
-    res.send('NFL schedule fetched and stored successfully!');
+    await Team.insertMany(teams, { ordered: false }); // Prevent duplication errors
+    console.log('NFL teams successfully stored in MongoDB.');
+    res.send('NFL teams fetched and stored successfully!');
   } catch (error) {
-    console.error('Error fetching schedule:', error);
-    res.status(500).send('Error fetching schedule.');
+    console.error('Error fetching NFL teams:', error.response ? error.response.data : error.message);
+    res.status(500).send('Error fetching NFL teams.');
   }
 });
