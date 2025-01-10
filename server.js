@@ -93,6 +93,10 @@ app.get('/fetch-schedule', async (req, res) => {
   }
 });
 
+app.get('/schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
+});
+
 app.get('/available-teams', async (req, res) => {
   const now = new Date();
   try {
@@ -331,4 +335,3 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
