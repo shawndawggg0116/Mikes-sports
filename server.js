@@ -1,3 +1,4 @@
+// Import dependencies
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -9,10 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-).then(() => console.log('Connected to MongoDB'))
+mongoose
+  .connect(
+    "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+    { useNewUrlParser: true, useUnifiedTopology: true }
+  )
+  .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
@@ -35,7 +38,7 @@ const userSchema = new mongoose.Schema({
   pickedTeams: { type: [String], default: [] },
   lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -56,6 +59,7 @@ const Game = mongoose.model('Game', gameSchema);
 // Function to fetch and store NFL schedule
 async function fetchAndStoreSchedule() {
   try {
+    console.log('Fetching NFL schedule...');
     const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
       headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
     });
@@ -66,7 +70,7 @@ async function fetchAndStoreSchedule() {
       team1: game.home_team.abbreviation,
       team2: game.visitor_team.abbreviation,
       startTime: new Date(game.date),
-      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
+      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000),
       status: 'scheduled',
     }));
 
@@ -77,12 +81,14 @@ async function fetchAndStoreSchedule() {
   }
 }
 
-// Routes for fetching NFL schedule and teams
+// Routes
 app.get('/fetch-schedule', async (req, res) => {
   try {
+    console.log('Fetch schedule route hit');
     await fetchAndStoreSchedule();
     res.send('NFL schedule fetched and stored successfully!');
   } catch (error) {
+    console.error('Error fetching schedule:', error);
     res.status(500).send('Error fetching schedule.');
   }
 });
@@ -96,22 +102,6 @@ app.get('/available-teams', async (req, res) => {
   } catch (error) {
     console.error('Error fetching available teams:', error);
     res.status(500).send('Error fetching available teams.');
-  }
-});
-
-// Serve the NFL Schedule HTML page
-app.get('/schedule', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
-});
-
-// API route to fetch the NFL schedule data
-app.get('/api/nfl-schedule', async (req, res) => {
-  try {
-    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
-    res.json(games);
-  } catch (error) {
-    console.error('Error fetching NFL schedule:', error);
-    res.status(500).send('Error fetching NFL schedule.');
   }
 });
 
@@ -341,3 +331,4 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
