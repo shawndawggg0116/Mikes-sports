@@ -99,6 +99,22 @@ app.get('/available-teams', async (req, res) => {
   }
 });
 
+// Serve the NFL Schedule HTML page
+app.get('/schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
+});
+
+// API route to fetch the NFL schedule data
+app.get('/api/nfl-schedule', async (req, res) => {
+  try {
+    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
+    res.json(games);
+  } catch (error) {
+    console.error('Error fetching NFL schedule:', error);
+    res.status(500).send('Error fetching NFL schedule.');
+  }
+});
+
 // Existing routes for login, registration, team selection, leaderboard, admin, etc.
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
