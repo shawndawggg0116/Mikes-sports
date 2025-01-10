@@ -357,6 +357,7 @@ app.get('/fetch-schedule', async (req, res) => {
       endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // 3-hour duration
       status: 'scheduled',
     }));
+    console.log('Transformed schedule:', schedule);
 
     await Game.insertMany(schedule, { ordered: false }); // Prevent duplication errors
     console.log('NFL schedule successfully stored.');
