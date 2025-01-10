@@ -5,6 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Schedule</title>
   <link rel="stylesheet" href="/navbar.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f8ff;
+    }
+    .navbar {
+      background-color: #4CAF50;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+    }
+    .navbar a {
+      text-decoration: none;
+      color: white;
+      padding: 14px 20px;
+      display: block;
+    }
+    .navbar a.active {
+      background-color: #045d4a;
+    }
+    .navbar a:hover {
+      background-color: #3e8e41;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #schedule-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .game {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .game p {
+      margin: 5px 0;
+    }
+  </style>
 </head>
 <body>
   <div class="navbar">
@@ -22,6 +70,11 @@
       .then(data => {
         const scheduleContainer = document.getElementById('schedule-container');
         scheduleContainer.innerHTML = ''; // Clear loading text
+
+        if (data.length === 0) {
+          scheduleContainer.innerHTML = '<p>No schedule data available.</p>';
+          return;
+        }
 
         data.forEach(game => {
           const gameDiv = document.createElement('div');
