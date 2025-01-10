@@ -339,9 +339,6 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-const axios = require('axios'); // Ensure Axios is imported at the top of your file
 
 // Function to fetch NFL teams from RapidAPI
 async function fetchNFLTeams() {
