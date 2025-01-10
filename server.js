@@ -340,22 +340,8 @@ app.post('/admin/delete-user', async (req, res) => {
 });
 
 
-// Function to fetch NFL teams from RapidAPI
-async function fetchNFLTeams() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
-        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your key
-      },
-    });
-    console.log('NFL teams fetched successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching NFL teams:', error);
-    throw error;
-  }
-}
+
+  
 // Define NFL Team schema
 const teamSchema = new mongoose.Schema({
   id: String,
