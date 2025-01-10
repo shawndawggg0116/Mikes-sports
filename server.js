@@ -341,17 +341,6 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-const gameSchema = new mongoose.Schema({
-  gameId: String,
-  week: Number,
-  team1: String,
-  team2: String,
-  startTime: Date,
-  endTime: Date,
-  status: String, // "scheduled", "in-progress", or "finished"
-});
-
-const Game = mongoose.model('Game', gameSchema);
 app.get('/fetch-schedule', async (req, res) => {
   try {
     console.log('Fetching NFL schedule...');
@@ -377,4 +366,3 @@ app.get('/fetch-schedule', async (req, res) => {
     res.status(500).send('Error fetching schedule.');
   }
 });
-
