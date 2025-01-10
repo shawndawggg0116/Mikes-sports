@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,19 +40,90 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Routes
+// Define Game schema
+const gameSchema = new mongoose.Schema({
+  gameId: String,
+  week: Number,
+  team1: String,
+  team2: String,
+  startTime: Date,
+  endTime: Date,
+  status: String, // "scheduled", "in-progress", or "finished"
+});
 
-// Root Route
+const Game = mongoose.model('Game', gameSchema);
+
+// Function to fetch and store NFL schedule
+async function fetchAndStoreSchedule() {
+  try {
+    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
+      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
+    });
+
+    const schedule = response.data.map(game => ({
+      gameId: game.id,
+      week: game.week,
+      team1: game.home_team.abbreviation,
+      team2: game.visitor_team.abbreviation,
+      startTime: new Date(game.date),
+      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
+      status: 'scheduled',
+    }));
+
+    await Game.insertMany(schedule);
+    console.log('NFL schedule successfully stored.');
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+  }
+}
+
+// Routes for fetching NFL schedule and teams
+app.get('/fetch-schedule', async (req, res) => {
+  try {
+    await fetchAndStoreSchedule();
+    res.send('NFL schedule fetched and stored successfully!');
+  } catch (error) {
+    res.status(500).send('Error fetching schedule.');
+  }
+});
+
+app.get('/available-teams', async (req, res) => {
+  const now = new Date();
+  try {
+    const games = await Game.find({ startTime: { $gt: now } }); // Get games that haven't started
+    const availableTeams = games.flatMap(game => [game.team1, game.team2]);
+    res.json(availableTeams);
+  } catch (error) {
+    console.error('Error fetching available teams:', error);
+    res.status(500).send('Error fetching available teams.');
+  }
+});
+
+// Serve the NFL Schedule HTML page
+app.get('/schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
+});
+
+// API route to fetch the NFL schedule data
+app.get('/api/nfl-schedule', async (req, res) => {
+  try {
+    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
+    res.json(games);
+  } catch (error) {
+    console.error('Error fetching NFL schedule:', error);
+    res.status(500).send('Error fetching NFL schedule.');
+  }
+});
+
+// Existing routes for login, registration, team selection, leaderboard, admin, etc.
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Register a user
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
@@ -76,7 +148,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Login Route
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -103,7 +174,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Fetch logged-in username
 app.get('/get-logged-in-user', (req, res) => {
   if (!req.session || !req.session.username) {
     return res.status(401).send({ error: 'User not logged in' });
@@ -111,22 +181,18 @@ app.get('/get-logged-in-user', (req, res) => {
   res.send({ username: req.session.username });
 });
 
-// Serve the team selection page
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Serve the leaderboard page
 app.get('/leaderboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
-// Serve the rules page
 app.get('/rules', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
-// Fetch user's picked teams
 app.get('/get-picked-teams', async (req, res) => {
   const { username } = req.query;
 
@@ -147,7 +213,6 @@ app.get('/get-picked-teams', async (req, res) => {
   }
 });
 
-// Get leaderboard data
 app.get('/get-leaderboard', async (req, res) => {
   try {
     const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
@@ -158,7 +223,6 @@ app.get('/get-leaderboard', async (req, res) => {
   }
 });
 
-// Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
 
@@ -194,12 +258,10 @@ app.post('/select-team', async (req, res) => {
   }
 });
 
-// Admin Routes
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Admin Login
 app.post('/admin-login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -219,7 +281,6 @@ app.post('/admin-login', async (req, res) => {
   }
 });
 
-// Fetch all users for admin
 app.get('/admin/users', async (req, res) => {
   try {
     const users = await User.find();
@@ -230,7 +291,6 @@ app.get('/admin/users', async (req, res) => {
   }
 });
 
-// Edit user points
 app.post('/admin/update-points', async (req, res) => {
   const { username, points } = req.body;
 
@@ -249,7 +309,6 @@ app.post('/admin/update-points', async (req, res) => {
   }
 });
 
-// Unlock a user's picked teams
 app.post('/admin/unlock-teams', async (req, res) => {
   const { username } = req.body;
 
@@ -268,7 +327,6 @@ app.post('/admin/unlock-teams', async (req, res) => {
   }
 });
 
-// Delete a user
 app.post('/admin/delete-user', async (req, res) => {
   const { username } = req.body;
 
@@ -283,3 +341,40 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const gameSchema = new mongoose.Schema({
+  gameId: String,
+  week: Number,
+  team1: String,
+  team2: String,
+  startTime: Date,
+  endTime: Date,
+  status: String, // "scheduled", "in-progress", or "finished"
+});
+
+const Game = mongoose.model('Game', gameSchema);
+app.get('/fetch-schedule', async (req, res) => {
+  try {
+    console.log('Fetching NFL schedule...');
+    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
+      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
+    });
+
+    const schedule = response.data.map(game => ({
+      gameId: game.id,
+      week: game.week,
+      team1: game.home_team.abbreviation,
+      team2: game.visitor_team.abbreviation,
+      startTime: new Date(game.date),
+      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // 3-hour duration
+      status: 'scheduled',
+    }));
+
+    await Game.insertMany(schedule, { ordered: false }); // Prevent duplication errors
+    console.log('NFL schedule successfully stored.');
+    res.send('NFL schedule fetched and stored successfully!');
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    res.status(500).send('Error fetching schedule.');
+  }
+});
+
