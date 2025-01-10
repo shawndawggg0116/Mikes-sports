@@ -1,4 +1,3 @@
-// Import dependencies
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -10,12 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-mongoose
-  .connect(
-    "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
-  .then(() => console.log('Connected to MongoDB'))
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
@@ -38,7 +35,7 @@ const userSchema = new mongoose.Schema({
   pickedTeams: { type: [String], default: [] },
   lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -59,7 +56,6 @@ const Game = mongoose.model('Game', gameSchema);
 // Function to fetch and store NFL schedule
 async function fetchAndStoreSchedule() {
   try {
-    console.log('Fetching NFL schedule...');
     const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
       headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
     });
@@ -70,7 +66,7 @@ async function fetchAndStoreSchedule() {
       team1: game.home_team.abbreviation,
       team2: game.visitor_team.abbreviation,
       startTime: new Date(game.date),
-      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000),
+      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
       status: 'scheduled',
     }));
 
@@ -245,4 +241,158 @@ app.post('/select-team', async (req, res) => {
     }
 
     const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
+  }
+});
+
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
+  }
+});
+
+app.post('/admin/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.points = points;
+    await user.save();
+    res.send('Points updated successfully!');
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send('Error updating points.');
+  }
+});
+
+app.post('/admin/unlock-teams', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.pickedTeams = [];
+    await user.save();
+    res.send('Teams unlocked successfully!');
+  } catch (error) {
+    console.error('Error unlocking teams:', error);
+    res.status(500).send('Error unlocking teams.');
+  }
+});
+
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    await User.deleteOne({ username });
+    res.send('User deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
+  }
+});
+
+// Start the server
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const axios = require('axios'); // Ensure Axios is imported at the top of your file
+
+// Function to fetch NFL teams from RapidAPI
+async function fetchNFLTeams() {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your key
+      },
+    });
+    console.log('NFL teams fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error);
+    throw error;
+  }
+}
+// Define NFL Team schema
+const teamSchema = new mongoose.Schema({
+  id: String,
+  abbreviation: String,
+  name: String,
+  conference: String,
+  division: String,
+});
+
+const Team = mongoose.model('Team', teamSchema);
+// Route to fetch and store NFL teams
+app.get('/fetch-teams', async (req, res) => {
+  try {
+    console.log('Fetching NFL teams...');
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Your API key
+      },
+    });
+
+    const teams = response.data.map(team => ({
+      id: team.id,
+      abbreviation: team.abbreviation,
+      name: team.name,
+      conference: team.conference,
+      division: team.division,
+    }));
+
+    await Team.insertMany(teams, { ordered: false }); // Prevent duplication errors
+    console.log('NFL teams successfully stored in MongoDB.');
+    res.send('NFL teams fetched and stored successfully!');
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.response ? error.response.data : error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
