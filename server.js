@@ -77,6 +77,23 @@ async function fetchAndStoreSchedule() {
   }
 }
 
+// Function to fetch NFL live schedule from RapidAPI
+async function fetchNFLLiveSchedule() {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your API key
+      },
+    });
+    console.log('NFL Live Schedule fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching NFL live schedule:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
 // Routes for fetching NFL schedule and teams
 app.get('/fetch-schedule', async (req, res) => {
   try {
@@ -96,6 +113,16 @@ app.get('/available-teams', async (req, res) => {
   } catch (error) {
     console.error('Error fetching available teams:', error);
     res.status(500).send('Error fetching available teams.');
+  }
+});
+
+// Route to fetch NFL live schedule
+app.get('/nfl-live-schedule', async (req, res) => {
+  try {
+    const liveSchedule = await fetchNFLLiveSchedule();
+    res.json(liveSchedule); // Send the live schedule as a response
+  } catch (error) {
+    res.status(500).send('Error fetching NFL live schedule.');
   }
 });
 
