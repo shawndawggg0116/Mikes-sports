@@ -96,6 +96,30 @@ app.get('/update-game-results', async (req, res) => {
   }
 });
 
+// Route to fetch the NFL schedule
+app.get('/api/nfl-schedule', async (req, res) => {
+  try {
+    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
+    res.json(games);
+  } catch (error) {
+    console.error('Error fetching NFL schedule:', error);
+    res.status(500).send('Error fetching NFL schedule.');
+  }
+});
+
+// Route to fetch available teams
+app.get('/available-teams', async (req, res) => {
+  try {
+    const now = new Date();
+    const games = await Game.find({ startTime: { $gt: now } }); // Get games that haven't started
+    const availableTeams = games.flatMap(game => [game.team1, game.team2]);
+    res.json(availableTeams);
+  } catch (error) {
+    console.error('Error fetching available teams:', error);
+    res.status(500).send('Error fetching available teams.');
+  }
+});
+
 // Scheduled task to update game results every hour
 cron.schedule('0 * * * *', async () => {
   console.log('Running scheduled game results update...');
