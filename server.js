@@ -280,32 +280,40 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-const http = require('https');
+import express from 'express';
+import axios from 'axios';
 
-const options = {
-	method: 'GET',
-	hostname: 'nfl-api-data.p.rapidapi.com',
-	port: null,
-	path: '/nfl-team-listing/v1/data',
-	headers: {
-		'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
-		'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com'
-	}
-};
+const app = express();
+const port = 5000; // Your specified port
 
-const req = http.request(options, function (res) {
-	const chunks = [];
+// RapidAPI credentials
+const RAPIDAPI_KEY = '10bf18f0demsh31eaae24d15703p127820jsn83bb8d8273b6';
+const RAPIDAPI_HOST = 'nfl-api-data.p.rapidapi.com';
 
-	res.on('data', function (chunk) {
-		chunks.push(chunk);
-	});
+// Endpoint to test the API
+app.get('/test-api', async (req, res) => {
+  const options = {
+    method: 'GET',
+    url: 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data',
+    headers: {
+      'x-rapidapi-key': RAPIDAPI_KEY,
+      'x-rapidapi-host': RAPIDAPI_HOST,
+    },
+  };
 
-	res.on('end', function () {
-		const body = Buffer.concat(chunks);
-		console.log(body.toString());
-	});
+  try {
+    const response = await axios.request(options);
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Failed to fetch data from the NFL API');
+  }
 });
 
-req.end();
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
