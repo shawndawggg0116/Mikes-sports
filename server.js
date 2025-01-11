@@ -312,5 +312,13 @@ async function fetchAndStoreSchedule() {
     console.error('Error fetching or saving schedule:', error.message);
   }
 }
+app.get('/fetch-schedule', async (req, res) => {
+  try {
+    await fetchAndStoreSchedule();
+    res.send('NFL schedule fetched and stored successfully!');
+  } catch (error) {
+    res.status(500).send('Error fetching and storing NFL schedule.');
+  }
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
