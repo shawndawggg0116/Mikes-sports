@@ -370,6 +370,15 @@ app.get('/fetch-teams', async (req, res) => {
     res.status(500).send('Error fetching NFL teams.');
   }
 });
+app.get('/available-teams', async (req, res) => {
+  try {
+    const teams = await Team.find(); // Fetch all teams from the collection
+    res.json(teams.map(team => team.team)); // Adjust if the field is nested
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
