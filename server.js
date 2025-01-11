@@ -284,14 +284,14 @@ app.get('/test-api', async (req, res) => {
   try {
     const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
       headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Use your environment variable
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
         'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
       },
     });
-    console.log('API Response:', response.data); // Log the data for debugging
-    res.json(response.data); // Send the raw data as the response
+    console.log('API Response:', response.data); // Log the successful response
+    res.json(response.data);
   } catch (error) {
-    console.error('Error fetching from API:', error.message);
+    console.error('Error fetching from API:', error.response?.data || error.message);
     res.status(500).send('Error fetching data from API.');
   }
 });
@@ -320,15 +320,6 @@ async function fetchAndStoreSchedule() {
     console.error('Error fetching or storing schedule:', error.message);
   }
 }
-app.get('/fetch-schedule', async (req, res) => {
-  try {
-    await fetchAndStoreSchedule();
-    res.send('NFL schedule fetched and stored successfully!');
-  } catch (error) {
-    console.error('Error in fetch-schedule route:', error.message);
-    res.status(500).send('Error fetching and storing NFL schedule.');
-  }
-});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
