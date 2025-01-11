@@ -280,21 +280,32 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-const url = 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data';
+const http = require('https');
+
 const options = {
 	method: 'GET',
+	hostname: 'nfl-api-data.p.rapidapi.com',
+	port: null,
+	path: '/nfl-team-listing/v1/data',
 	headers: {
 		'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
 		'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com'
 	}
 };
 
-try {
-	const response = await fetch(url, options);
-	const result = await response.text();
-	console.log(result);
-} catch (error) {
-	console.error(error);
-}
+const req = http.request(options, function (res) {
+	const chunks = [];
+
+	res.on('data', function (chunk) {
+		chunks.push(chunk);
+	});
+
+	res.on('end', function () {
+		const body = Buffer.concat(chunks);
+		console.log(body.toString());
+	});
+});
+
+req.end();
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
