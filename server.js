@@ -280,37 +280,22 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-import express from 'express';
-import axios from 'axios';
+const axios = require('axios');
 
-const app = express();
-const port = 5000;
-
-const RAPIDAPI_KEY = '10bf18f0demsh31eaae24d15703p127820jsn83bb8d8273b6';
-const RAPIDAPI_HOST = 'nfl-api-data.p.rapidapi.com';
-
-app.get('/test-api', async (req, res) => {
-  const options = {
-    method: 'GET',
-    url: 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data',
-    headers: {
-      'x-rapidapi-key': RAPIDAPI_KEY,
-      'x-rapidapi-host': RAPIDAPI_HOST,
-    },
-  };
-
-  try {
-    const response = await axios.request(options);
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Failed to fetch data');
+const options = {
+  method: 'GET',
+  url: 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data',
+  headers: {
+    'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
+    'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com'
   }
-});
+};
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
+try {
+	const response = await axios.request(options);
+	console.log(response.data);
+} catch (error) {
+	console.error(error);
+}
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
