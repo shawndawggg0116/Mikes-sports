@@ -379,6 +379,26 @@ app.get('/available-teams', async (req, res) => {
     res.status(500).send('Error fetching teams.');
   }
 });
+const mongoose = require('mongoose');
+
+const teamSchema = new mongoose.Schema({
+  id: String,
+  abbreviation: String,
+  name: String,
+  conference: String,
+  division: String,
+});
+
+const Team = mongoose.model('Team', teamSchema);
+app.get('/available-teams', async (req, res) => {
+  try {
+    const teams = await Team.find(); // Adjust the query if needed
+    res.json(teams); // Send the teams as JSON response
+  } catch (error) {
+    console.error('Error fetching available teams:', error);
+    res.status(500).send('Error fetching available teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
