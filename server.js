@@ -371,6 +371,41 @@ app.get('/teams', async (req, res) => {
     res.status(500).send('Error serving team selection page.');
   }
 });
+const TEAMS = [
+  'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals',
+  'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts',
+  'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings',
+  'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers',
+  'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+];
+
+app.get('/teams', async (req, res) => {
+  try {
+    const now = new Date();
+    const games = await Game.find(); // Fetch all games
+    const teamStatuses = {};
+
+    TEAMS.forEach((team) => {
+      teamStatuses[team] = 'available'; // Default status
+    });
+
+    games.forEach((game) => {
+      const gameTime = new Date(game.startTime);
+      if (gameTime > now) {
+        teamStatuses[game.team1] = 'playing'; // Yellow
+        teamStatuses[game.team2] = 'playing'; // Yellow
+      } else {
+        teamStatuses[game.team1] = 'played'; // Grey
+        teamStatuses[game.team2] = 'played'; // Grey
+      }
+    });
+
+    res.json(teamStatuses);
+  } catch (error) {
+    console.error('Error fetching teams:', error.message);
+    res.status(500).send('Error fetching teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
