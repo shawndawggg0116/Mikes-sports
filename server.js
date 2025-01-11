@@ -1,34 +1,28 @@
-// Required imports
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios');
-const cron = require('node-cron');
-const MongoStore = require('connect-mongo');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: 'your-secret-key',
     resave: false,
     saveUninitialized: true,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
   })
 );
 
@@ -40,104 +34,24 @@ const userSchema = new mongoose.Schema({
   pickedTeams: { type: [String], default: [] },
   lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// Game schema
-const gameSchema = new mongoose.Schema({
-  gameId: String,
-  week: Number,
-  team1: String,
-  team2: String,
-  startTime: Date,
-  endTime: Date,
-  status: { type: String, enum: ['scheduled', 'in-progress', 'finished'], default: 'scheduled' },
-  winningTeam: { type: String, default: null },
-});
+// Routes
 
-const Game = mongoose.model('Game', gameSchema);
-
-// Function to fetch and update game results
-async function updateGameResults() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-
-    const gameResults = response.data; // Adjust based on API response structure
-    for (const game of gameResults) {
-      if (game.status === 'finished') {
-        const winningTeam = game.winningTeam; // Replace with actual key from API response
-        const users = await User.find({ selectedTeam: winningTeam });
-
-        for (const user of users) {
-          user.points += 1; // Increment points for the win
-          user.selectedTeam = null; // Reset selected team for the next week
-          await user.save();
-        }
-      }
-    }
-    console.log('Game results updated successfully.');
-  } catch (error) {
-    console.error('Error updating game results:', error);
-  }
-}
-
-// Route to manually trigger game results update
-app.get('/update-game-results', async (req, res) => {
-  try {
-    await updateGameResults();
-    res.send('Game results updated successfully.');
-  } catch (error) {
-    res.status(500).send('Error updating game results.');
-  }
-});
-
-// Route to fetch the NFL schedule
-app.get('/api/nfl-schedule', async (req, res) => {
-  try {
-    const games = await Game.find().sort({ week: 1, startTime: 1 });
-    res.json(games);
-  } catch (error) {
-    console.error('Error fetching NFL schedule:', error);
-    res.status(500).send('Error fetching NFL schedule.');
-  }
-});
-
-// Route to fetch available teams
-app.get('/available-teams', async (req, res) => {
-  try {
-    const now = new Date();
-    const games = await Game.find({ startTime: { $gt: now } });
-    const availableTeams = games.flatMap((game) => [game.team1, game.team2]);
-    res.json(availableTeams);
-  } catch (error) {
-    console.error('Error fetching available teams:', error);
-    res.status(500).send('Error fetching available teams.');
-  }
-});
-
-// Scheduled task to update game results every hour
-cron.schedule('0 * * * *', async () => {
-  console.log('Running scheduled game results update...');
-  await updateGameResults();
-});
-
-// Routes for serving static HTML files
+// Root Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// User registration
+// Register a user
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
@@ -162,7 +76,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// User login
+// Login Route
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -181,15 +95,15 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    req.session.username = username;
-    res.redirect('/teams');
+    req.session.username = username; // Set username in session
+    res.redirect('/teams'); // Redirect to the team selection page
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
   }
 });
 
-// Fetch logged-in user
+// Fetch logged-in username
 app.get('/get-logged-in-user', (req, res) => {
   if (!req.session || !req.session.username) {
     return res.status(401).send({ error: 'User not logged in' });
@@ -197,58 +111,175 @@ app.get('/get-logged-in-user', (req, res) => {
   res.send({ username: req.session.username });
 });
 
-// Admin login
-app.post('/admin-login', (req, res) => {
-  const { username, password } = req.body;
-  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
-    return res.redirect('/admin');
-  }
-  res.status(401).send('Invalid admin credentials.');
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Admin page
-app.get('/admin', (req, res) => {
-  if (!req.session.isAdmin) {
-    return res.status(403).send('Access denied.');
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Serve the rules page
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+// Fetch user's picked teams
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).send({ success: false, message: 'Username is required.' });
   }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    res.send({ success: true, pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
+});
+
+// Get leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
+});
+
+// Handle team selection
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
+// Admin Routes
+app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Fetch and store NFL schedule
-async function fetchAndStoreSchedule() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
+// Admin Login
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
 
-    const schedule = response.data.map((game) => ({
-      gameId: game.team.id,
-      team1: game.team.displayName,
-      team2: game.team.nickname,
-      startTime: new Date(),
-      endTime: new Date(),
-      status: 'scheduled',
-    }));
-
-    await Game.insertMany(schedule);
-    console.log('Schedule saved successfully.');
-  } catch (error) {
-    console.error('Error fetching or saving schedule:', error.message);
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
   }
-}
 
-app.get('/fetch-schedule', async (req, res) => {
   try {
-    await fetchAndStoreSchedule();
-    res.send('NFL schedule fetched and stored successfully!');
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
   } catch (error) {
-    res.status(500).send('Error fetching and storing NFL schedule.');
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
   }
 });
 
-// Start server
+// Fetch all users for admin
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
+  }
+});
+
+// Edit user points
+app.post('/admin/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.points = points;
+    await user.save();
+    res.send('Points updated successfully!');
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send('Error updating points.');
+  }
+});
+
+// Unlock a user's picked teams
+app.post('/admin/unlock-teams', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.pickedTeams = [];
+    await user.save();
+    res.send('Teams unlocked successfully!');
+  } catch (error) {
+    console.error('Error unlocking teams:', error);
+    res.status(500).send('Error unlocking teams.');
+  }
+});
+
+// Delete a user
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    await User.deleteOne({ username });
+    res.send('User deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
+  }
+});
+
+// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
