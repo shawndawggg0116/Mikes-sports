@@ -280,53 +280,6 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-app.get('/test-api', async (req, res) => {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-    console.log('API Response:', response.data);
-    res.json(response.data); // Send the raw data back to the browser
-  } catch (error) {
-    console.error('API Error:', error.message);
-    res.status(500).send('Error fetching API data');
-  }
-});
-async function fetchAndStoreSchedule() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-
-    const schedule = response.data.map(game => ({
-      gameId: game.id || game.team.id, // Adjust based on API keys
-      week: 1, // Placeholder, update based on API response
-      team1: game.team.displayName, // Adjust based on API keys
-      team2: game.team.nickname, // Adjust based on API keys
-      startTime: new Date(), // Placeholder, update based on API response
-      endTime: new Date(),
-      status: 'scheduled',
-    }));
-
-    console.log('Processed Schedule:', schedule); // Log what is being saved
-    await Game.insertMany(schedule);
-    console.log('Schedule saved successfully.');
-  } catch (error) {
-    console.error('Error fetching or saving schedule:', error.message);
-  }
-}
-const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-  headers: {
-    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Ensure this matches
-    'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-  },
-});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
