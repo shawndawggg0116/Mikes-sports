@@ -280,22 +280,32 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-const axios = require('axios');
 
-const options = {
-  method: 'GET',
-  url: 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data',
-  headers: {
-    'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
-    'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com'
+const port = 5000; // Use your specified port
+
+// Test API route
+app.get('/test-api', async (req, res) => {
+  const options = {
+    method: 'GET',
+    url: 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data',
+    headers: {
+      'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
+      'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    console.log(response.data);
+    res.status(200).json(response.data); // Send the API response back to the client
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching data from the API');
   }
-};
+});
 
-try {
-	const response = await axios.request(options);
-	console.log(response.data);
-} catch (error) {
-	console.error(error);
-}
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
