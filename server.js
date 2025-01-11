@@ -280,6 +280,21 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
+const url = 'https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data';
+const options = {
+	method: 'GET',
+	headers: {
+		'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
+		'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com'
+	}
+};
 
+try {
+	const response = await fetch(url, options);
+	const result = await response.text();
+	console.log(result);
+} catch (error) {
+	console.error(error);
+}
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
