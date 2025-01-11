@@ -307,5 +307,77 @@ app.get('/test-api', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+// Fetch current week's team statuses
+app.get('/team-statuses', async (req, res) => {
+  const options = {
+    method: 'GET',
+    url: 'https://nfl-api-data.p.rapidapi.com/nfl-game-schedule/v1/data', // Replace with the correct API endpoint if needed
+    headers: {
+      'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6',
+      'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    const games = response.data; // Adjust based on your API response format
+
+    const teamStatuses = {}; // Example: { Cardinals: 'yellow', Falcons: 'grey', ... }
+
+    games.forEach(game => {
+      const { homeTeam, awayTeam, gameStatus } = game; // Adjust fields based on API
+      if (gameStatus === 'Scheduled') {
+        teamStatuses[homeTeam] = 'yellow';
+        teamStatuses[awayTeam] = 'yellow';
+      } else if (gameStatus === 'Final') {
+        teamStatuses[homeTeam] = 'grey';
+        teamStatuses[awayTeam] = 'grey';
+      }
+    });
+
+    // Add user-specific statuses
+    if (req.session && req.session.username) {
+      const user = await User.findOne({ username: req.session.username });
+      if (user) {
+        user.pickedTeams.forEach(team => {
+          teamStatuses[team] = 'red';
+        });
+
+        Object.keys(teamStatuses).forEach(team => {
+          if (!user.pickedTeams.includes(team) && !teamStatuses[team]) {
+            teamStatuses[team] = 'green';
+          }
+        });
+      }
+    }
+
+    res.json(teamStatuses);
+  } catch (error) {
+    console.error('Error fetching team statuses:', error);
+    res.status(500).send('Error fetching team statuses.');
+  }
+});
+import cron from 'node-cron';
+
+// Schedule a task to update points daily at midnight
+cron.schedule('0 0 * * *', async () => {
+  try {
+    await axios.post('http://localhost:5000/update-points'); // Call your update-points endpoint
+    console.log('Points updated successfully.');
+  } catch (error) {
+    console.error('Error updating points:', error);
+  }
+});
+// Get leaderboard data sorted by points
+app.get('/leaderboard-data', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username points').sort({ points: -1 }); // Sort by points descending
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard data.');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

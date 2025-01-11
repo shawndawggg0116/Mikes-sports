@@ -146,6 +146,43 @@
             }
           });
       }
+      // Fetch and render team statuses
+fetch('/team-statuses')
+  .then(response => response.json())
+  .then(statuses => {
+    const teamElements = document.querySelectorAll('.team');
+    teamElements.forEach(teamElement => {
+      const teamName = teamElement.textContent.trim();
+      if (statuses[teamName]) {
+        teamElement.classList.add(statuses[teamName]); // Add class based on status
+        if (statuses[teamName] !== 'green') {
+          teamElement.classList.add('disabled');
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error fetching team statuses:', error));
+  .team.yellow {
+  background-color: yellow;
+}
+
+.team.grey {
+  background-color: grey;
+}
+
+.team.red {
+  background-color: red;
+}
+
+.team.green {
+  background-color: green;
+}
+
+.team.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
     });
   </script>
 </body>
