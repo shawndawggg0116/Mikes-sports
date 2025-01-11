@@ -1,4 +1,4 @@
-// Updated server.js with API integration
+// Updated server.js with API integration and path fixes
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -98,6 +98,30 @@ async function updateUserPoints() {
 }
 
 // Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 app.get('/fetch-schedule', async (req, res) => {
   await fetchAndStoreSchedule();
   res.send('Schedule fetched and stored.');
