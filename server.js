@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -278,6 +279,59 @@ app.post('/admin/delete-user', async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).send('Error deleting user.');
+  }
+});
+// Route to update game results and user points
+app.post('/update-game-result', async (req, res) => {
+  const { gameId, winningTeam } = req.body;
+
+  if (!gameId || !winningTeam) {
+    return res.status(400).send('Game ID and winning team are required.');
+  }
+
+  try {
+    // Find the game and update its status and winning team
+    const game = await Game.findOne({ gameId });
+    if (!game) {
+      return res.status(404).send('Game not found.');
+    }
+
+    game.status = 'finished';
+    game.winningTeam = winningTeam;
+    await game.save();
+
+    // Find all users who picked the winning team and update their points
+    const users = await User.find({ selectedTeam: winningTeam });
+    for (const user of users) {
+      user.points += 1; // Increment points for the win
+      user.selectedTeam = null; // Reset selected team for the next week
+      await user.save();
+    }
+
+    res.send('Game result and user points updated successfully.');
+  } catch (error) {
+    console.error('Error updating game result:', error);
+    res.status(500).send('Error updating game result.');
+  }
+});
+// Reset all users' selected teams weekly at midnight on Tuesday
+cron.schedule('0 0 * * 2', async () => {
+  try {
+    await User.updateMany({}, { selectedTeam: null });
+    console.log('All user selected teams have been reset for the week.');
+  } catch (error) {
+    console.error('Error resetting user teams:', error);
+  }
+});
+// Fetch leaderboard data
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const leaderboard = await User.find({}, 'username points')
+      .sort({ points: -1 }); // Sort by points (highest first)
+    res.json(leaderboard); // Return leaderboard as JSON
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
   }
 });
 
