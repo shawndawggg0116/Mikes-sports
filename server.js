@@ -70,7 +70,7 @@ async function fetchAndStoreNFLTeams() {
     const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
       headers: {
         'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
-        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Your API key
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your actual API key
       },
     });
 
@@ -89,6 +89,30 @@ async function fetchAndStoreNFLTeams() {
   }
 }
 
+// Function to fetch and store NFL schedule
+async function fetchAndStoreSchedule() {
+  try {
+    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
+      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
+    });
+
+    const schedule = response.data.map(game => ({
+      gameId: game.id,
+      week: game.week,
+      team1: game.home_team.abbreviation,
+      team2: game.visitor_team.abbreviation,
+      startTime: new Date(game.date),
+      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
+      status: 'scheduled',
+    }));
+
+    await Game.insertMany(schedule);
+    console.log('NFL schedule successfully stored.');
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+  }
+}
+
 // Routes for fetching NFL schedule and teams
 app.get('/fetch-teams', async (req, res) => {
   try {
@@ -96,6 +120,41 @@ app.get('/fetch-teams', async (req, res) => {
     res.send('NFL teams fetched and stored successfully!');
   } catch (error) {
     res.status(500).send('Error fetching NFL teams.');
+  }
+});
+
+app.get('/fetch-schedule', async (req, res) => {
+  try {
+    await fetchAndStoreSchedule();
+    res.send('NFL schedule fetched and stored successfully!');
+  } catch (error) {
+    res.status(500).send('Error fetching schedule.');
+  }
+});
+
+app.get('/available-teams', async (req, res) => {
+  try {
+    const teams = await Team.find(); // Fetch all teams from the collection
+    res.json(teams.map(team => team));
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams.');
+  }
+});
+
+// Serve the NFL Schedule HTML page
+app.get('/schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
+});
+
+// API route to fetch the NFL schedule data
+app.get('/api/nfl-schedule', async (req, res) => {
+  try {
+    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
+    res.json(games);
+  } catch (error) {
+    console.error('Error fetching NFL schedule:', error);
+    res.status(500).send('Error fetching NFL schedule.');
   }
 });
 
@@ -156,6 +215,13 @@ app.post('/login', async (req, res) => {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
   }
+});
+
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
 });
 
 app.get('/teams', (req, res) => {
