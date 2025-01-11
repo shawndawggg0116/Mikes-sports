@@ -284,13 +284,11 @@ import express from 'express';
 import axios from 'axios';
 
 const app = express();
-const port = 5000; // Your specified port
+const port = 5000;
 
-// RapidAPI credentials
 const RAPIDAPI_KEY = '10bf18f0demsh31eaae24d15703p127820jsn83bb8d8273b6';
 const RAPIDAPI_HOST = 'nfl-api-data.p.rapidapi.com';
 
-// Endpoint to test the API
 app.get('/test-api', async (req, res) => {
   const options = {
     method: 'GET',
@@ -306,11 +304,10 @@ app.get('/test-api', async (req, res) => {
     res.status(200).json(response.data);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Failed to fetch data from the NFL API');
+    res.status(500).send('Failed to fetch data');
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
