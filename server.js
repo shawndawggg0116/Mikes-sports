@@ -1,4 +1,4 @@
-// Updated server.js with API integration and path fixes, including POST route handling
+// Updated server.js to handle root login form submission correctly and avoid incorrect /login route usage
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -103,6 +103,29 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+app.post('/', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid credentials.');
+    }
+    req.session.username = username;
+    console.log('Session created for:', username); // Debugging log
+    res.redirect('/teams');
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
+  }
+});
+
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
@@ -121,48 +144,6 @@ app.get('/rules', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('Username already exists.');
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-    res.status(201).send('User registered successfully!');
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
-});
-
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).send('Invalid credentials.');
-    }
-    req.session.username = username;
-    res.redirect('/teams');
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Error logging in.');
-  }
 });
 
 app.get('/fetch-schedule', async (req, res) => {
