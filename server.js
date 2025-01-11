@@ -40,7 +40,18 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Define Game schema
+// Team schema
+const teamSchema = new mongoose.Schema({
+  id: String,
+  abbreviation: String,
+  name: String,
+  conference: String,
+  division: String,
+});
+
+const Team = mongoose.model('Team', teamSchema);
+
+// Game schema
 const gameSchema = new mongoose.Schema({
   gameId: String,
   week: Number,
@@ -53,112 +64,7 @@ const gameSchema = new mongoose.Schema({
 
 const Game = mongoose.model('Game', gameSchema);
 
-// Define NFL Team schema
-const teamSchema = new mongoose.Schema({
-  id: String,
-  abbreviation: String,
-  name: String,
-  conference: String,
-  division: String,
-});
-
-const Team = mongoose.model('Team', teamSchema);
-
-// Function to fetch and store NFL teams from RapidAPI
-async function fetchAndStoreNFLTeams() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
-        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your actual API key
-      },
-    });
-
-    const teams = response.data.map(team => ({
-      id: team.id,
-      abbreviation: team.abbreviation,
-      name: team.name,
-      conference: team.conference,
-      division: team.division,
-    }));
-
-    await Team.insertMany(teams, { ordered: false }); // Prevent duplication errors
-    console.log('NFL teams successfully stored in MongoDB.');
-  } catch (error) {
-    console.error('Error fetching NFL teams:', error.response ? error.response.data : error.message);
-  }
-}
-
-// Function to fetch and store NFL schedule
-async function fetchAndStoreSchedule() {
-  try {
-    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
-      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
-    });
-
-    const schedule = response.data.map(game => ({
-      gameId: game.id,
-      week: game.week,
-      team1: game.home_team.abbreviation,
-      team2: game.visitor_team.abbreviation,
-      startTime: new Date(game.date),
-      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
-      status: 'scheduled',
-    }));
-
-    await Game.insertMany(schedule);
-    console.log('NFL schedule successfully stored.');
-  } catch (error) {
-    console.error('Error fetching schedule:', error);
-  }
-}
-
-// Routes for fetching NFL schedule and teams
-app.get('/fetch-teams', async (req, res) => {
-  try {
-    await fetchAndStoreNFLTeams();
-    res.send('NFL teams fetched and stored successfully!');
-  } catch (error) {
-    res.status(500).send('Error fetching NFL teams.');
-  }
-});
-
-app.get('/fetch-schedule', async (req, res) => {
-  try {
-    await fetchAndStoreSchedule();
-    res.send('NFL schedule fetched and stored successfully!');
-  } catch (error) {
-    res.status(500).send('Error fetching schedule.');
-  }
-});
-
-app.get('/available-teams', async (req, res) => {
-  try {
-    const teams = await Team.find(); // Fetch all teams from the collection
-    res.json(teams.map(team => team));
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams.');
-  }
-});
-
-// Serve the NFL Schedule HTML page
-app.get('/schedule', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
-});
-
-// API route to fetch the NFL schedule data
-app.get('/api/nfl-schedule', async (req, res) => {
-  try {
-    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
-    res.json(games);
-  } catch (error) {
-    console.error('Error fetching NFL schedule:', error);
-    res.status(500).send('Error fetching NFL schedule.');
-  }
-});
-
-// Existing routes for login, registration, team selection, leaderboard, admin, etc.
+// Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -209,8 +115,8 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
+    req.session.username = username;
+    res.redirect('/teams');
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
@@ -228,13 +134,56 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
+app.get('/available-teams', async (req, res) => {
+  try {
+    const teams = await Team.find();
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching available teams:', error);
+    res.status(500).send('Error fetching available teams.');
+  }
+});
+
 app.get('/leaderboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
 });
 
-// Start the server
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
