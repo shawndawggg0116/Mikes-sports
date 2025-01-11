@@ -321,6 +321,12 @@ async function fetchAndStoreSchedule() {
     console.error('Error fetching or saving schedule:', error.message);
   }
 }
+const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+  headers: {
+    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Ensure this matches
+    'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+  },
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
