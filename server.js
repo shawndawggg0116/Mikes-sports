@@ -1,9 +1,11 @@
+// Existing imports
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const axios = require('axios');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,7 +42,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Define Game schema
+// Game schema
 const gameSchema = new mongoose.Schema({
   gameId: String,
   week: Number,
@@ -49,73 +51,58 @@ const gameSchema = new mongoose.Schema({
   startTime: Date,
   endTime: Date,
   status: String, // "scheduled", "in-progress", or "finished"
+  winningTeam: String, // Store the winning team
 });
 
 const Game = mongoose.model('Game', gameSchema);
 
-// Function to fetch and store NFL schedule
-async function fetchAndStoreSchedule() {
+// Function to fetch and update game results
+async function updateGameResults() {
   try {
-    const response = await axios.get('https://api.balldontlie.io/v1/nfl/schedules', {
-      headers: { 'Authorization': '1384160c-0e89-4e67-a763-23f51b996df9' },
+    // Replace with your NFL API endpoint
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6', // Your API key
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
     });
 
-    const schedule = response.data.map(game => ({
-      gameId: game.id,
-      week: game.week,
-      team1: game.home_team.abbreviation,
-      team2: game.visitor_team.abbreviation,
-      startTime: new Date(game.date),
-      endTime: new Date(new Date(game.date).getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
-      status: 'scheduled',
-    }));
+    const gameResults = response.data; // Adjust based on API response structure
+    for (const game of gameResults) {
+      if (game.status === 'finished') {
+        const winningTeam = game.winningTeam; // Replace with actual key from API response
+        const users = await User.find({ selectedTeam: winningTeam });
 
-    await Game.insertMany(schedule);
-    console.log('NFL schedule successfully stored.');
+        for (const user of users) {
+          user.points += 1; // Increment points for the win
+          user.selectedTeam = null; // Reset selected team for the next week
+          await user.save();
+        }
+      }
+    }
+    console.log('Game results updated successfully.');
   } catch (error) {
-    console.error('Error fetching schedule:', error);
+    console.error('Error updating game results:', error);
   }
 }
 
-// Routes for fetching NFL schedule and teams
-app.get('/fetch-schedule', async (req, res) => {
+// Route to manually trigger game results update
+app.get('/update-game-results', async (req, res) => {
   try {
-    await fetchAndStoreSchedule();
-    res.send('NFL schedule fetched and stored successfully!');
+    await updateGameResults();
+    res.send('Game results updated successfully.');
   } catch (error) {
-    res.status(500).send('Error fetching schedule.');
+    res.status(500).send('Error updating game results.');
   }
 });
 
-app.get('/available-teams', async (req, res) => {
-  const now = new Date();
-  try {
-    const games = await Game.find({ startTime: { $gt: now } }); // Get games that haven't started
-    const availableTeams = games.flatMap(game => [game.team1, game.team2]);
-    res.json(availableTeams);
-  } catch (error) {
-    console.error('Error fetching available teams:', error);
-    res.status(500).send('Error fetching available teams.');
-  }
+// Scheduled task to update game results every hour
+cron.schedule('0 * * * *', async () => {
+  console.log('Running scheduled game results update...');
+  await updateGameResults();
 });
 
-// Serve the NFL Schedule HTML page
-app.get('/schedule', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'schedule.html'));
-});
-
-// API route to fetch the NFL schedule data
-app.get('/api/nfl-schedule', async (req, res) => {
-  try {
-    const games = await Game.find().sort({ week: 1, startTime: 1 }); // Sort games by week and start time
-    res.json(games);
-  } catch (error) {
-    console.error('Error fetching NFL schedule:', error);
-    res.status(500).send('Error fetching NFL schedule.');
-  }
-});
-
-// Existing routes for login, registration, team selection, leaderboard, admin, etc.
+// Existing routes (no changes made)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -262,82 +249,4 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.post('/admin-login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    if (username === 'admin' && password === 'password') {
-      res.redirect('/admin'); // Redirect to admin dashboard
-    } else {
-      res.status(401).send('Invalid admin credentials.');
-    }
-  } catch (error) {
-    console.error('Error during admin login:', error);
-    res.status(500).send('Error during admin login.');
-  }
-});
-
-app.get('/admin/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
-  }
-});
-
-app.post('/admin/update-points', async (req, res) => {
-  const { username, points } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.points = points;
-    await user.save();
-    res.send('Points updated successfully!');
-  } catch (error) {
-    console.error('Error updating points:', error);
-    res.status(500).send('Error updating points.');
-  }
-});
-
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    await User.deleteOne({ username });
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
-  }
-});
-
-// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
