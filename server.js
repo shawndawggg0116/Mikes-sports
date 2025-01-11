@@ -338,6 +338,38 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
+// Function to fetch and store NFL teams from RapidAPI
+async function fetchAndStoreNFLTeams() {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'x-rapidapi-host': 'nfl-api-data.p.rapidapi.com',
+        'x-rapidapi-key': '10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b', // Replace with your actual API key
+      },
+    });
+
+    const teams = response.data.map(team => ({
+      id: team.id,
+      abbreviation: team.abbreviation,
+      name: team.name,
+      conference: team.conference,
+      division: team.division,
+    }));
+
+    await Team.insertMany(teams, { ordered: false }); // Prevent duplication errors
+    console.log('NFL teams successfully stored in MongoDB.');
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.response ? error.response.data : error.message);
+  }
+}
+app.get('/fetch-teams', async (req, res) => {
+  try {
+    await fetchAndStoreNFLTeams();
+    res.send('NFL teams fetched and stored successfully!');
+  } catch (error) {
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
