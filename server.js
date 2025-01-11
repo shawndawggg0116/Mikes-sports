@@ -1,4 +1,4 @@
-// Updated server.js to handle root login form submission correctly and avoid incorrect /login route usage
+// Updated server.js to properly handle login at root URL without incorrect redirections
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -105,20 +105,25 @@ app.get('/', (req, res) => {
 
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
+  console.log(`Login attempt by user: ${username}`);
   if (!username || !password) {
+    console.log('Missing username or password');
     return res.status(400).send('Username and password are required.');
   }
   try {
     const user = await User.findOne({ username });
     if (!user) {
+      console.log('User not found');
       return res.status(404).send('User not found.');
     }
+    console.log('User found in database:', user);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      console.log('Invalid password');
       return res.status(401).send('Invalid credentials.');
     }
     req.session.username = username;
-    console.log('Session created for:', username); // Debugging log
+    console.log('Login successful for user:', username);
     res.redirect('/teams');
   } catch (error) {
     console.error('Error during login:', error);
