@@ -1,4 +1,4 @@
-// Updated server.js to properly handle login at root URL without incorrect redirections
+// Updated server.js to properly handle login and redirect without incorrect paths
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
