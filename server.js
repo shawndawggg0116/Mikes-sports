@@ -1,15 +1,18 @@
+// Updated server.js with API integration
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const axios = require('axios');
 const path = require('path');
 const session = require('express-session');
+const dotenv = require('dotenv');
 
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
 mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  "mongodb+srv://shawnbuckhannon:<db_password>@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
   { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -17,7 +20,7 @@ mongoose.connect(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
     secret: 'your-secret-key',
@@ -39,245 +42,79 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Game schema
+const gameSchema = new mongoose.Schema({
+  team: String,
+  status: { type: String, enum: ['upcoming', 'live', 'completed'], default: 'upcoming' },
+  gameDate: Date,
+});
+
+const Game = mongoose.model('Game', gameSchema);
+
+// Fetch NFL schedule and update database
+async function fetchAndStoreSchedule() {
+  try {
+    const response = await axios.get('https://api.example.com/nfl/schedule', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': process.env.RAPIDAPI_HOST,
+      },
+    });
+
+    const schedule = response.data;
+    for (const game of schedule) {
+      const existingGame = await Game.findOne({ team: game.team });
+      if (!existingGame) {
+        await Game.create({
+          team: game.team,
+          status: game.status,
+          gameDate: new Date(game.date),
+        });
+      } else {
+        existingGame.status = game.status;
+        existingGame.save();
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+  }
+}
+
+// Update user points based on completed games
+async function updateUserPoints() {
+  try {
+    const completedGames = await Game.find({ status: 'completed' });
+    for (const game of completedGames) {
+      const users = await User.find({ selectedTeam: game.team });
+      for (const user of users) {
+        user.points += 1;
+        user.selectedTeam = null; // Reset selected team for the next week
+        await user.save();
+      }
+    }
+  } catch (error) {
+    console.error('Error updating user points:', error);
+  }
+}
+
 // Routes
-
-// Root Route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+app.get('/fetch-schedule', async (req, res) => {
+  await fetchAndStoreSchedule();
+  res.send('Schedule fetched and stored.');
 });
 
-// Serve the registration page
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+app.get('/update-points', async (req, res) => {
+  await updateUserPoints();
+  res.send('User points updated.');
 });
 
-// Register a user
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
+app.get('/get-games', async (req, res) => {
   try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('Username already exists.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).send('User registered successfully!');
+    const games = await Game.find();
+    res.json(games);
   } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
-});
-
-// Login Route
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).send('Invalid credentials.');
-    }
-
-    req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Error logging in.');
-  }
-});
-
-// Fetch logged-in username
-app.get('/get-logged-in-user', (req, res) => {
-  if (!req.session || !req.session.username) {
-    return res.status(401).send({ error: 'User not logged in' });
-  }
-  res.send({ username: req.session.username });
-});
-
-// Serve the team selection page
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// Serve the rules page
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
-// Fetch user's picked teams
-app.get('/get-picked-teams', async (req, res) => {
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).send({ success: false, message: 'Username is required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching picked teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
-  }
-});
-
-// Get leaderboard data
-app.get('/get-leaderboard', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Error fetching leaderboard.');
-  }
-});
-
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    user.lastPickDate = now;
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-// Admin Routes
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Admin Login
-app.post('/admin-login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    if (username === 'admin' && password === 'password') {
-      res.redirect('/admin'); // Redirect to admin dashboard
-    } else {
-      res.status(401).send('Invalid admin credentials.');
-    }
-  } catch (error) {
-    console.error('Error during admin login:', error);
-    res.status(500).send('Error during admin login.');
-  }
-});
-
-// Fetch all users for admin
-app.get('/admin/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
-  }
-});
-
-// Edit user points
-app.post('/admin/update-points', async (req, res) => {
-  const { username, points } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.points = points;
-    await user.save();
-    res.send('Points updated successfully!');
-  } catch (error) {
-    console.error('Error updating points:', error);
-    res.status(500).send('Error updating points.');
-  }
-});
-
-// Unlock a user's picked teams
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
-// Delete a user
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    await User.deleteOne({ username });
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
+    console.error('Error fetching games:', error);
+    res.status(500).send('Error fetching games.');
   }
 });
 
