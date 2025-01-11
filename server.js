@@ -320,6 +320,15 @@ async function fetchAndStoreSchedule() {
     console.error('Error fetching or storing schedule:', error.message);
   }
 }
+app.get('/fetch-schedule', async (req, res) => {
+  try {
+    await fetchAndStoreSchedule();
+    res.send('NFL schedule fetched and stored successfully!');
+  } catch (error) {
+    console.error('Error in fetch-schedule route:', error.message);
+    res.status(500).send('Error fetching and storing NFL schedule.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
