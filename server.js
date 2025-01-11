@@ -281,48 +281,5 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-
-
-    const schedule = response.data.map((team) => ({
-      gameId: team.id,
-      week: 1, // Placeholder (update this based on your logic)
-      team1: team.displayName,
-      team2: team.nickname,
-      startTime: new Date(), // Placeholder date
-      endTime: new Date(new Date().getTime() + 3 * 60 * 60 * 1000), // Approximate 3-hour duration
-      status: 'scheduled',
-    }));
-
-    await Game.insertMany(schedule);
-    console.log('NFL schedule fetched and stored successfully.');
-  } catch (error) {
-    console.error('Error fetching or storing schedule:', error.message);
-  }
-}
-app.get('/fetch-schedule', async (req, res) => {
-  try {
-    await fetchAndStoreSchedule();
-    res.send('NFL schedule fetched and stored successfully!');
-  } catch (error) {
-    console.error('Error in fetch-schedule route:', error.message);
-    res.status(500).send('Error fetching and storing NFL schedule.');
-  }
-});
-app.get('/test-api', async (req, res) => {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Use your environment variable
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-    console.log('API Response:', response.data); // Log the response data
-    res.json(response.data); // Send the raw data as the response
-  } catch (error) {
-    console.error('Error fetching from API:', error.response?.data || error.message); // Log more detailed error information
-    res.status(500).send('Error fetching data from API.');
-  }
-});
-
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
