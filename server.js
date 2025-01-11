@@ -334,6 +334,43 @@ app.get('/get-leaderboard', async (req, res) => {
     res.status(500).send('Error fetching leaderboard.');
   }
 });
+// Serve the team selection page with game data
+app.get('/teams', async (req, res) => {
+  try {
+    const now = new Date();
+    const games = await Game.find({}); // Fetch all games
+
+    // Mark teams by their status
+    const teamStatuses = {};
+    for (const game of games) {
+      const { team1, team2, startTime, endTime, status } = game;
+      if (status === 'finished') {
+        teamStatuses[team1] = 'grey'; // Already played
+        teamStatuses[team2] = 'grey'; // Already played
+      } else if (startTime <= now && now <= endTime) {
+        teamStatuses[team1] = 'yellow'; // Playing now
+        teamStatuses[team2] = 'yellow'; // Playing now
+      } else {
+        teamStatuses[team1] = 'available'; // Available to pick
+        teamStatuses[team2] = 'available'; // Available to pick
+      }
+    }
+
+    // Fetch the logged-in user's picked teams
+    const username = req.session.username;
+    const user = await User.findOne({ username });
+    if (user) {
+      user.pickedTeams.forEach((team) => {
+        teamStatuses[team] = 'red'; // Already picked
+      });
+    }
+
+    res.render('teams', { teamStatuses, username }); // Pass data to the frontend
+  } catch (error) {
+    console.error('Error serving team selection page:', error);
+    res.status(500).send('Error serving team selection page.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
