@@ -280,29 +280,8 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-app.get('/test-api', async (req, res) => {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-    console.log('API Response:', response.data); // Log the successful response
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching from API:', error.response?.data || error.message);
-    res.status(500).send('Error fetching data from API.');
-  }
-});
-async function fetchAndStoreSchedule() {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Use your environment variable
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
+
+
 
     const schedule = response.data.map((team) => ({
       gameId: team.id,
@@ -327,6 +306,21 @@ app.get('/fetch-schedule', async (req, res) => {
   } catch (error) {
     console.error('Error in fetch-schedule route:', error.message);
     res.status(500).send('Error fetching and storing NFL schedule.');
+  }
+});
+app.get('/test-api', async (req, res) => {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Use your environment variable
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+    console.log('API Response:', response.data); // Log the response data
+    res.json(response.data); // Send the raw data as the response
+  } catch (error) {
+    console.error('Error fetching from API:', error.response?.data || error.message); // Log more detailed error information
+    res.status(500).send('Error fetching data from API.');
   }
 });
 
