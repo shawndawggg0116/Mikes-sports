@@ -272,5 +272,20 @@ app.post('/select-team', async (req, res) => {
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
+app.get('/test-api', async (req, res) => {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+    console.log('API Response:', response.data);
+    res.json(response.data); // Send the raw data back to the browser
+  } catch (error) {
+    console.error('API Error:', error.message);
+    res.status(500).send('Error fetching API data');
+  }
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
