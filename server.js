@@ -195,6 +195,16 @@ app.post('/admin-login', (req, res) => {
     res.status(401).send('Invalid admin credentials.');
   }
 });
+// Fetch all users for admin
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username'); // Fetch only the username field
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
+  }
+});
 
 // Admin Routes
 app.get('/admin', (req, res) => {
