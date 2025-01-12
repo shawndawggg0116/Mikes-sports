@@ -1,3 +1,4 @@
+// Updated server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -17,7 +18,7 @@ mongoose.connect(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
     secret: 'your-secret-key',
@@ -39,9 +40,16 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Routes
+
 // Root Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Serve the registration page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
 // Register a user
@@ -69,7 +77,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// User Login
+// Login Route
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
 
@@ -88,8 +96,8 @@ app.post('/', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
+    req.session.username = username;
+    res.redirect('/teams');
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
@@ -104,47 +112,40 @@ app.get('/get-logged-in-user', (req, res) => {
   res.send({ username: req.session.username });
 });
 
-// Serve the team selection page
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Fetch user's picked teams
-app.get('/get-picked-teams', async (req, res) => {
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).send({ success: false, message: 'Username is required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching picked teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
-  }
-});
-
-// Fetch NFL Teams
+// Fetch NFL games and their current status
 app.get('/get-nfl-teams', async (req, res) => {
   try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
+    const response = await axios.get('https://api.example.com/nfl/games', {
       headers: {
         'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+        'X-RapidAPI-Host': process.env.RAPIDAPI_HOST,
       },
     });
 
-    const teams = response.data;
-    res.json(teams); // Return the teams as JSON
+    const games = response.data;
+    const teamStatus = {};
+    const now = new Date();
+
+    games.forEach((game) => {
+      const { teamA, teamB, status, date } = game;
+      const gameDate = new Date(date);
+
+      if (status === 'live') {
+        teamStatus[teamA] = 'yellow';
+        teamStatus[teamB] = 'yellow';
+      } else if (gameDate < now) {
+        teamStatus[teamA] = 'grey';
+        teamStatus[teamB] = 'grey';
+      } else {
+        teamStatus[teamA] = 'green';
+        teamStatus[teamB] = 'green';
+      }
+    });
+
+    res.json(teamStatus);
   } catch (error) {
-    console.error('Error fetching NFL teams:', error);
-    res.status(500).send('Error fetching NFL teams.');
+    console.error('Error fetching NFL games:', error);
+    res.status(500).send('Error fetching NFL games.');
   }
 });
 
@@ -162,18 +163,15 @@ app.post('/select-team', async (req, res) => {
       return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
     const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    const currentTuesday = new Date();
-    currentTuesday.setDate(currentTuesday.getDate() - currentTuesday.getDay() + 2);
-    currentTuesday.setHours(0, 0, 0, 0);
+    const resetDay = 2; // Tuesday
+    const today = now.getUTCDay();
 
-    if (lastPickDate && lastPickDate >= currentTuesday) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    if (user.lastPickDate) {
+      const lastPickDate = new Date(user.lastPickDate);
+      if (today !== resetDay && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+        return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+      }
     }
 
     user.selectedTeam = team;
@@ -186,6 +184,21 @@ app.post('/select-team', async (req, res) => {
     console.error('Error selecting team:', error);
     res.status(500).send({ success: false, message: 'Error selecting team.' });
   }
+});
+
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Serve the rules page
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
 // Start the server
