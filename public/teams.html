@@ -6,53 +6,10 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-image: url('background.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-    h1 {
-      color: #333;
-    }
-    .team-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .team {
-      padding: 10px 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: #4caf50;
-      color: white;
-      cursor: pointer;
-    }
-    .team.selected {
-      background-color: #007bff;
-      color: white;
-    }
-    .team.disabled {
-      background-color: red;
-      cursor: not-allowed;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      color: white;
-      background-color: #4caf50;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
+    .team { padding: 10px; margin: 10px; border: 1px solid #ccc; }
+    .idle { background-color: #4caf50; color: white; }
+    .playing { background-color: yellow; color: black; }
+    .played { background-color: gray; color: white; }
   </style>
 </head>
 <body>
@@ -63,90 +20,28 @@
   </div>
 
   <h1>Select Your Team</h1>
-  <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
-  <button id="submitButton" disabled>Submit</button>
+  <div id="teamList"></div>
 
   <script>
-    const teams = [
-      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
-      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
-      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
-      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
-      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-    ];
-
-    let selectedTeam = null;
-    const teamList = document.querySelector('.team-list');
-    const submitButton = document.getElementById('submitButton');
-    const usernameField = document.getElementById('username');
-
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+    // Fetch NFL teams and render them
+    fetch('/nfl-teams')
       .then(response => response.json())
       .then(data => {
-        usernameField.value = data.username;
+        const teamList = document.getElementById('teamList');
 
-        // Fetch the user's picked teams from the server
-        fetch(`/get-picked-teams?username=${data.username}`)
-          .then(response => response.json())
-          .then(data => {
-            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
+        data.forEach(team => {
+          const teamDiv = document.createElement('div');
+          teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
+          teamDiv.className = `team ${team.status}`;
 
-            // Render teams
-            teams.forEach(team => {
-              const teamDiv = document.createElement('div');
-              teamDiv.textContent = team;
-              teamDiv.classList.add('team');
-
-              // If the team is already picked, disable it
-              if (pickedTeams.includes(team)) {
-                teamDiv.classList.add('disabled');
-              }
-
-              teamDiv.addEventListener('click', () => {
-                if (!teamDiv.classList.contains('disabled')) {
-                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                  teamDiv.classList.add('selected');
-                  selectedTeam = team;
-                  submitButton.disabled = false;
-                }
-              });
-
-              teamList.appendChild(teamDiv);
-            });
+          teamDiv.addEventListener('click', () => {
+            alert(`You selected ${team.teamName}`);
           });
+
+          teamList.appendChild(teamDiv);
+        });
       })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
-      });
-
-    // Submit the selected team
-    submitButton.addEventListener('click', () => {
-      const username = usernameField.value;
-      if (selectedTeam && username) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, team: selectedTeam })
-        }).then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert(`You picked ${selectedTeam}`);
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
-              }
-              selectedTeam = null;
-              submitButton.disabled = true;
-            } else {
-              alert(data.message);
-            }
-          });
-      }
-    });
+      .catch(err => console.error('Error fetching teams:', err));
   </script>
 </body>
 </html>

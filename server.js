@@ -280,6 +280,81 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+// Route to scrape NFL team data
+app.get('/nfl-teams', async (req, res) => {
+  try {
+    const url = 'https://www.pro-football-reference.com/teams/';
+    const { data } = await axios.get(url);
+
+    // Load the HTML with Cheerio
+    const $ = cheerio.load(data);
+
+    const teams = [];
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
+
+      // Push team data into the array
+      if (teamName) {
+        teams.push({
+          teamName,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
+          status: 'idle', // Default status (add logic for 'playing' or 'played' later)
+        });
+      }
+    });
+
+    res.json(teams); // Send the team data as JSON
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
+const cron = require('node-cron');
+let cachedTeams = []; // To store scraped data
+
+// Function to scrape and cache NFL teams
+async function scrapeAndCacheNFLTeams() {
+  try {
+    const url = 'https://www.pro-football-reference.com/teams/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const teams = [];
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
+
+      if (teamName) {
+        teams.push({
+          teamName,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
+          status: 'idle', // Default status
+        });
+      }
+    });
+
+    cachedTeams = teams; // Cache the results
+    console.log('NFL team data updated.');
+  } catch (error) {
+    console.error('Error scraping NFL teams:', error.message);
+  }
+}
+
+// Schedule the scraper to run every hour
+cron.schedule('0 * * * *', scrapeAndCacheNFLTeams);
+
+// Serve cached data via an API route
+app.get('/nfl-teams', (req, res) => {
+  res.json(cachedTeams);
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
