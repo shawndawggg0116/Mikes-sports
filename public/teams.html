@@ -28,18 +28,17 @@
       padding: 10px 20px;
       border: 1px solid #ccc;
       border-radius: 5px;
+      background-color: #4caf50;
       color: white;
       cursor: pointer;
     }
-    .team.upcoming {
-      background-color: #4caf50; /* Green */
+    .team.selected {
+      background-color: #007bff;
+      color: white;
     }
-    .team.live {
-      background-color: yellow; /* Yellow */
-      color: black;
-    }
-    .team.completed {
-      background-color: gray; /* Gray */
+    .team.disabled {
+      background-color: red;
+      cursor: not-allowed;
     }
     button {
       padding: 10px 20px;
@@ -69,31 +68,47 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
+    const teams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+    ];
+
+    let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
-    let selectedTeam = null;
 
     // Fetch the logged-in username
-    fetch('/get-logged-in-user')
+    fetch('/get-logged-in-user') // Fetch username dynamically from the server
       .then(response => response.json())
       .then(data => {
         usernameField.value = data.username;
 
-        // Fetch game statuses
-        fetch('/get-games')
+        // Fetch the user's picked teams from the server
+        fetch(`/get-picked-teams?username=${data.username}`)
           .then(response => response.json())
-          .then(games => {
-            games.forEach(game => {
+          .then(data => {
+            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
+
+            // Render teams
+            teams.forEach(team => {
               const teamDiv = document.createElement('div');
-              teamDiv.textContent = game.team;
-              teamDiv.classList.add('team', game.status);
+              teamDiv.textContent = team;
+              teamDiv.classList.add('team');
+
+              // If the team is already picked, disable it
+              if (pickedTeams.includes(team)) {
+                teamDiv.classList.add('disabled');
+              }
 
               teamDiv.addEventListener('click', () => {
-                if (game.status === 'upcoming') {
+                if (!teamDiv.classList.contains('disabled')) {
                   document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
                   teamDiv.classList.add('selected');
-                  selectedTeam = game.team;
+                  selectedTeam = team;
                   submitButton.disabled = false;
                 }
               });
@@ -119,7 +134,13 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              location.reload();
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
+              submitButton.disabled = true;
             } else {
               alert(data.message);
             }
