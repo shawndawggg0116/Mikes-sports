@@ -3,6 +3,10 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const axios = require('axios'); // Ensure axios is imported
+const cheerio = require('cheerio'); // Ensure cheerio is imported
+const cron = require('node-cron'); // Ensure cron is imported
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -327,6 +331,34 @@ app.get('/nfl-teams', (req, res) => {
 const axios = require('axios'); // For making HTTP requests
 const cron = require('node-cron'); // For scheduling tasks
 const cheerio = require('cheerio'); // For web scraping
+async function scrapeAndCacheNFLTeams() {
+  try {
+    const url = 'https://www.pro-football-reference.com/teams/';
+    const { data } = await axios.get(url); // axios is used correctly here
+    const $ = cheerio.load(data);
+
+    const teams = [];
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
+
+      if (teamName) {
+        teams.push({
+          teamName,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
+          status: 'idle', // Default status
+        });
+      }
+    });
+
+    cachedTeams = teams; // Cache the results
+    console.log('NFL team data updated.');
+  } catch (error) {
+    console.error('Error scraping NFL teams:', error.message);
+  }
+}
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
