@@ -280,99 +280,50 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-const express = require('express');
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const path = require('path');
-const session = require('express-session');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const cron = require('node-cron'); // Import for scheduled tasks
+let cachedTeams = []; // This will store the scraped team data temporarily
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// MongoDB connection
-mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-).then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
-app.use(
-  session({
-    secret: 'your-secret-key',
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-
-// User schema
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  selectedTeam: { type: String, default: null },
-  pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null },
-  points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Cached team data
-let cachedTeams = [];
-
-// Scraper function to fetch NFL team data
+// Function to scrape NFL teams
 async function scrapeAndCacheNFLTeams() {
   try {
     const url = 'https://www.pro-football-reference.com/teams/';
-    const { data } = await axios.get(url);
+    const { data } = await axios.get(url); // Fetch the webpage content
+    const $ = cheerio.load(data); // Load the HTML into cheerio
 
-    const $ = cheerio.load(data);
-    const teams = [];
+    const teams = []; // This will store the scraped teams
 
+    // Look for teams in the table
     $('table#teams_active tbody tr').each((i, el) => {
-      const teamName = $(el).find('th[data-stat="team_name"] a').text();
-      const wins = $(el).find('td[data-stat="wins"]').text();
-      const losses = $(el).find('td[data-stat="losses"]').text();
+      const teamName = $(el).find('th[data-stat="team_name"] a').text(); // Get team name
+      const wins = $(el).find('td[data-stat="wins"]').text(); // Get wins
+      const losses = $(el).find('td[data-stat="losses"]').text(); // Get losses
 
       if (teamName) {
         teams.push({
           teamName,
           wins: parseInt(wins, 10) || 0,
           losses: parseInt(losses, 10) || 0,
-          status: 'available', // Default status (can be updated with game logic)
+          status: 'available', // Default status
         });
       }
     });
 
-    cachedTeams = teams; // Cache the scraped data
-    console.log('NFL team data updated successfully.');
+    cachedTeams = teams; // Save the scraped data in memory
+    console.log('NFL team data updated!');
   } catch (error) {
     console.error('Error scraping NFL teams:', error.message);
   }
 }
+// Run the scraper when the server starts
+scrapeAndCacheNFLTeams();
 
 // Schedule the scraper to run every 6 hours
 cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
-
-// Initial scrape when the server starts
-scrapeAndCacheNFLTeams();
-
-// Route to serve cached team data
 app.get('/nfl-teams', (req, res) => {
-  res.json(cachedTeams);
+  if (cachedTeams.length === 0) {
+    return res.status(503).send('NFL team data is not available yet. Please try again later.');
+  }
+  res.json(cachedTeams); // Send the cached data as JSON
 });
-
-// Rest of your server code (unchanged from your working script)
-
-// Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
