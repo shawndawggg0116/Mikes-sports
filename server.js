@@ -347,6 +347,22 @@ app.get('/get-nfl-teams-status', async (req, res) => {
     res.status(500).send('Error fetching NFL teams.');
   }
 });
+app.get('/get-nfl-teams-status', async (req, res) => {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+
+    const teams = response.data.teams || []; // Adjust based on API response structure
+    res.json(teams); // Send raw data for debugging first
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
