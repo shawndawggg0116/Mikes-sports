@@ -328,7 +328,7 @@ app.get('/nfl-teams', (req, res) => {
   }
   res.json(cachedTeams); // Send the cached data as JSON
 });
-const axios = require('axios'); // For making HTTP requests
+
 const cron = require('node-cron'); // For scheduling tasks
 const cheerio = require('cheerio'); // For web scraping
 async function scrapeAndCacheNFLTeams() {
