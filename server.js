@@ -355,14 +355,12 @@ cron.schedule('0 * * * *', scrapeAndCacheNFLTeams);
 app.get('/nfl-teams', (req, res) => {
   res.json(cachedTeams);
 });
-const cheerio = require('cheerio'); // Add this only if not already added
-
 // Fetch NFL teams with status (playing, played, available)
 app.get('/nfl-teams', async (req, res) => {
   try {
     const url = 'https://www.pro-football-reference.com/teams/';
     const { data } = await axios.get(url);
-    const $ = cheerio.load(data);
+    const $ = require('cheerio').load(data); // Directly using require here without declaring a separate const
 
     const teams = [];
     $('table#teams_active tbody tr').each((i, el) => {
