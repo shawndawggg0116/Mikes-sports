@@ -42,12 +42,42 @@ const User = mongoose.model('User', userSchema);
 
 // Routes
 
-// Root Route (Login Page)
+// Root Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Handle login submission
+// Serve the registration page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Register a user
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).send('Username already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
+  }
+});
+
+// Handle login at the root
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
 
@@ -87,16 +117,6 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// Serve the rules page
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
 // Fetch NFL teams from API
 app.get('/get-nfl-teams', async (req, res) => {
   try {
@@ -114,56 +134,22 @@ app.get('/get-nfl-teams', async (req, res) => {
   }
 });
 
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+// Weekly reset on Tuesday (Eastern Time)
+const resetWeeklySelections = () => {
+  const now = new Date();
+  if (now.getDay() === 2) { // Tuesday
+    User.updateMany({}, { selectedTeam: null, lastPickDate: null }).then(() => {
+      console.log('Weekly selections reset.');
+    }).catch(err => {
+      console.error('Error resetting weekly selections:', err);
+    });
   }
+};
+setInterval(resetWeeklySelections, 60 * 60 * 1000); // Check every hour
 
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    user.lastPickDate = now;
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-// Admin Routes
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Fetch all users for admin
-app.get('/admin/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
-  }
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
 // Start the server
