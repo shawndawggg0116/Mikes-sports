@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios'); // Added for API calls
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -192,29 +191,6 @@ app.post('/select-team', async (req, res) => {
   } catch (error) {
     console.error('Error selecting team:', error);
     res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-// Fetch NFL team statuses
-app.get('/get-nfl-teams-status', async (req, res) => {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-
-    const teams = response.data;
-    const enrichedTeams = teams.map(team => ({
-      name: team.name,
-      status: team.isPlaying ? 'playing' : 'played', // Example logic
-    }));
-
-    res.json(enrichedTeams);
-  } catch (error) {
-    console.error('Error fetching NFL teams:', error);
-    res.status(500).send('Error fetching NFL teams.');
   }
 });
 
