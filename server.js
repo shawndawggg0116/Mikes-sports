@@ -330,5 +330,41 @@ app.get('/nfl-teams', (req, res) => {
   }
   res.json(cachedTeams);
 });
+app.get('/nfl-game-status', async (req, res) => {
+  try {
+    const now = new Date();
+    const nflSchedule = await fetchNflSchedule(); // Assume this function fetches the schedule from your database or API
+    const currentDay = now.getDay();
+    const currentTime = now.getTime();
+
+    const gameStatus = nflSchedule.map(game => {
+      const gameStartTime = new Date(game.startTime).getTime();
+      const gameEndTime = new Date(game.endTime).getTime();
+
+      if (currentTime < gameStartTime) {
+        return { team: game.team, status: 'upcoming' };
+      } else if (currentTime >= gameStartTime && currentTime <= gameEndTime) {
+        return { team: game.team, status: 'inProgress' };
+      } else {
+        return { team: game.team, status: 'played' };
+      }
+    });
+
+    res.json(gameStatus);
+  } catch (error) {
+    console.error('Error fetching NFL game status:', error);
+    res.status(500).send('Error fetching game status.');
+  }
+});
+
+// Helper to reset picks every Tuesday at midnight
+cron.schedule('0 0 * * 2', async () => {
+  try {
+    await User.updateMany({}, { $set: { selectedTeam: null, pickedTeams: [] } });
+    console.log('Team selections reset successfully!');
+  } catch (error) {
+    console.error('Error resetting team selections:', error);
+  }
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
