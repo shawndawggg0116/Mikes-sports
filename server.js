@@ -280,6 +280,53 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
+// Route for fetching real-time NFL data
+app.get('/nfl-teams', async (req, res) => {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+
+    const teams = response.data; // Assuming the API returns a list of teams
+    const enrichedTeams = teams.map(team => ({
+      name: team.team, // Adjust key based on API response
+      isPlaying: team.isPlaying,
+      hasPlayed: team.hasPlayed,
+    }));
+
+    res.json(enrichedTeams);
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
+
+// Route for updating user points (to be called by admin after games)
+app.post('/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  if (!username || points === undefined) {
+    return res.status(400).send({ success: false, message: 'Username and points are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    user.points = points;
+    await user.save();
+
+    res.send({ success: true, message: 'Points updated successfully.' });
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send({ success: false, message: 'Error updating points.' });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
