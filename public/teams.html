@@ -40,6 +40,10 @@
       background-color: red;
       cursor: not-allowed;
     }
+    .team.playing {
+      background-color: yellow;
+      color: black;
+    }
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -64,65 +68,51 @@
 
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
+  <input type="hidden" id="username" value="">
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    const teams = [
-      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
-      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
-      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
-      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
-      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-    ];
-
     let selectedTeam = null;
+
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
 
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+    fetch('/get-logged-in-user')
       .then(response => response.json())
-      .then(data => {
-        usernameField.value = data.username;
+      .then(userData => {
+        usernameField.value = userData.username;
 
-        // Fetch the user's picked teams from the server
-        fetch(`/get-picked-teams?username=${data.username}`)
+        fetch('/get-nfl-teams-status')
           .then(response => response.json())
-          .then(data => {
-            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
-
-            // Render teams
-            teams.forEach(team => {
+          .then(teamData => {
+            teamData.forEach(team => {
               const teamDiv = document.createElement('div');
-              teamDiv.textContent = team;
+              teamDiv.textContent = team.name;
               teamDiv.classList.add('team');
 
-              // If the team is already picked, disable it
-              if (pickedTeams.includes(team)) {
+              if (team.status === 'played') {
                 teamDiv.classList.add('disabled');
+              } else if (team.status === 'playing') {
+                teamDiv.classList.add('playing');
               }
 
               teamDiv.addEventListener('click', () => {
-                if (!teamDiv.classList.contains('disabled')) {
+                if (!teamDiv.classList.contains('disabled') && !teamDiv.classList.contains('playing')) {
                   document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
                   teamDiv.classList.add('selected');
-                  selectedTeam = team;
+                  selectedTeam = team.name;
                   submitButton.disabled = false;
                 }
               });
 
               teamList.appendChild(teamDiv);
             });
-          });
+          })
+          .catch(err => console.error('Error fetching team status:', err));
       })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
-      });
+      .catch(err => console.error('Error fetching user:', err));
 
-    // Submit the selected team
     submitButton.addEventListener('click', () => {
       const username = usernameField.value;
       if (selectedTeam && username) {
@@ -134,13 +124,7 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
-              }
-              selectedTeam = null;
-              submitButton.disabled = true;
+              location.reload();
             } else {
               alert(data.message);
             }
