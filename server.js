@@ -190,27 +190,81 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.post('/admin-login', async (req, res) => {
-  const { username, password } = req.body;
+// Delete a user
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
+  if (!username) {
+    return res.status(400).send('Username is required.');
   }
 
-  if (username === 'admin' && password === 'password') {
-    res.redirect('/admin');
-  } else {
-    res.status(401).send('Invalid admin credentials.');
+  try {
+    const user = await User.findOneAndDelete({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    res.send('User deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
   }
 });
 
-app.get('/admin/users', async (req, res) => {
+// Update user points
+app.post('/admin/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  if (!username || points === undefined) {
+    return res.status(400).send('Username and points are required.');
+  }
+
   try {
-    const users = await User.find();
-    res.json(users);
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.points = points;
+    await user.save();
+    res.send('Points updated successfully!');
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
+    console.error('Error updating points:', error);
+    res.status(500).send('Error updating points.');
+  }
+});
+
+// Unlock all teams for a user
+app.post('/admin/unlock-teams', async (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).send('Username is required.');
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.pickedTeams = [];
+    await user.save();
+    res.send('Teams unlocked successfully!');
+  } catch (error) {
+    console.error('Error unlocking teams:', error);
+    res.status(500).send('Error unlocking teams.');
+  }
+});
+
+// Unlock all teams for all users
+app.post('/admin/unlock-all-teams', async (req, res) => {
+  try {
+    await User.updateMany({}, { pickedTeams: [] });
+    res.send('All teams unlocked for all users!');
+  } catch (error) {
+    console.error('Error unlocking all teams:', error);
+    res.status(500).send('Error unlocking all teams.');
   }
 });
 
