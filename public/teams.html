@@ -4,122 +4,79 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
+  <link rel="stylesheet" href="navbar.css">
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-    }
-    h1 {
-      color: #333;
+      background-color: #f4f4f9;
     }
     .team-list {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
-      margin: 20px auto;
+      margin-top: 20px;
     }
     .team {
-      padding: 10px 20px;
+      padding: 10px 15px;
       border: 1px solid #ccc;
       border-radius: 5px;
       cursor: pointer;
     }
-    .red {
-      background-color: red;
+    .team.available {
+      background-color: green;
       color: white;
-      cursor: not-allowed;
     }
-    .yellow {
+    .team.playing {
       background-color: yellow;
       color: black;
-      cursor: not-allowed;
     }
-    .gray {
+    .team.played {
       background-color: gray;
       color: white;
-      cursor: not-allowed;
     }
-    .green {
-      background-color: #4caf50;
+    .team.red {
+      background-color: red;
       color: white;
-      cursor: pointer;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      color: white;
-      background-color: #4caf50;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
   <h1>Select Your Team</h1>
-  <div id="teamList" class="team-list"></div>
+  <div id="errorMessage" style="color: red; display: none;">Error loading teams. Please try again later.</div>
+  <div class="team-list" id="teamList"></div>
 
   <script>
-    const username = 'user123'; // Replace with dynamic username
-    let pickedTeams = [];
+    async function loadTeams() {
+      const teamList = document.getElementById('teamList');
+      const errorMessage = document.getElementById('errorMessage');
 
-    // Fetch data for teams and user's picks
-    Promise.all([
-      fetch('/nfl-teams').then(response => response.json()),
-      fetch(`/get-picked-teams?username=${username}`).then(response => response.json())
-    ])
-      .then(([teams, userData]) => {
-        pickedTeams = userData.pickedTeams;
+      try {
+        const response = await fetch('/nfl-teams');
+        if (!response.ok) {
+          throw new Error('Failed to fetch teams.');
+        }
 
-        const teamList = document.getElementById('teamList');
-        teamList.innerHTML = '';
+        const teams = await response.json();
+        if (teams.length === 0) {
+          throw new Error('No teams available.');
+        }
 
         teams.forEach(team => {
-          const teamDiv = document.createElement('div');
-          teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
-
-          // Apply color based on status
-          if (pickedTeams.includes(team.teamName)) {
-            teamDiv.className = 'team red'; // Red for picked teams
-            teamDiv.title = 'You have already picked this team';
-          } else if (team.status === 'playing') {
-            teamDiv.className = 'team yellow'; // Yellow for currently playing
-            teamDiv.title = 'This team is currently playing';
-          } else if (team.status === 'played') {
-            teamDiv.className = 'team gray'; // Gray for already played
-            teamDiv.title = 'This team has already played';
-          } else {
-            teamDiv.className = 'team green'; // Green for available teams
-            teamDiv.addEventListener('click', () => selectTeam(team.teamName));
-          }
-
-          teamList.appendChild(teamDiv);
+          const div = document.createElement('div');
+          div.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
+          div.className = `team ${team.status}`;
+          div.onclick = () => alert(`You selected ${team.teamName}`);
+          teamList.appendChild(div);
         });
-      })
-      .catch(err => console.error('Error loading data:', err));
-
-    function selectTeam(teamName) {
-      fetch('/select-team', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, team: teamName })
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert(`You picked ${teamName}`);
-            location.reload(); // Refresh to update UI
-          } else {
-            alert(data.message);
-          }
-        });
+      } catch (error) {
+        console.error('Error:', error.message);
+        errorMessage.style.display = 'block';
+      }
     }
+
+    loadTeams();
   </script>
 </body>
 </html>
