@@ -72,28 +72,41 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    let selectedTeam = null;
+    const allTeams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+    ];
 
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
+    let selectedTeam = null;
 
     fetch('/get-logged-in-user')
       .then(response => response.json())
       .then(userData => {
         usernameField.value = userData.username;
 
+        // Fetch team statuses and render all 32 teams
         fetch('/get-nfl-teams-status')
           .then(response => response.json())
-          .then(teamData => {
-            teamData.forEach(team => {
+          .then(teamStatuses => {
+            const statusMap = teamStatuses.reduce((acc, team) => {
+              acc[team.name] = team.status;
+              return acc;
+            }, {});
+
+            allTeams.forEach(teamName => {
               const teamDiv = document.createElement('div');
-              teamDiv.textContent = team.name;
+              teamDiv.textContent = teamName;
               teamDiv.classList.add('team');
 
-              if (team.status === 'played') {
+              if (statusMap[teamName] === 'played') {
                 teamDiv.classList.add('disabled');
-              } else if (team.status === 'playing') {
+              } else if (statusMap[teamName] === 'playing') {
                 teamDiv.classList.add('playing');
               }
 
@@ -101,7 +114,7 @@
                 if (!teamDiv.classList.contains('disabled') && !teamDiv.classList.contains('playing')) {
                   document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
                   teamDiv.classList.add('selected');
-                  selectedTeam = team.name;
+                  selectedTeam = teamName;
                   submitButton.disabled = false;
                 }
               });
@@ -109,9 +122,9 @@
               teamList.appendChild(teamDiv);
             });
           })
-          .catch(err => console.error('Error fetching team status:', err));
+          .catch(err => console.error('Error fetching team statuses:', err));
       })
-      .catch(err => console.error('Error fetching user:', err));
+      .catch(err => console.error('Error fetching logged-in user:', err));
 
     submitButton.addEventListener('click', () => {
       const username = usernameField.value;
