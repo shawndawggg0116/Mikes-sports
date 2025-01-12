@@ -326,6 +326,27 @@ app.post('/update-points', async (req, res) => {
     res.status(500).send({ success: false, message: 'Error updating points.' });
   }
 });
+app.get('/get-nfl-teams-status', async (req, res) => {
+  try {
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Replace with actual API key
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+
+    const teams = response.data.teams || []; // Adjust based on API response
+    const enrichedTeams = teams.map(team => ({
+      name: team.name,
+      status: team.isPlaying ? 'playing' : 'played', // Update logic based on actual API
+    }));
+
+    res.json(enrichedTeams);
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
