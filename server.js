@@ -76,8 +76,8 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Handle login and redirect to /teams
-app.post('/', async (req, res) => {
+// Login Route
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
