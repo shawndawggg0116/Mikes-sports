@@ -355,6 +355,42 @@ cron.schedule('0 * * * *', scrapeAndCacheNFLTeams);
 app.get('/nfl-teams', (req, res) => {
   res.json(cachedTeams);
 });
+const cheerio = require('cheerio'); // Add this only if not already added
+
+// Fetch NFL teams with status (playing, played, available)
+app.get('/nfl-teams', async (req, res) => {
+  try {
+    const url = 'https://www.pro-football-reference.com/teams/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const teams = [];
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
+
+      // Mock status for demo; you can refine this based on live data
+      let status = 'available'; // Default status
+      if (Math.random() > 0.7) status = 'playing'; // Random logic for now
+      if (Math.random() > 0.5) status = 'played'; // Random logic for now
+
+      if (teamName) {
+        teams.push({
+          teamName,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
+          status,
+        });
+      }
+    });
+
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
