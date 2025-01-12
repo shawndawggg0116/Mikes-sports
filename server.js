@@ -1,4 +1,3 @@
-// Server.js with improved integration and alignment with original functionality
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -78,7 +77,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login Route
-app.post('/', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -198,6 +197,88 @@ app.post('/select-team', async (req, res) => {
 // Admin Routes
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Admin Login
+app.post('/admin-login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
+  }
+});
+
+// Fetch all users for admin
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
+  }
+});
+
+// Edit user points
+app.post('/admin/update-points', async (req, res) => {
+  const { username, points } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.points = points;
+    await user.save();
+    res.send('Points updated successfully!');
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).send('Error updating points.');
+  }
+});
+
+// Unlock a user's picked teams
+app.post('/admin/unlock-teams', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    user.pickedTeams = [];
+    await user.save();
+    res.send('Teams unlocked successfully!');
+  } catch (error) {
+    console.error('Error unlocking teams:', error);
+    res.status(500).send('Error unlocking teams.');
+  }
+});
+
+// Delete a user
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    await User.deleteOne({ username });
+    res.send('User deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
+  }
 });
 
 // Start the server
