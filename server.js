@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios');
+const axios = require('axios'); // Ensure Axios is included for API calls
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,7 +18,7 @@ mongoose.connect(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 app.use(
   session({
     secret: 'your-secret-key',
@@ -47,37 +47,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve the registration page
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Register a user
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('Username already exists.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).send('User registered successfully!');
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
-});
-
-// Login Route
+// Login Logic at Root Route
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
 
@@ -97,7 +67,7 @@ app.post('/', async (req, res) => {
     }
 
     req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
+    res.redirect('/teams'); // Redirect to team selection
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
@@ -117,7 +87,7 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Fetch NFL Teams
+// Fetch NFL Teams from the API
 app.get('/get-nfl-teams', async (req, res) => {
   try {
     const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
@@ -126,12 +96,15 @@ app.get('/get-nfl-teams', async (req, res) => {
         'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
       },
     });
-    res.json(response.data);
+    const teams = response.data;
+    res.json(teams); // Return the teams as JSON
   } catch (error) {
     console.error('Error fetching NFL teams:', error);
     res.status(500).send('Error fetching NFL teams.');
   }
 });
 
-// Start the server
+// Ensure everything else works as expected
+// (Routes for /leaderboard, /rules, admin panel, and others)
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
