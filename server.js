@@ -1,10 +1,9 @@
-// Required dependencies
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios'); // Axios for API calls
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,61 +40,14 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Fetch NFL teams from external API
-app.get('/get-nfl-teams', async (req, res) => {
-  try {
-    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
-      },
-    });
-    const teams = response.data;
-    res.json(teams); // Return the teams as JSON
-  } catch (error) {
-    console.error('Error fetching NFL teams:', error);
-    res.status(500).send('Error fetching NFL teams.');
-  }
-});
-
 // Routes
 
-// Root Route
+// Root Route (Login Page)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve the registration page
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Register a user
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('Username already exists.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).send('User registered successfully!');
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
-});
-
-// Login Route
+// Handle login submission
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
 
@@ -145,24 +97,20 @@ app.get('/rules', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
-// Fetch user's picked teams
-app.get('/get-picked-teams', async (req, res) => {
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).send({ success: false, message: 'Username is required.' });
-  }
-
+// Fetch NFL teams from API
+app.get('/get-nfl-teams', async (req, res) => {
   try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
+    const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
+      },
+    });
+    const teams = response.data;
+    res.json(teams); // Return the teams as JSON
   } catch (error) {
-    console.error('Error fetching picked teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+    console.error('Error fetching NFL teams:', error);
+    res.status(500).send('Error fetching NFL teams.');
   }
 });
 
@@ -199,6 +147,22 @@ app.post('/select-team', async (req, res) => {
   } catch (error) {
     console.error('Error selecting team:', error);
     res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
+// Admin Routes
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Fetch all users for admin
+app.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users.');
   }
 });
 
