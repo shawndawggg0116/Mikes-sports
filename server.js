@@ -408,16 +408,7 @@ app.use(
   })
 );
 
-// User schema
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
-  points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
 
-const User = mongoose.model('User', userSchema);
 
 // Routes
 
@@ -463,7 +454,6 @@ app.get('/get-picked-teams', async (req, res) => {
 // Fetch NFL teams with status
 app.get('/nfl-teams', async (req, res) => {
   try {
-    const response = await axios.get('https://www.pro-football-reference.com/teams/');
     const teams = [
       { teamName: 'Cardinals', wins: 593, losses: 812, status: 'available' },
       { teamName: 'Falcons', wins: 398, losses: 512, status: 'available' },
