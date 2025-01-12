@@ -3,13 +3,17 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const axios = require('axios');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
 mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  "mongodb+srv://shawnbuckhannon:<db_password>@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
   { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -38,6 +42,64 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+
+// Game schema
+const gameSchema = new mongoose.Schema({
+  team: String,
+  status: { type: String, enum: ['upcoming', 'live', 'completed'], default: 'upcoming' },
+  gameDate: Date,
+  score: { type: String, default: null },
+});
+
+const Game = mongoose.model('Game', gameSchema);
+
+// Fetch NFL schedule and store in the database
+async function fetchAndStoreSchedule() {
+  try {
+    const response = await axios.get('https://api.sportsdata.io/v3/nfl/scores/json/Schedules/2023', {
+      headers: {
+        'Ocp-Apim-Subscription-Key': process.env.RAPIDAPI_KEY,
+      },
+    });
+
+    const schedule = response.data;
+    for (const game of schedule) {
+      const existingGame = await Game.findOne({ team: game.AwayTeam });
+      if (!existingGame) {
+        await Game.create({
+          team: game.AwayTeam,
+          status: 'upcoming',
+          gameDate: new Date(game.Date),
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+  }
+}
+
+// Update game scores in the database
+async function updateGameScores() {
+  try {
+    const response = await axios.get('https://api.sportsdata.io/v3/nfl/scores/json/ScoresByWeek/2023REG/1', {
+      headers: {
+        'Ocp-Apim-Subscription-Key': process.env.RAPIDAPI_KEY,
+      },
+    });
+
+    const scores = response.data;
+    for (const score of scores) {
+      const game = await Game.findOne({ team: score.AwayTeam });
+      if (game) {
+        game.score = `${score.AwayScore} - ${score.HomeScore}`;
+        game.status = score.Status.toLowerCase();
+        await game.save();
+      }
+    }
+  } catch (error) {
+    console.error('Error updating scores:', error);
+  }
+}
 
 // Routes
 
@@ -121,36 +183,10 @@ app.get('/leaderboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
-// Serve the rules page
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
-// Fetch user's picked teams
-app.get('/get-picked-teams', async (req, res) => {
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).send({ success: false, message: 'Username is required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching picked teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
-  }
-});
-
-// Get leaderboard data
+// Fetch leaderboard data
 app.get('/get-leaderboard', async (req, res) => {
   try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
     res.json(users);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
@@ -158,39 +194,14 @@ app.get('/get-leaderboard', async (req, res) => {
   }
 });
 
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
-
+// Fetch live scores
+app.get('/get-live-scores', async (req, res) => {
   try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    user.lastPickDate = now;
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
+    const liveScores = await Game.find({ status: 'live' });
+    res.json(liveScores);
   } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
+    console.error('Error fetching live scores:', error);
+    res.status(500).send('Error fetching live scores.');
   }
 });
 
@@ -199,86 +210,16 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Admin Login
-app.post('/admin-login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    if (username === 'admin' && password === 'password') {
-      res.redirect('/admin'); // Redirect to admin dashboard
-    } else {
-      res.status(401).send('Invalid admin credentials.');
-    }
-  } catch (error) {
-    console.error('Error during admin login:', error);
-    res.status(500).send('Error during admin login.');
-  }
+// Fetch NFL schedule
+app.get('/fetch-schedule', async (req, res) => {
+  await fetchAndStoreSchedule();
+  res.send('Schedule fetched and stored.');
 });
 
-// Fetch all users for admin
-app.get('/admin/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users.');
-  }
-});
-
-// Edit user points
-app.post('/admin/update-points', async (req, res) => {
-  const { username, points } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.points = points;
-    await user.save();
-    res.send('Points updated successfully!');
-  } catch (error) {
-    console.error('Error updating points:', error);
-    res.status(500).send('Error updating points.');
-  }
-});
-
-// Unlock a user's picked teams
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
-// Delete a user
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    await User.deleteOne({ username });
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
-  }
+// Update game scores
+app.get('/update-scores', async (req, res) => {
+  await updateGameScores();
+  res.send('Game scores updated.');
 });
 
 // Start the server
