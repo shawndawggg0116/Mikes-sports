@@ -1,90 +1,104 @@
 <script>
-  const teamList = document.getElementById('teamList');
-  const submitButton = document.getElementById('submitButton');
-  const errorMessage = document.getElementById('errorMessage');
+  const teams = [
+    'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+    'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+    'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+    'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+    'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+  ];
+
   let selectedTeam = null;
+  const teamList = document.querySelector('.team-list');
+  const submitButton = document.getElementById('submitButton');
+  const usernameField = document.getElementById('username');
 
-  async function loadTeams() {
-    try {
-      const usernameResponse = await fetch('/get-logged-in-user');
-      if (!usernameResponse.ok) throw new Error('Failed to fetch username.');
+  // Fetch the logged-in username
+  fetch('/get-logged-in-user') // Fetch username dynamically from the server
+    .then(response => response.json())
+    .then(data => {
+      usernameField.value = data.username;
 
-      const { username } = await usernameResponse.json();
+      // Fetch the user's picked teams from the server
+      fetch(`/get-picked-teams?username=${data.username}`)
+        .then(response => response.json())
+        .then(pickedData => {
+          const pickedTeams = pickedData.pickedTeams || []; // Teams already picked by the user
 
-      const pickedTeamsResponse = await fetch(`/get-picked-teams?username=${username}`);
-      if (!pickedTeamsResponse.ok) throw new Error('Failed to fetch picked teams.');
+          // Fetch all teams with statuses
+          fetch('/nfl-teams')
+            .then(response => response.json())
+            .then(teamData => {
+              teamData.forEach(team => {
+                const teamDiv = document.createElement('div');
+                teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
 
-      const { pickedTeams } = await pickedTeamsResponse.json();
+                // Apply color logic
+                if (pickedTeams.includes(team.teamName)) {
+                  teamDiv.classList.add('disabled'); // Red: already picked
+                  teamDiv.style.backgroundColor = 'red';
+                } else if (team.status === 'playing') {
+                  teamDiv.classList.add('playing'); // Yellow: currently playing
+                  teamDiv.style.backgroundColor = 'yellow';
+                  teamDiv.style.color = 'black';
+                  teamDiv.style.cursor = 'not-allowed';
+                } else if (team.status === 'played') {
+                  teamDiv.classList.add('played'); // Gray: already played
+                  teamDiv.style.backgroundColor = 'gray';
+                  teamDiv.style.cursor = 'not-allowed';
+                } else {
+                  teamDiv.classList.add('available'); // Green: available
+                  teamDiv.style.backgroundColor = '#4caf50';
+                  teamDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                    teamDiv.classList.add('selected');
+                    selectedTeam = team.teamName;
+                    submitButton.disabled = false;
+                  });
+                }
 
-      const teamsResponse = await fetch('/nfl-teams');
-      if (!teamsResponse.ok) throw new Error('Failed to fetch teams.');
+                teamList.appendChild(teamDiv);
+              });
+            })
+            .catch(err => {
+              console.error('Error fetching team data:', err);
+              alert('Error: Unable to load teams.');
+            });
+        });
+    })
+    .catch(err => {
+      console.error('Error fetching username:', err);
+      alert('Error: Unable to fetch logged-in user.');
+    });
 
-      const teams = await teamsResponse.json();
-
-      teams.forEach(team => {
-        const div = document.createElement('div');
-        div.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
-
-        // Default class
-        div.className = 'team available';
-
-        // Check status and set classes
-        if (pickedTeams.includes(team.teamName)) {
-          div.className = 'team selected'; // Red: already picked by the user
-        } else if (team.status === 'playing') {
-          div.className = 'team playing'; // Yellow: currently playing
-        } else if (team.status === 'played') {
-          div.className = 'team played'; // Gray: already played
-        }
-
-        // Add click event for available teams
-        if (team.status === 'available' && !pickedTeams.includes(team.teamName)) {
-          div.addEventListener('click', () => {
-            document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-            div.classList.add('selected');
-            selectedTeam = team.teamName;
-            submitButton.disabled = false;
-          });
-        } else {
-          div.style.cursor = 'not-allowed'; // Make unclickable teams visually distinct
-        }
-
-        teamList.appendChild(div);
-      });
-    } catch (error) {
-      console.error('Error loading teams:', error.message);
-      errorMessage.style.display = 'block';
-    }
-  }
-
-  submitButton.addEventListener('click', async () => {
-    if (!selectedTeam) return;
-
-    try {
-      const response = await fetch('/select-team', {
+  // Submit the selected team
+  submitButton.addEventListener('click', () => {
+    const username = usernameField.value;
+    if (selectedTeam && username) {
+      fetch('/select-team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team: selectedTeam })
-      });
-
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message);
-
-      alert(`You selected ${selectedTeam}.`);
-      document.querySelectorAll('.team').forEach(t => {
-        if (t.textContent.includes(selectedTeam)) {
-          t.classList.remove('available');
-          t.classList.add('selected');
-        }
-      });
-
-      selectedTeam = null;
-      submitButton.disabled = true;
-    } catch (error) {
-      console.error('Error submitting team:', error.message);
-      alert('Error submitting your team. Please try again.');
+        body: JSON.stringify({ username, team: selectedTeam })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(`You picked ${selectedTeam}`);
+            const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent.includes(selectedTeam));
+            if (selectedDiv) {
+              selectedDiv.classList.add('disabled');
+              selectedDiv.style.backgroundColor = 'red';
+              selectedDiv.classList.remove('selected');
+            }
+            selectedTeam = null;
+            submitButton.disabled = true;
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(err => {
+          console.error('Error submitting team:', err);
+          alert('Error submitting your team. Please try again.');
+        });
     }
   });
-
-  loadTeams();
 </script>
