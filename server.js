@@ -18,7 +18,7 @@ mongoose.connect(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
     secret: 'your-secret-key',
@@ -42,7 +42,7 @@ const User = mongoose.model('User', userSchema);
 
 // Routes
 
-// Root Route
+// Root Route (Login Page)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -77,7 +77,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Handle login at the root
+// Login Route
 app.post('/', async (req, res) => {
   const { username, password } = req.body;
 
@@ -117,7 +117,7 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Fetch NFL teams from API
+// Fetch NFL Teams
 app.get('/get-nfl-teams', async (req, res) => {
   try {
     const response = await axios.get('https://nfl-api-data.p.rapidapi.com/teams', {
@@ -126,30 +126,11 @@ app.get('/get-nfl-teams', async (req, res) => {
         'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
       },
     });
-    const teams = response.data;
-    res.json(teams); // Return the teams as JSON
+    res.json(response.data);
   } catch (error) {
     console.error('Error fetching NFL teams:', error);
     res.status(500).send('Error fetching NFL teams.');
   }
-});
-
-// Weekly reset on Tuesday (Eastern Time)
-const resetWeeklySelections = () => {
-  const now = new Date();
-  if (now.getDay() === 2) { // Tuesday
-    User.updateMany({}, { selectedTeam: null, lastPickDate: null }).then(() => {
-      console.log('Weekly selections reset.');
-    }).catch(err => {
-      console.error('Error resetting weekly selections:', err);
-    });
-  }
-};
-setInterval(resetWeeklySelections, 60 * 60 * 1000); // Check every hour
-
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
 // Start the server
