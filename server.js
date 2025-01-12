@@ -77,7 +77,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login Route
-app.post('/', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -283,4 +283,3 @@ app.post('/admin/delete-user', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
