@@ -158,6 +158,44 @@ app.get('/get-leaderboard', async (req, res) => {
   }
 });
 
+// Handle team selection
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    // Check if the team has already been picked
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    // Weekly restriction: Ensure the user can only pick one team per week
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    // Update user data
+    user.selectedTeam = team; // Track the current week's selected team
+    user.pickedTeams.push(team); // Add to the list of picked teams
+    user.lastPickDate = now; // Update the last pick date
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
 
 // Admin Routes
 app.get('/admin', (req, res) => {
@@ -438,32 +476,6 @@ app.get('/nfl-teams', async (req, res) => {
   }
 });
 
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
 
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    user.pickedTeams.push(team);
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
