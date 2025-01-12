@@ -285,26 +285,25 @@ app.get('/nfl-teams', async (req, res) => {
   try {
     const response = await axios.get('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
       headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // Use environment variable for security
         'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com',
       },
     });
 
-    const teams = response.data; // Assuming the API returns a list of teams
+    const teams = response.data.teams || []; // Adjust key based on actual API response
     const enrichedTeams = teams.map(team => ({
-      name: team.team, // Adjust key based on API response
-      isPlaying: team.isPlaying,
-      hasPlayed: team.hasPlayed,
+      name: team.name, // Use correct key for team name
+      status: team.isPlaying ? 'playing' : 'played', // Adjust logic based on API response
     }));
 
     res.json(enrichedTeams);
   } catch (error) {
-    console.error('Error fetching NFL teams:', error);
+    console.error('Error fetching NFL teams:', error.message);
     res.status(500).send('Error fetching NFL teams.');
   }
 });
 
-// Route for updating user points (to be called by admin after games)
+// Route for updating user points (admin functionality)
 app.post('/update-points', async (req, res) => {
   const { username, points } = req.body;
 
@@ -323,7 +322,7 @@ app.post('/update-points', async (req, res) => {
 
     res.send({ success: true, message: 'Points updated successfully.' });
   } catch (error) {
-    console.error('Error updating points:', error);
+    console.error('Error updating points:', error.message);
     res.status(500).send({ success: false, message: 'Error updating points.' });
   }
 });
