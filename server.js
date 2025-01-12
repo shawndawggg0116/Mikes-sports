@@ -184,6 +184,17 @@ app.post('/select-team', async (req, res) => {
     res.status(500).send({ success: false, message: 'Error selecting team.' });
   }
 });
+// Admin Login
+app.post('/admin-login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Basic admin username and password for authentication
+  if (username === 'admin' && password === 'password') {
+    res.redirect('/admin'); // Redirect to admin panel
+  } else {
+    res.status(401).send('Invalid admin credentials.');
+  }
+});
 
 // Admin Routes
 app.get('/admin', (req, res) => {
