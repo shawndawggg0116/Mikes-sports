@@ -40,10 +40,6 @@
       background-color: red;
       cursor: not-allowed;
     }
-    .team.playing {
-      background-color: yellow;
-      color: black;
-    }
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -68,11 +64,11 @@
 
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value="">
+  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    const allTeams = [
+    const teams = [
       'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
       'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
       'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
@@ -80,52 +76,53 @@
       'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
     ];
 
+    let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
-    let selectedTeam = null;
 
-    fetch('/get-logged-in-user')
+    // Fetch the logged-in username
+    fetch('/get-logged-in-user') // Fetch username dynamically from the server
       .then(response => response.json())
-      .then(userData => {
-        usernameField.value = userData.username;
+      .then(data => {
+        usernameField.value = data.username;
 
-        // Fetch team statuses and render all 32 teams
-        fetch('/get-nfl-teams-status')
+        // Fetch the user's picked teams from the server
+        fetch(`/get-picked-teams?username=${data.username}`)
           .then(response => response.json())
-          .then(teamStatuses => {
-            const statusMap = teamStatuses.reduce((acc, team) => {
-              acc[team.name] = team.status;
-              return acc;
-            }, {});
+          .then(data => {
+            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
 
-            allTeams.forEach(teamName => {
+            // Render teams
+            teams.forEach(team => {
               const teamDiv = document.createElement('div');
-              teamDiv.textContent = teamName;
+              teamDiv.textContent = team;
               teamDiv.classList.add('team');
 
-              if (statusMap[teamName] === 'played') {
+              // If the team is already picked, disable it
+              if (pickedTeams.includes(team)) {
                 teamDiv.classList.add('disabled');
-              } else if (statusMap[teamName] === 'playing') {
-                teamDiv.classList.add('playing');
               }
 
               teamDiv.addEventListener('click', () => {
-                if (!teamDiv.classList.contains('disabled') && !teamDiv.classList.contains('playing')) {
+                if (!teamDiv.classList.contains('disabled')) {
                   document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
                   teamDiv.classList.add('selected');
-                  selectedTeam = teamName;
+                  selectedTeam = team;
                   submitButton.disabled = false;
                 }
               });
 
               teamList.appendChild(teamDiv);
             });
-          })
-          .catch(err => console.error('Error fetching team statuses:', err));
+          });
       })
-      .catch(err => console.error('Error fetching logged-in user:', err));
+      .catch(err => {
+        console.error('Error fetching username:', err);
+        alert('Error: Unable to fetch logged-in user.');
+      });
 
+    // Submit the selected team
     submitButton.addEventListener('click', () => {
       const username = usernameField.value;
       if (selectedTeam && username) {
@@ -137,7 +134,13 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              location.reload();
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
+              submitButton.disabled = true;
             } else {
               alert(data.message);
             }

@@ -81,10 +81,12 @@
       </tr>
     </thead>
     <tbody id="leaderboardBody">
+      <!-- Data will be dynamically added here -->
     </tbody>
   </table>
 
   <script>
+    // Fetch leaderboard data from the server
     fetch('/get-leaderboard')
       .then(response => response.json())
       .then(data => {
@@ -100,7 +102,9 @@
           leaderboardBody.appendChild(row);
         });
       })
-      .catch(err => console.error('Error fetching leaderboard:', err));
+      .catch(error => {
+        console.error('Error fetching leaderboard data:', error);
+      });
   </script>
 </body>
 </html>
