@@ -389,6 +389,126 @@ app.get('/nfl-teams', async (req, res) => {
     res.status(500).send('Error fetching NFL teams.');
   }
 });
+// MongoDB connection
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(
+  session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+// User schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  pickedTeams: { type: [String], default: [] },
+  points: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', userSchema);
+
+// Routes
+
+// Root Route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Fetch logged-in username
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
+});
+
+// Fetch user's picked teams
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).send({ success: false, message: 'Username is required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    res.send({ success: true, pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
+});
+
+// Fetch NFL teams with status
+app.get('/nfl-teams', async (req, res) => {
+  try {
+    const response = await axios.get('https://www.pro-football-reference.com/teams/');
+    const teams = [
+      { teamName: 'Cardinals', wins: 593, losses: 812, status: 'available' },
+      { teamName: 'Falcons', wins: 398, losses: 512, status: 'available' },
+      // Add other teams here
+    ];
+
+    // Mock statuses for demo
+    teams.forEach(team => {
+      if (Math.random() > 0.7) team.status = 'playing';
+      else if (Math.random() > 0.5) team.status = 'played';
+    });
+
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching NFL teams:', error.message);
+    res.status(500).send('Error fetching NFL teams.');
+  }
+});
+
+// Handle team selection
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    user.pickedTeams.push(team);
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
