@@ -169,6 +169,35 @@
         alert('Error submitting your team. Please try again.');
       }
     });
+    teams.forEach(team => {
+  const teamDiv = document.createElement('div');
+  teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
+
+  // Set classes based on status
+  if (pickedTeams.includes(team.teamName)) {
+    teamDiv.className = 'team selected'; // Red for picked teams
+  } else if (team.status === 'playing') {
+    teamDiv.className = 'team playing'; // Yellow for playing teams
+  } else if (team.status === 'played') {
+    teamDiv.className = 'team played'; // Gray for played teams
+  } else {
+    teamDiv.className = 'team available'; // Green for available teams
+  }
+
+  // Add click event for available teams
+  if (team.status === 'available' && !pickedTeams.includes(team.teamName)) {
+    teamDiv.addEventListener('click', () => {
+      document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+      teamDiv.classList.add('selected');
+      selectedTeam = team.teamName;
+      submitButton.disabled = false;
+    });
+  } else {
+    teamDiv.style.cursor = 'not-allowed'; // Make unclickable teams visually distinct
+  }
+
+  teamList.appendChild(teamDiv);
+});
 
     loadTeams();
   </script>

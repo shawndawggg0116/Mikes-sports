@@ -318,38 +318,6 @@ app.get('/nfl-teams', async (req, res) => {
     res.status(500).send('Error fetching NFL teams.');
   }
 });
-const cron = require('node-cron');
-let cachedTeams = []; // To store scraped data
-
-// Function to scrape and cache NFL teams
-async function scrapeAndCacheNFLTeams() {
-  try {
-    const url = 'https://www.pro-football-reference.com/teams/';
-    const { data } = await axios.get(url);
-    const $ = cheerio.load(data);
-
-    const teams = [];
-    $('table#teams_active tbody tr').each((i, el) => {
-      const teamName = $(el).find('th[data-stat="team_name"] a').text();
-      const wins = $(el).find('td[data-stat="wins"]').text();
-      const losses = $(el).find('td[data-stat="losses"]').text();
-
-      if (teamName) {
-        teams.push({
-          teamName,
-          wins: parseInt(wins, 10) || 0,
-          losses: parseInt(losses, 10) || 0,
-          status: 'idle', // Default status
-        });
-      }
-    });
-
-    cachedTeams = teams; // Cache the results
-    console.log('NFL team data updated.');
-  } catch (error) {
-    console.error('Error scraping NFL teams:', error.message);
-  }
-}
 
 // Schedule the scraper to run every hour
 cron.schedule('0 * * * *', scrapeAndCacheNFLTeams);
@@ -475,7 +443,91 @@ app.get('/nfl-teams', async (req, res) => {
     res.status(500).send('Error fetching NFL teams.');
   }
 });
+let cachedTeams = []; // Cached team data
 
+// Scrape and update NFL team statuses
+async function scrapeNFLTeams() {
+  try {
+    const url = 'https://www.pro-football-reference.com/teams/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const teams = [];
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
+
+      if (teamName) {
+        teams.push({
+          teamName,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
+          status: 'available', // Default status
+        });
+      }
+    });
+
+    // Example: Update statuses based on game time (add logic here if you have live data)
+    teams.forEach(team => {
+      const randomStatus = Math.random();
+      if (randomStatus > 0.7) team.status = 'playing';
+      if (randomStatus > 0.5) team.status = 'played';
+    });
+
+    cachedTeams = teams; // Cache the teams
+    console.log('Cached team data updated.');
+  } catch (error) {
+    console.error('Error scraping NFL teams:', error.message);
+  }
+}
+
+// Schedule scraping every hour
+cron.schedule('0 * * * *', scrapeNFLTeams);
+
+// Provide cached team data
+app.get('/nfl-teams', (req, res) => {
+  res.json(cachedTeams);
+});
+
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    // Ensure only one pick per week
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    // Validate team status
+    const teamData = cachedTeams.find(t => t.teamName === team);
+    if (!teamData || teamData.status !== 'available') {
+      return res.status(400).send({ success: false, message: 'Team is not available for selection.' });
+    }
+
+    // Update user data
+    user.selectedTeam = team; // Track the current pick
+    user.pickedTeams.push(team); // Add to picked list
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error.message);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
