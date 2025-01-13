@@ -195,6 +195,29 @@
 }
 
     loadTeams();
+    teams.forEach(team => {
+  const teamDiv = document.createElement('div');
+  teamDiv.textContent = `${team.teamName} (${team.gameStatus || 'not started'})`; // Default to 'not started'
+  teamDiv.classList.add('team');
+
+  if (team.gameStatus === 'completed' || pickedTeams.includes(team.teamName)) {
+    teamDiv.classList.add('disabled');
+  } else if (team.gameStatus === 'live') {
+    teamDiv.classList.add('highlight'); // Add yellow highlight for live games
+  }
+
+  teamDiv.addEventListener('click', () => {
+    if (!teamDiv.classList.contains('disabled')) {
+      document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+      teamDiv.classList.add('selected');
+      submitButton.disabled = false;
+      submitButton.dataset.team = team.teamName;
+    }
+  });
+
+  teamList.appendChild(teamDiv);
+});
+
   </script>
 </body>
 </html>

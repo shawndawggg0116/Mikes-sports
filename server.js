@@ -330,5 +330,56 @@ app.get('/nfl-teams', (req, res) => {
   }
   res.json(cachedTeams);
 });
+app.get('/nfl-teams', (req, res) => {
+  if (cachedTeams.length === 0) {
+    return res.status(503).send('NFL team data is not available yet. Please try again later.');
+  }
+
+  // Merge `cachedTeams` with `cachedTeamsWithStatus`
+  const mergedTeams = cachedTeams.map(team => {
+    const status = cachedTeamsWithStatus.find(s => s.teamName === team.teamName);
+    return {
+      ...team,
+      gameStatus: status ? status.gameStatus : 'not started', // Default to 'not started'
+    };
+  });
+
+  res.json(mergedTeams);
+});
+async function scrapeAndCacheNFLGames() {
+  try {
+    const url = 'https://www.pro-football-reference.com/boxscores/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    console.log('Scraper fetched data successfully.');
+
+    const currentDate = new Date();
+    const games = [];
+
+    // Update selectors to match the structure of the page
+    $('table tbody tr').each((i, el) => {
+      const teamName = $(el).find('td[data-stat="team"]').text(); // Adjust selector
+      const gameTime = $(el).find('td[data-stat="time"]').text(); // Adjust selector
+
+      console.log(`Team Name: ${teamName}, Game Time: ${gameTime}`); // Log data being processed
+
+      const gameStatus = gameTime.includes('Live') ? 'live' :
+                         currentDate > new Date(gameTime) ? 'completed' : 'not started';
+
+      if (teamName) {
+        games.push({
+          teamName,
+          gameStatus,
+        });
+      }
+    });
+
+    cachedTeamsWithStatus = games;
+    console.log('Cached Teams with Status:', cachedTeamsWithStatus);
+  } catch (error) {
+    console.error('Error scraping NFL games:', error.message);
+  }
+}
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
