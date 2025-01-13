@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
+  <div class="legend">
+    <span class="team live">Live</span> - Game is currently live<br>
+    <span class="team completed">Completed</span> - Game already played<br>
+    <span class="team disabled">Disabled</span> - Team already picked
+  </div>
+  
   <style>
+    
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -17,6 +24,7 @@
     h1 {
       color: #333;
     }
+    
     .team-list {
       display: flex;
       flex-wrap: wrap;
@@ -58,6 +66,14 @@
   font-weight: bold;
   animation: glow 1s infinite alternate;
   position: relative;
+  .team.completed {
+  background-color: #808080; /* Gray color */
+  color: white;
+  border: 2px solid #333;
+  cursor: not-allowed; /* Indicate it's not selectable */
+  opacity: 0.7; /* Add a faded effect */
+}
+
 }
 
 @keyframes glow {
