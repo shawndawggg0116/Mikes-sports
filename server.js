@@ -330,5 +330,46 @@ app.get('/nfl-teams', (req, res) => {
   }
   res.json(cachedTeams);
 });
+let cachedTeamsWithStatus = [];
+
+async function scrapeAndCacheNFLGames() {
+  try {
+    const url = 'https://www.pro-football-reference.com/boxscores/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const currentDate = new Date();
+    const games = [];
+
+    $('table#games tbody tr').each((i, el) => {
+      const teamName = $(el).find('td[data-stat="team"]').text();
+      const gameTime = $(el).find('td[data-stat="time"]').text();
+      const gameStatus = gameTime.includes('Live') ? 'live' : 
+                         currentDate > new Date(gameTime) ? 'completed' : 'not started';
+
+      if (teamName) {
+        games.push({
+          teamName,
+          gameStatus,
+        });
+      }
+    });
+
+    cachedTeamsWithStatus = games;
+    console.log('NFL game data with statuses updated!');
+  } catch (error) {
+    console.error('Error scraping NFL games:', error);
+  }
+}
+
+scrapeAndCacheNFLGames();
+cron.schedule('0 */6 * * *', scrapeAndCacheNFLGames);
+
+app.get('/nfl-teams', (req, res) => {
+  if (cachedTeamsWithStatus.length === 0) {
+    return res.status(503).send('NFL game data is not available yet. Please try again later.');
+  }
+  res.json(cachedTeamsWithStatus);
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

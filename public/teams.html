@@ -6,6 +6,12 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
+    .team.highlight {
+  background-color: yellow;
+  color: black;
+  font-weight: bold;
+}
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -139,6 +145,54 @@
         }
       }
     });
+    async function loadTeams() {
+  try {
+    const usernameResponse = await fetch('/get-logged-in-user');
+    if (!usernameResponse.ok) throw new Error('Failed to fetch username.');
+
+    const { username } = await usernameResponse.json();
+    document.getElementById('username').value = username;
+
+    const pickedTeamsResponse = await fetch(`/get-picked-teams?username=${username}`);
+    if (!pickedTeamsResponse.ok) throw new Error('Failed to fetch picked teams.');
+
+    const { pickedTeams } = await pickedTeamsResponse.json();
+    const teamsResponse = await fetch('/nfl-teams');
+    if (!teamsResponse.ok) throw new Error('Failed to fetch NFL teams.');
+
+    const teams = await teamsResponse.json();
+
+    const teamList = document.querySelector('.team-list');
+    const submitButton = document.getElementById('submitButton');
+    teamList.innerHTML = ''; // Clear previous list
+
+    teams.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = `${team.teamName} (${team.gameStatus})`;
+      teamDiv.classList.add('team');
+
+      if (team.gameStatus === 'completed' || pickedTeams.includes(team.teamName)) {
+        teamDiv.classList.add('disabled');
+      } else if (team.gameStatus === 'live') {
+        teamDiv.classList.add('highlight'); // Add yellow highlight for live games
+      }
+
+      teamDiv.addEventListener('click', () => {
+        if (!teamDiv.classList.contains('disabled')) {
+          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+          teamDiv.classList.add('selected');
+          submitButton.disabled = false;
+          submitButton.dataset.team = team.teamName;
+        }
+      });
+
+      teamList.appendChild(teamDiv);
+    });
+  } catch (error) {
+    console.error('Error loading teams:', error);
+    alert('Failed to load teams. Please try again later.');
+  }
+}
 
     loadTeams();
   </script>
