@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
-  <div class="legend">
-    <span class="team live">Live</span> - Game is currently live<br>
-    <span class="team completed">Completed</span> - Game already played<br>
-    <span class="team disabled">Disabled</span> - Team already picked
-  </div>
   
   <style>
     
@@ -208,10 +203,11 @@
               teamDiv.textContent = team;
               teamDiv.classList.add('team');
 
-              // If the team is already picked, disable it
-              if (pickedTeams.includes(team)) {
-                teamDiv.classList.add('disabled');
-              }
+              teamDiv.classList.add('team', team.gameStatus); // Add the `gameStatus` class dynamically
+if (pickedTeams.includes(team.teamName) || team.gameStatus === 'completed') {
+  teamDiv.classList.add('disabled'); // Mark team as disabled if already picked or game is completed
+}
+
 
               teamDiv.addEventListener('click', () => {
                 if (!teamDiv.classList.contains('disabled')) {
