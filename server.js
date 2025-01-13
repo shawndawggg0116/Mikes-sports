@@ -328,6 +328,18 @@ async function scrapeAndCacheNFLTeams() {
     cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
     
 }
+try {
+  const teamsWithStatus = teams.map(team => {
+    return {
+      ...team,
+      gameStatus, // Add dynamic status
+    };
+  });
+
+  cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
+} catch (error) {
+  console.error('Error updating team statuses:', error);
+}
 
 // Schedule scraping every 6 hours
 cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
