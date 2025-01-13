@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios');
+const axios = require('axios'); // Added for real-time NFL schedule scraping
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,51 +40,52 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Function to fetch real-time NFL data
+// Real-time NFL schedule scraper
 const fetchNFLData = async () => {
-  const url = "https://api.sportsdata.io/v3/nfl/scores/json/Schedules/2024";
+  const url = "https://api.sportsdata.io/v3/nfl/scores/json/Schedules/2024"; // Replace with an active API URL
   const options = {
     headers: {
-      "Ocp-Apim-Subscription-Key": process.env.RAPIDAPI_KEY
+      "Ocp-Apim-Subscription-Key": process.env.RAPIDAPI_KEY // Add your API key in the environment variables
     }
   };
   try {
     const response = await axios.get(url, options);
     return response.data;
   } catch (error) {
-    console.error("Error fetching NFL data:", error);
+    console.error("Error fetching NFL schedule:", error);
     return [];
   }
 };
 
-// Serve the team selection page with real-time data
+// Serve the team selection page
 app.get('/teams', async (req, res) => {
   try {
     const nflData = await fetchNFLData();
     const currentTime = new Date();
 
-    const teamStatus = nflData.reduce((status, game) => {
+    // Map teams to their current game status
+    const teamStatuses = nflData.reduce((status, game) => {
+      const gameTime = new Date(game.Date);
       const homeTeam = game.HomeTeam;
       const awayTeam = game.AwayTeam;
-      const gameTime = new Date(game.Date);
 
       if (gameTime > currentTime) {
-        status[homeTeam] = "upcoming";
-        status[awayTeam] = "upcoming";
-      } else if (gameTime.toDateString() === currentTime.toDateString()) {
-        status[homeTeam] = "live";
-        status[awayTeam] = "live";
+        status[homeTeam] = 'upcoming';
+        status[awayTeam] = 'upcoming';
+      } else if (gameTime <= currentTime && gameTime.getDate() === currentTime.getDate()) {
+        status[homeTeam] = 'live';
+        status[awayTeam] = 'live';
       } else {
-        status[homeTeam] = "completed";
-        status[awayTeam] = "completed";
+        status[homeTeam] = 'completed';
+        status[awayTeam] = 'completed';
       }
       return status;
     }, {});
 
-    res.send({ teamStatus });
+    res.send({ teamStatuses });
   } catch (error) {
-    console.error("Error serving teams:", error);
-    res.status(500).send("Error fetching team data.");
+    console.error("Error serving team statuses:", error);
+    res.status(500).send("Error fetching team statuses.");
   }
 });
 

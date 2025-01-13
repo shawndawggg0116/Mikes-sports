@@ -16,20 +16,21 @@
       padding: 10px 20px;
       border-radius: 5px;
       margin: 5px;
-      cursor: pointer;
       color: white;
+      cursor: pointer;
     }
-    .team.upcoming { background-color: #4caf50; }
-    .team.live { background-color: #007bff; }
-    .team.completed { background-color: grey; }
+    .team.upcoming { background-color: #4caf50; } /* Green for upcoming games */
+    .team.live { background-color: #007bff; } /* Blue for live games */
+    .team.completed { background-color: grey; } /* Grey for completed games */
   </style>
 </head>
 <body>
   <h1>Select Your Team</h1>
   <div id="teamList"></div>
   <button id="submitButton" disabled>Submit</button>
+
   <script>
-    const teamListElement = document.getElementById('teamList');
+    const teamList = document.getElementById('teamList');
     const submitButton = document.getElementById('submitButton');
     let selectedTeam = null;
 
@@ -37,40 +38,33 @@
     fetch('/teams')
       .then(response => response.json())
       .then(data => {
-        const teamStatus = data.teamStatus;
+        const { teamStatuses } = data;
 
-        for (const team in teamStatus) {
-          const status = teamStatus[team];
+        for (const team in teamStatuses) {
+          const status = teamStatuses[team];
           const div = document.createElement('div');
           div.textContent = team;
-          div.classList.add('team', status);
+          div.className = `team ${status}`;
 
-          div.addEventListener('click', () => {
-            if (status === 'upcoming') {
+          // Handle click events
+          if (status === 'upcoming') {
+            div.addEventListener('click', () => {
               document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
               div.classList.add('selected');
               selectedTeam = team;
               submitButton.disabled = false;
-            }
-          });
+            });
+          }
 
-          teamListElement.appendChild(div);
+          teamList.appendChild(div);
         }
       });
 
     // Submit team selection
     submitButton.addEventListener('click', () => {
       if (selectedTeam) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: selectedTeam })
-        })
-        .then(response => response.json())
-        .then(data => {
-          alert(data.message);
-          location.reload();
-        });
+        alert(`You selected: ${selectedTeam}`);
+        // Add your POST request to save the team selection
       }
     });
   </script>
