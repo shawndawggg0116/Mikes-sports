@@ -42,21 +42,163 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Admin routes
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).send('Username already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid credentials.');
+    }
+
+    req.session.username = username;
+    res.redirect('/teams');
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
+  }
+});
+
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
+});
+
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).send({ success: false, message: 'Username is required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    res.send({ success: true, pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
+  }
+});
+
+app.get('/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
+});
+
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+// Admin Login
 app.post('/admin-login', (req, res) => {
   const { username, password } = req.body;
+
+  // Basic admin username and password for authentication
   if (username === 'admin' && password === 'password') {
-    res.redirect('/admin');
+    res.redirect('/admin'); // Redirect to admin panel
   } else {
     res.status(401).send('Invalid admin credentials.');
   }
 });
-
+// Fetch all users for admin
 app.get('/admin/users', async (req, res) => {
   try {
-    const users = await User.find({}, 'username'); // Fetch usernames
+    const users = await User.find({}, 'username'); // Fetch only the username field
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -64,13 +206,25 @@ app.get('/admin/users', async (req, res) => {
   }
 });
 
+// Admin Routes
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Delete a user
 app.post('/admin/delete-user', async (req, res) => {
   const { username } = req.body;
-  if (!username) return res.status(400).send('Username is required.');
+
+  if (!username) {
+    return res.status(400).send('Username is required.');
+  }
 
   try {
     const user = await User.findOneAndDelete({ username });
-    if (!user) return res.status(404).send('User not found.');
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
     res.send('User deleted successfully!');
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -78,13 +232,20 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
+// Update user points
 app.post('/admin/update-points', async (req, res) => {
   const { username, points } = req.body;
-  if (!username || points === undefined) return res.status(400).send('Username and points are required.');
+
+  if (!username || points === undefined) {
+    return res.status(400).send('Username and points are required.');
+  }
 
   try {
     const user = await User.findOne({ username });
-    if (!user) return res.status(404).send('User not found.');
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
     user.points = points;
     await user.save();
     res.send('Points updated successfully!');
@@ -94,13 +255,20 @@ app.post('/admin/update-points', async (req, res) => {
   }
 });
 
+// Unlock all teams for a user
 app.post('/admin/unlock-teams', async (req, res) => {
   const { username } = req.body;
-  if (!username) return res.status(400).send('Username is required.');
+
+  if (!username) {
+    return res.status(400).send('Username is required.');
+  }
 
   try {
     const user = await User.findOne({ username });
-    if (!user) return res.status(404).send('User not found.');
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
     user.pickedTeams = [];
     await user.save();
     res.send('Teams unlocked successfully!');
@@ -110,6 +278,7 @@ app.post('/admin/unlock-teams', async (req, res) => {
   }
 });
 
+// Unlock all teams for all users
 app.post('/admin/unlock-all-teams', async (req, res) => {
   try {
     await User.updateMany({}, { pickedTeams: [] });
@@ -130,52 +299,72 @@ async function scrapeAndCacheNFLTeams() {
     const $ = cheerio.load(data);
 
     const teams = [];
+
     $('table#teams_active tbody tr').each((i, el) => {
       const teamName = $(el).find('th[data-stat="team_name"] a').text();
       const wins = $(el).find('td[data-stat="wins"]').text();
       const losses = $(el).find('td[data-stat="losses"]').text();
-      const gameStatus = Math.random() < 0.3 ? 'playing' : Math.random() < 0.5 ? 'finished' : 'not_started'; // Simulate game status
 
       if (teamName) {
         teams.push({
           teamName,
           wins: parseInt(wins, 10) || 0,
           losses: parseInt(losses, 10) || 0,
-          status: gameStatus,
         });
       }
     });
 
     cachedTeams = teams;
-    console.log('NFL team data updated with status!');
+    console.log('NFL team data updated!');
   } catch (error) {
     console.error('Error scraping NFL teams:', error);
   }
 }
 
-// Reset team statuses every Tuesday
-cron.schedule('0 0 * * 2', () => {
-  cachedTeams.forEach(team => team.status = 'not_started');
-  console.log('Teams reset to not_started for the new week!');
-});
+scrapeAndCacheNFLTeams();
+cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
 
-// Fetch NFL teams
 app.get('/nfl-teams', (req, res) => {
   if (cachedTeams.length === 0) {
     return res.status(503).send('NFL team data is not available yet. Please try again later.');
   }
   res.json(cachedTeams);
 });
+app.get('/nfl-game-status', async (req, res) => {
+  try {
+    const now = new Date();
+    const nflSchedule = await fetchNflSchedule(); // Assume this function fetches the schedule from your database or API
+    const currentDay = now.getDay();
+    const currentTime = now.getTime();
 
-// Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'teams.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
-app.get('/teams', (req, res) => res.sendFile(path.join(__dirname, 'public', 'teams.html')));
-app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'leaderboard.html')));
-app.get('/rules', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rules.html')));
+    const gameStatus = nflSchedule.map(game => {
+      const gameStartTime = new Date(game.startTime).getTime();
+      const gameEndTime = new Date(game.endTime).getTime();
+
+      if (currentTime < gameStartTime) {
+        return { team: game.team, status: 'upcoming' };
+      } else if (currentTime >= gameStartTime && currentTime <= gameEndTime) {
+        return { team: game.team, status: 'inProgress' };
+      } else {
+        return { team: game.team, status: 'played' };
+      }
+    });
+
+    res.json(gameStatus);
+  } catch (error) {
+    console.error('Error fetching NFL game status:', error);
+    res.status(500).send('Error fetching game status.');
+  }
+});
+
+// Helper to reset picks every Tuesday at midnight
+cron.schedule('0 0 * * 2', async () => {
+  try {
+    await User.updateMany({}, { $set: { selectedTeam: null, pickedTeams: [] } });
+    console.log('Team selections reset successfully!');
+  } catch (error) {
+    console.error('Error resetting team selections:', error);
+  }
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// Run the scraper initially
-scrapeAndCacheNFLTeams();
-cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
