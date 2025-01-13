@@ -141,36 +141,31 @@
     const teamsResponse = await fetch('/nfl-teams');
     const teams = await teamsResponse.json();
 
+    // Render teams
     teams.forEach(team => {
-  const teamDiv = document.createElement('div');
-  teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
-  teamDiv.classList.add('team', team.gameStatus);
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
+      teamDiv.classList.add('team');
 
-  // Mark the team as 'selected' if the user has already picked it
-  if (pickedTeams.includes(team.teamName)) {
-    teamDiv.classList.add('selected');
+      if (pickedTeams.includes(team.teamName)) {
+        teamDiv.classList.add('disabled');
+      }
+
+      teamDiv.addEventListener('click', () => {
+        if (!teamDiv.classList.contains('disabled')) {
+          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+          teamDiv.classList.add('selected');
+          selectedTeam = team.teamName;
+          submitButton.disabled = false;
+        }
+      });
+
+      teamList.appendChild(teamDiv);
+    });
+  } catch (error) {
+    console.error('Error loading teams:', error);
+    alert('Failed to load teams. Please try again later.');
   }
-
-  // Mark the team as 'disabled' if it is already completed
-  if (team.gameStatus === 'completed') {
-    teamDiv.classList.add('completed');
-    teamDiv.classList.add('disabled');
-  }
-
-  teamDiv.addEventListener('click', () => {
-    // Allow clicking only for 'not-started' or 'live' games
-    if (!teamDiv.classList.contains('disabled') && !teamDiv.classList.contains('completed')) {
-      document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-      teamDiv.classList.add('selected');
-
-      // Update the selected team for submission
-      selectedTeam = team.teamName;
-      submitButton.disabled = false;
-    }
-  });
-
-  teamList.appendChild(teamDiv);
-});
 
   // Submit the selected team
   submitButton.addEventListener('click', async () => {
@@ -195,7 +190,7 @@
       }
     }
   });
-);
+});
 
     let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
