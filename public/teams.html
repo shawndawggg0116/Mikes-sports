@@ -27,12 +27,17 @@
   gap: 20px; /* Space between items */
   margin-bottom: 20px;
 }
-    
+.team.completed {
+  background-color: gray; /* Team that has already played */
+  color: #666;
+  opacity: 0.7;
+  cursor: not-allowed;
+}  
     
 .team.selected {
-  background-color: #007bff;
+  background-color: red; /* Team that user picks */
   color: white;
-    }
+}
     .team {
   display: inline-block;
   padding: 10px 15px;
