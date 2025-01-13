@@ -291,47 +291,44 @@ app.post('/admin/unlock-all-teams', async (req, res) => {
 
 // Scraper and cron job
 let cachedTeams = [];
-async function scrapeAndCacheNFLGames() {
+
+async function scrapeAndCacheNFLTeams() {
   try {
-    const url = 'https://www.pro-football-reference.com/boxscores/';
+    const url = 'https://www.pro-football-reference.com/teams/';
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
 
-    console.log('Scraper fetched data successfully.');
+    const teams = [];
 
-    const currentDate = new Date();
-    const games = [];
-
-    $('table#games tbody tr').each((i, el) => {
-      const teamName = $(el).find('td[data-stat="team"]').text(); // Adjust selector
-      const gameTime = $(el).find('td[data-stat="time"]').text(); // Adjust selector
-
-      console.log(`Team: ${teamName}, Game Time: ${gameTime}`);
-
-      const gameStatus = gameTime.includes('Live') ? 'live' : 
-                         currentDate > new Date(gameTime) ? 'completed' : 'not started';
+    $('table#teams_active tbody tr').each((i, el) => {
+      const teamName = $(el).find('th[data-stat="team_name"] a').text();
+      const wins = $(el).find('td[data-stat="wins"]').text();
+      const losses = $(el).find('td[data-stat="losses"]').text();
 
       if (teamName) {
-        games.push({
+        teams.push({
           teamName,
-          gameStatus,
+          wins: parseInt(wins, 10) || 0,
+          losses: parseInt(losses, 10) || 0,
         });
       }
     });
 
-    cachedTeamsWithStatus = games;
-    console.log('Cached Teams with Status:', cachedTeamsWithStatus);
+    cachedTeams = teams;
+    console.log('NFL team data updated!');
   } catch (error) {
-    console.error('Error scraping NFL games:', error.message);
+    console.error('Error scraping NFL teams:', error);
   }
 }
 
+scrapeAndCacheNFLTeams();
+cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
 
 app.get('/nfl-teams', (req, res) => {
-  if (cachedTeamsWithStatus.length === 0) {
-    return res.status(503).send('NFL game data is not available yet. Please try again later.');
+  if (cachedTeams.length === 0) {
+    return res.status(503).send('NFL team data is not available yet. Please try again later.');
   }
-  res.json(cachedTeamsWithStatus);
+  res.json(cachedTeams);
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
