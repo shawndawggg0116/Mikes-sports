@@ -21,20 +21,35 @@
     }
     
     .team-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px; /* Space between items */
+  margin-bottom: 20px;
+}
+    
+    
+.team.selected {
+  background-color: #007bff;
+  color: white;
     }
-    
-    
-    .team.selected {
-      background-color: #007bff;
-      color: white;
-    }
-   
-    
+    .team {
+  display: inline-block;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  text-align: center;
+  width: calc(25% - 20px); /* Adjust width to fit items properly */
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.team.disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
     button {
       padding: 10px 20px;
       font-size: 16px;
