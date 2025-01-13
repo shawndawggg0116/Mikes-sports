@@ -307,52 +307,41 @@ async function scrapeAndCacheNFLTeams() {
         });
       }
     });
-
-    const teamsWithStatus = teams.map(team => {
-      const gameStartTime = new Date(team.gameStartTime); // Ensure you scrape or store `gameStartTime`
-      let gameStatus = 'not started';
+    async function scrapeAndCacheNFLTeams() {
+      const teamsWithStatus = teams.map(team => {
+        const gameStartTime = new Date(team.gameStartTime); // Ensure you scrape or store `gameStartTime`
+        let gameStatus = 'not started';
     
-      const currentTime = new Date();
-      if (gameStartTime <= currentTime) {
-        gameStatus = currentTime - gameStartTime < 3 * 60 * 60 * 1000 // Assume 3-hour game
-          ? 'live'
-          : 'completed';
+        const currentTime = new Date();
+        if (gameStartTime <= currentTime) {
+          gameStatus = currentTime - gameStartTime < 3 * 60 * 60 * 1000 // Assume 3-hour game
+            ? 'live'
+            : 'completed';
+        }
+    
+        return {
+          ...team,
+          gameStatus, // Add dynamic status
+        };
+      });
+    
+      cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
+    }
+    
+    // Schedule scraping every 6 hours
+    cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
+    
+    // Initial scrape
+    scrapeAndCacheNFLTeams();
+    
+    // Serve cached team data
+    app.get('/nfl-teams', (req, res) => {
+      if (cachedTeams.length === 0) {
+        return res.status(503).send('NFL team data is not available yet. Please try again later.');
       }
-    
-      return {
-        ...team,
-        gameStatus, // Add dynamic status
-      };
+      res.json(cachedTeams);
     });
     
-    cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
+    // Start the server
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     
-}
-try {
-  const teamsWithStatus = teams.map(team => {
-    return {
-      ...team,
-      gameStatus, // Add dynamic status
-    };
-  });
-
-  cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
-} catch (error) {
-  console.error('Error updating team statuses:', error);
-}
-
-// Schedule scraping every 6 hours
-cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
-
-// Initial scrape
-scrapeAndCacheNFLTeams();
-// Serve cached team data
-app.get('/nfl-teams', (req, res) => {
-  if (cachedTeams.length === 0) {
-    return res.status(503).send('NFL team data is not available yet. Please try again later.');
-  }
-  res.json(cachedTeams);
-});
-
-// Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
