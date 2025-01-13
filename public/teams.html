@@ -52,6 +52,36 @@
     button:disabled {
       background-color: #ccc;
       cursor: not-allowed;
+      .team.live {
+  background-color: #f39c12; /* A different color for live games */
+  color: white;
+  font-weight: bold;
+  animation: glow 1s infinite alternate;
+  position: relative;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px #f39c12;
+  }
+  to {
+    box-shadow: 0 0 20px #e67e22;
+  }
+}
+
+.team.live::after {
+  content: "LIVE";
+  color: white;
+  background-color: red;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 5px;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+}
+
     }
   </style>
 </head>
@@ -210,6 +240,56 @@
           });
       }
     });
+    async function loadTeams() {
+  try {
+    const usernameResponse = await fetch('/get-logged-in-user');
+    if (!usernameResponse.ok) throw new Error('Failed to fetch username.');
+
+    const { username } = await usernameResponse.json();
+    document.getElementById('username').value = username;
+
+    const pickedTeamsResponse = await fetch(`/get-picked-teams?username=${username}`);
+    if (!pickedTeamsResponse.ok) throw new Error('Failed to fetch picked teams.');
+
+    const { pickedTeams } = await pickedTeamsResponse.json();
+    const teamsResponse = await fetch('/nfl-teams');
+    if (!teamsResponse.ok) throw new Error('Failed to fetch NFL teams.');
+
+    const teams = await teamsResponse.json();
+
+    const teamList = document.querySelector('.team-list');
+    const submitButton = document.getElementById('submitButton');
+    teamList.innerHTML = ''; // Clear previous list
+
+    teams.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
+      teamDiv.classList.add('team');
+
+      // Apply styles based on game status
+      if (team.gameStatus === 'completed' || pickedTeams.includes(team.teamName)) {
+        teamDiv.classList.add('disabled');
+      } else if (team.gameStatus === 'live') {
+        teamDiv.classList.add('live'); // Add glowing effect for live games
+      }
+
+      teamDiv.addEventListener('click', () => {
+        if (!teamDiv.classList.contains('disabled')) {
+          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+          teamDiv.classList.add('selected');
+          submitButton.disabled = false;
+          submitButton.dataset.team = team.teamName;
+        }
+      });
+
+      teamList.appendChild(teamDiv);
+    });
+  } catch (error) {
+    console.error('Error loading teams:', error);
+    alert('Failed to load teams. Please try again later.');
+  }
+}
+
   </script>
 </body>
 </html>
