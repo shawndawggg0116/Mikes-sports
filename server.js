@@ -308,11 +308,25 @@ async function scrapeAndCacheNFLTeams() {
       }
     });
 
-    cachedTeams = teams; // Update cache
-    console.log('NFL team data updated!');
-  } catch (error) {
-    console.error('Error scraping NFL teams:', error.message);
-  }
+    const teamsWithStatus = teams.map(team => {
+      const gameStartTime = new Date(team.gameStartTime); // Ensure you scrape or store `gameStartTime`
+      let gameStatus = 'not started';
+    
+      const currentTime = new Date();
+      if (gameStartTime <= currentTime) {
+        gameStatus = currentTime - gameStartTime < 3 * 60 * 60 * 1000 // Assume 3-hour game
+          ? 'live'
+          : 'completed';
+      }
+    
+      return {
+        ...team,
+        gameStatus, // Add dynamic status
+      };
+    });
+    
+    cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
+    
 }
 
 // Schedule scraping every 6 hours
