@@ -37,11 +37,7 @@
       color: white;
     }
     .team.disabled {
-      background-color: grey !important;
-      cursor: not-allowed;
-    }
-    .team.playing {
-      background-color: yellow !important;
+      background-color: red;
       cursor: not-allowed;
     }
     button {
@@ -58,6 +54,7 @@
       cursor: not-allowed;
     }
   </style>
+ 
 </head>
 <body>
   <div class="navbar">
@@ -68,32 +65,36 @@
 
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value="">
+  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    fetch('/get-logged-in-user')
-      .then(response => response.json())
-      .then(({ username }) => {
+    async function loadTeams() {
+      try {
+        const usernameResponse = await fetch('/get-logged-in-user');
+        if (!usernameResponse.ok) throw new Error('Failed to fetch username.');
+
+        const { username } = await usernameResponse.json();
         document.getElementById('username').value = username;
 
-        return fetch('/nfl-teams');
-      })
-      .then(response => response.json())
-      .then(teams => {
+        const pickedTeamsResponse = await fetch(`/get-picked-teams?username=${username}`);
+        if (!pickedTeamsResponse.ok) throw new Error('Failed to fetch picked teams.');
+
+        const { pickedTeams } = await pickedTeamsResponse.json();
+        const teamsResponse = await fetch('/nfl-teams');
+        if (!teamsResponse.ok) throw new Error('Failed to fetch NFL teams.');
+
+        const teams = await teamsResponse.json();
+
         const teamList = document.querySelector('.team-list');
         const submitButton = document.getElementById('submitButton');
 
-        teamList.innerHTML = ''; // Clear previous content
-
         teams.forEach(team => {
           const teamDiv = document.createElement('div');
-          teamDiv.textContent = `${team.teamName} (${team.wins}-${team.losses})`;
+          teamDiv.textContent = `${team.teamName} (Wins: ${team.wins}, Losses: ${team.losses})`;
           teamDiv.classList.add('team');
 
-          if (team.status === 'playing') {
-            teamDiv.classList.add('playing', 'disabled');
-          } else if (team.status === 'finished') {
+          if (pickedTeams.includes(team.teamName)) {
             teamDiv.classList.add('disabled');
           }
 
@@ -108,29 +109,106 @@
 
           teamList.appendChild(teamDiv);
         });
-      })
-      .catch(error => console.error('Error fetching teams:', error));
+      } catch (error) {
+        console.error('Error loading teams:', error);
+        alert('Failed to load teams. Please try again later.');
+      }
+    }
 
-    document.getElementById('submitButton').addEventListener('click', () => {
+    document.getElementById('submitButton').addEventListener('click', async () => {
       const username = document.getElementById('username').value;
       const team = document.getElementById('submitButton').dataset.team;
 
       if (username && team) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, team })
-        }).then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert(`You picked ${team}`);
-              location.reload();
-            } else {
-              alert(data.message);
-            }
+        try {
+          const response = await fetch('/select-team', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, team })
           });
+
+          const result = await response.json();
+
+          if (result.success) {
+            alert(`You picked ${team}`);
+            loadTeams();
+          } else {
+            alert(result.message);
+          }
+        } catch (error) {
+          console.error('Error submitting team:', error);
+        }
       }
     });
+    document.addEventListener('DOMContentLoaded', async () => {
+  const teamList = document.querySelector('.team-list');
+  const submitButton = document.getElementById('submitButton');
+  const usernameField = document.getElementById('username');
+  let selectedTeam = null;
+
+  try {
+    const usernameResponse = await fetch('/get-logged-in-user');
+    const { username } = await usernameResponse.json();
+    usernameField.value = username;
+
+    const pickedTeamsResponse = await fetch(`/get-picked-teams?username=${username}`);
+    const { pickedTeams } = await pickedTeamsResponse.json();
+
+    const teamsStatusResponse = await fetch('/nfl-game-status');
+    const teamsStatus = await teamsStatusResponse.json();
+
+    teamsStatus.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = team.team;
+      teamDiv.classList.add('team');
+
+      if (pickedTeams.includes(team.team) || team.status === 'played') {
+        teamDiv.classList.add('disabled');
+      } else if (team.status === 'inProgress') {
+        teamDiv.style.backgroundColor = 'yellow';
+        teamDiv.classList.add('disabled');
+      }
+
+      teamDiv.addEventListener('click', () => {
+        if (!teamDiv.classList.contains('disabled')) {
+          document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+          teamDiv.classList.add('selected');
+          selectedTeam = team.team;
+          submitButton.disabled = false;
+        }
+      });
+
+      teamList.appendChild(teamDiv);
+    });
+  } catch (error) {
+    console.error('Error loading teams:', error);
+    alert('Failed to load teams. Please try again later.');
+  }
+
+  submitButton.addEventListener('click', async () => {
+    if (!selectedTeam) return;
+
+    try {
+      const response = await fetch('/select-team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameField.value, team: selectedTeam })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert(`You picked ${selectedTeam}`);
+        location.reload();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting team:', error);
+    }
+  });
+});
+
+    loadTeams();
   </script>
 </body>
 </html>
