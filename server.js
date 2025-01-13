@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const cheerio = require('cheerio');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -279,6 +281,52 @@ app.post('/admin/delete-user', async (req, res) => {
     console.error('Error deleting user:', error);
     res.status(500).send('Error deleting user.');
   }
+});
+
+// Scrape NFL schedule (free website example)
+async function scrapeNFLSchedule() {
+  try {
+    const response = await axios.get('https://www.nfl.com/schedules/');
+    const $ = cheerio.load(response.data);
+    const schedule = [];
+
+    $('.nfl-o-matchup').each((index, element) => {
+      const homeTeam = $(element).find('.nfl-c-matchup__team--home .nfl-c-matchup__team-name').text().trim();
+      const awayTeam = $(element).find('.nfl-c-matchup__team--away .nfl-c-matchup__team-name').text().trim();
+      const status = $(element).find('.nfl-c-matchup__status').text().trim();
+
+      schedule.push({
+        homeTeam,
+        awayTeam,
+        status
+      });
+    });
+
+    return schedule;
+  } catch (error) {
+    console.error('Error scraping NFL schedule:', error);
+    return [];
+  }
+}
+
+// Serve the team selection page with schedule integration
+app.get('/teams-schedule', async (req, res) => {
+  const schedule = await scrapeNFLSchedule();
+
+  const now = new Date();
+  const teamsWithStatus = schedule.map(game => {
+    const isLive = game.status.includes('Live');
+    const hasPlayed = game.status.includes('Final');
+
+    return {
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      isLive,
+      hasPlayed
+    };
+  });
+
+  res.json({ teamsWithStatus });
 });
 
 // Start the server
