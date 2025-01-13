@@ -3,16 +3,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
 mongoose.connect(
-  'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority',
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
   { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -20,7 +17,7 @@ mongoose.connect(
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 app.use(
   session({
     secret: 'your-secret-key',
@@ -43,14 +40,18 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Routes
+
+// Root Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// Serve the registration page
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
+// Register a user
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
@@ -75,6 +76,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Login Route
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -93,14 +95,15 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    req.session.username = username;
-    res.redirect('/teams');
+    req.session.username = username; // Set username in session
+    res.redirect('/teams'); // Redirect to the team selection page
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
   }
 });
 
+// Fetch logged-in username
 app.get('/get-logged-in-user', (req, res) => {
   if (!req.session || !req.session.username) {
     return res.status(401).send({ error: 'User not logged in' });
@@ -108,18 +111,22 @@ app.get('/get-logged-in-user', (req, res) => {
   res.send({ username: req.session.username });
 });
 
+// Serve the team selection page
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
+// Serve the leaderboard page
 app.get('/leaderboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
+// Serve the rules page
 app.get('/rules', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
+// Fetch user's picked teams
 app.get('/get-picked-teams', async (req, res) => {
   const { username } = req.query;
 
@@ -140,9 +147,10 @@ app.get('/get-picked-teams', async (req, res) => {
   }
 });
 
+// Get leaderboard data
 app.get('/get-leaderboard', async (req, res) => {
   try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 }); // Sort by points (descending)
     res.json(users);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
@@ -150,6 +158,7 @@ app.get('/get-leaderboard', async (req, res) => {
   }
 });
 
+// Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
 
@@ -184,21 +193,36 @@ app.post('/select-team', async (req, res) => {
     res.status(500).send({ success: false, message: 'Error selecting team.' });
   }
 });
+
+// Admin Routes
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // Admin Login
-app.post('/admin-login', (req, res) => {
+app.post('/admin-login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Basic admin username and password for authentication
-  if (username === 'admin' && password === 'password') {
-    res.redirect('/admin'); // Redirect to admin panel
-  } else {
-    res.status(401).send('Invalid admin credentials.');
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
   }
 });
+
 // Fetch all users for admin
 app.get('/admin/users', async (req, res) => {
   try {
-    const users = await User.find({}, 'username'); // Fetch only the username field
+    const users = await User.find();
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -206,39 +230,9 @@ app.get('/admin/users', async (req, res) => {
   }
 });
 
-// Admin Routes
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Delete a user
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
-
-  if (!username) {
-    return res.status(400).send('Username is required.');
-  }
-
-  try {
-    const user = await User.findOneAndDelete({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
-  }
-});
-
-// Update user points
+// Edit user points
 app.post('/admin/update-points', async (req, res) => {
   const { username, points } = req.body;
-
-  if (!username || points === undefined) {
-    return res.status(400).send('Username and points are required.');
-  }
 
   try {
     const user = await User.findOne({ username });
@@ -255,13 +249,9 @@ app.post('/admin/update-points', async (req, res) => {
   }
 });
 
-// Unlock all teams for a user
+// Unlock a user's picked teams
 app.post('/admin/unlock-teams', async (req, res) => {
   const { username } = req.body;
-
-  if (!username) {
-    return res.status(400).send('Username is required.');
-  }
 
   try {
     const user = await User.findOne({ username });
@@ -278,19 +268,23 @@ app.post('/admin/unlock-teams', async (req, res) => {
   }
 });
 
-// Unlock all teams for all users
-app.post('/admin/unlock-all-teams', async (req, res) => {
+// Delete a user
+app.post('/admin/delete-user', async (req, res) => {
+  const { username } = req.body;
+
   try {
-    await User.updateMany({}, { pickedTeams: [] });
-    res.send('All teams unlocked for all users!');
+    await User.deleteOne({ username });
+    res.send('User deleted successfully!');
   } catch (error) {
-    console.error('Error unlocking all teams:', error);
-    res.status(500).send('Error unlocking all teams.');
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
   }
 });
+const axios = require('axios');
+const cheerio = require('cheerio');
+const cron = require('node-cron');
 
-// Scraper and cron job
-let cachedTeams = [];
+let cachedTeams = []; // Store scraped teams in memory
 
 async function scrapeAndCacheNFLTeams() {
   try {
@@ -314,72 +308,25 @@ async function scrapeAndCacheNFLTeams() {
       }
     });
 
-    cachedTeams = teams;
+    cachedTeams = teams; // Update cache
     console.log('NFL team data updated!');
   } catch (error) {
-    console.error('Error scraping NFL teams:', error);
+    console.error('Error scraping NFL teams:', error.message);
   }
 }
 
-scrapeAndCacheNFLTeams();
+// Schedule scraping every 6 hours
 cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
 
+// Initial scrape
+scrapeAndCacheNFLTeams();
+// Serve cached team data
 app.get('/nfl-teams', (req, res) => {
   if (cachedTeams.length === 0) {
     return res.status(503).send('NFL team data is not available yet. Please try again later.');
   }
   res.json(cachedTeams);
 });
-app.get('/nfl-teams', (req, res) => {
-  if (cachedTeams.length === 0) {
-    return res.status(503).send('NFL team data is not available yet. Please try again later.');
-  }
 
-  // Merge `cachedTeams` with `cachedTeamsWithStatus`
-  const mergedTeams = cachedTeams.map(team => {
-    const status = cachedTeamsWithStatus.find(s => s.teamName === team.teamName);
-    return {
-      ...team,
-      gameStatus: status ? status.gameStatus : 'not started', // Default to 'not started'
-    };
-  });
-
-  res.json(mergedTeams);
-});
-async function scrapeAndCacheNFLGames() {
-  try {
-    const url = 'https://www.pro-football-reference.com/boxscores/';
-    const { data } = await axios.get(url);
-    const $ = cheerio.load(data);
-
-    console.log('Scraper fetched data successfully.');
-
-    const currentDate = new Date();
-    const games = [];
-
-    // Update selectors to match the structure of the page
-    $('table tbody tr').each((i, el) => {
-      const teamName = $(el).find('td[data-stat="team"]').text(); // Adjust selector
-      const gameTime = $(el).find('td[data-stat="time"]').text(); // Adjust selector
-
-      console.log(`Team Name: ${teamName}, Game Time: ${gameTime}`); // Log data being processed
-
-      const gameStatus = gameTime.includes('Live') ? 'live' :
-                         currentDate > new Date(gameTime) ? 'completed' : 'not started';
-
-      if (teamName) {
-        games.push({
-          teamName,
-          gameStatus,
-        });
-      }
-    });
-
-    cachedTeamsWithStatus = games;
-    console.log('Cached Teams with Status:', cachedTeamsWithStatus);
-  } catch (error) {
-    console.error('Error scraping NFL games:', error.message);
-  }
-}
-
+// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
