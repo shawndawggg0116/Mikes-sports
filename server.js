@@ -291,59 +291,23 @@ app.post('/admin/unlock-all-teams', async (req, res) => {
 
 // Scraper and cron job
 let cachedTeams = [];
-
-async function scrapeAndCacheNFLTeams() {
-  try {
-    const url = 'https://www.pro-football-reference.com/teams/';
-    const { data } = await axios.get(url);
-    const $ = cheerio.load(data);
-
-    const teams = [];
-
-    $('table#teams_active tbody tr').each((i, el) => {
-      const teamName = $(el).find('th[data-stat="team_name"] a').text();
-      const wins = $(el).find('td[data-stat="wins"]').text();
-      const losses = $(el).find('td[data-stat="losses"]').text();
-
-      if (teamName) {
-        teams.push({
-          teamName,
-          wins: parseInt(wins, 10) || 0,
-          losses: parseInt(losses, 10) || 0,
-        });
-      }
-    });
-
-    cachedTeams = teams;
-    console.log('NFL team data updated!');
-  } catch (error) {
-    console.error('Error scraping NFL teams:', error);
-  }
-}
-
-scrapeAndCacheNFLTeams();
-cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
-
-app.get('/nfl-teams', (req, res) => {
-  if (cachedTeams.length === 0) {
-    return res.status(503).send('NFL team data is not available yet. Please try again later.');
-  }
-  res.json(cachedTeams);
-});
-let cachedTeamsWithStatus = [];
-
 async function scrapeAndCacheNFLGames() {
   try {
     const url = 'https://www.pro-football-reference.com/boxscores/';
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
 
+    console.log('Scraper fetched data successfully.');
+
     const currentDate = new Date();
     const games = [];
 
     $('table#games tbody tr').each((i, el) => {
-      const teamName = $(el).find('td[data-stat="team"]').text();
-      const gameTime = $(el).find('td[data-stat="time"]').text();
+      const teamName = $(el).find('td[data-stat="team"]').text(); // Adjust selector
+      const gameTime = $(el).find('td[data-stat="time"]').text(); // Adjust selector
+
+      console.log(`Team: ${teamName}, Game Time: ${gameTime}`);
+
       const gameStatus = gameTime.includes('Live') ? 'live' : 
                          currentDate > new Date(gameTime) ? 'completed' : 'not started';
 
@@ -356,14 +320,12 @@ async function scrapeAndCacheNFLGames() {
     });
 
     cachedTeamsWithStatus = games;
-    console.log('NFL game data with statuses updated!');
+    console.log('Cached Teams with Status:', cachedTeamsWithStatus);
   } catch (error) {
-    console.error('Error scraping NFL games:', error);
+    console.error('Error scraping NFL games:', error.message);
   }
 }
 
-scrapeAndCacheNFLGames();
-cron.schedule('0 */6 * * *', scrapeAndCacheNFLGames);
 
 app.get('/nfl-teams', (req, res) => {
   if (cachedTeamsWithStatus.length === 0) {
