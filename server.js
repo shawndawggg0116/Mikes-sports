@@ -283,7 +283,7 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-// Scrape NFL schedule (alternate static source)
+// Scrape NFL schedule (debugging added)
 async function scrapeNFLSchedule() {
   try {
     const response = await axios.get('https://sports.yahoo.com/nfl/schedule/');
@@ -301,6 +301,8 @@ async function scrapeNFLSchedule() {
         status
       });
     });
+
+    console.log('Scraped schedule:', schedule); // Debugging output
 
     return schedule;
   } catch (error) {
@@ -325,6 +327,8 @@ app.get('/teams-schedule', async (req, res) => {
       hasPlayed
     };
   });
+
+  console.log('Teams with status:', teamsWithStatus); // Debugging output
 
   res.json({ teamsWithStatus });
 });
