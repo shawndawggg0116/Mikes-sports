@@ -283,17 +283,17 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-// Scrape NFL schedule (free website example)
+// Scrape NFL schedule (alternate static source)
 async function scrapeNFLSchedule() {
   try {
-    const response = await axios.get('https://www.nfl.com/schedules/');
+    const response = await axios.get('https://sports.yahoo.com/nfl/schedule/');
     const $ = cheerio.load(response.data);
     const schedule = [];
 
-    $('.nfl-o-matchup').each((index, element) => {
-      const homeTeam = $(element).find('.nfl-c-matchup__team--home .nfl-c-matchup__team-name').text().trim();
-      const awayTeam = $(element).find('.nfl-c-matchup__team--away .nfl-c-matchup__team-name').text().trim();
-      const status = $(element).find('.nfl-c-matchup__status').text().trim();
+    $('div.Schedules__gameRow').each((index, element) => {
+      const homeTeam = $(element).find('div.Schedules__teamName').first().text().trim();
+      const awayTeam = $(element).find('div.Schedules__teamName').last().text().trim();
+      const status = $(element).find('span.Schedules__status').text().trim();
 
       schedule.push({
         homeTeam,
