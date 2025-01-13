@@ -286,8 +286,8 @@ const cron = require('node-cron');
 
 let cachedTeams = []; // Store scraped teams in memory
 
-async function scrapeAndCacheNFLTeams() 
-  try 
+async function scrapeAndCacheNFLTeams() {
+  try {
     const url = 'https://www.pro-football-reference.com/teams/';
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
@@ -307,41 +307,43 @@ async function scrapeAndCacheNFLTeams()
         });
       }
     });
-    async function scrapeAndCacheNFLTeams() {
-      const teamsWithStatus = teams.map(team => {
-        const gameStartTime = new Date(team.gameStartTime); // Ensure you scrape or store `gameStartTime`
-        let gameStatus = 'not started';
+
+    const teamsWithStatus = teams.map(team => {
+      const gameStartTime = new Date(team.gameStartTime); // Ensure you scrape or store `gameStartTime`
+      let gameStatus = 'not started';
     
-        const currentTime = new Date();
-        if (gameStartTime <= currentTime) {
-          gameStatus = currentTime - gameStartTime < 3 * 60 * 60 * 1000 // Assume 3-hour game
-            ? 'live'
-            : 'completed';
-        }
-    
-        return {
-          ...team,
-          gameStatus, // Add dynamic status
-        };
-      });
-    
-      cachedTeams = teamsWithStatus; // Update cachedTeams dynamically
-    }
-    
-    // Schedule scraping every 6 hours
-    cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
-    
-    // Initial scrape
-    scrapeAndCacheNFLTeams();
-    
-    // Serve cached team data
-    app.get('/nfl-teams', (req, res) => {
-      if (cachedTeams.length === 0) {
-        return res.status(503).send('NFL team data is not available yet. Please try again later.');
+      const currentTime = new Date();
+      if (gameStartTime <= currentTime) {
+        gameStatus = currentTime - gameStartTime < 3 * 60 * 60 * 1000 // Assume 3-hour game
+          ? 'live'
+          : 'completed';
       }
-      res.json(cachedTeams);
+    
+      return {
+        ...team,
+        gameStatus, // Add dynamic status
+      };
     });
     
-    // Start the server
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    
+    cachedTeams = teamsWithStatus; // Update cachedTeams dynamically  
+  } catch (error) {
+    console.error('Error scraping NFL teams:', error);
+  }
+}
+
+// Schedule scraping every 6 hours
+cron.schedule('0 */6 * * *', scrapeAndCacheNFLTeams);
+
+// Initial scrape
+scrapeAndCacheNFLTeams();
+
+// Serve cached team data
+app.get('/nfl-teams', (req, res) => {
+  if (cachedTeams.length === 0) {
+    return res.status(503).send('NFL team data is not available yet. Please try again later.');
+  }
+  res.json(cachedTeams);
+});
+
+// Start the server
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
