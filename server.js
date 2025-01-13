@@ -286,8 +286,8 @@ const cron = require('node-cron');
 
 let cachedTeams = []; // Store scraped teams in memory
 
-async function scrapeAndCacheNFLTeams() {
-  try {
+async function scrapeAndCacheNFLTeams() 
+  try 
     const url = 'https://www.pro-football-reference.com/teams/';
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
