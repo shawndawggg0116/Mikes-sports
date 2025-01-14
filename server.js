@@ -20,12 +20,13 @@ app.get('/scrape-schedule', async (req, res) => {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: 'C:/Users/shawn/fakesite/chrome-win/chrome.exe', // Adjusted path
+      executablePath: 'C:/Users/shawn/fakesite/chrome-win/chrome.exe', // Adjust this path as needed
     });
     const page = await browser.newPage();
 
     console.log('Navigating to NFL schedules page...');
     await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.nfl-o-matchup-group'); // Ensure the main content is loaded
 
     console.log('Extracting schedule data...');
     const schedule = await page.evaluate(() => {
