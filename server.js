@@ -63,6 +63,13 @@ app.get('/schedule', (req, res) => {
   res.json(cachedSchedule);
 });
 
+const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: 'C:\\path\\to\\chromium\\chrome.exe', // Update this to your actual Chromium path
+  });
+  
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
