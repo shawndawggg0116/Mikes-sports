@@ -4,15 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
-  <link rel="stylesheet" href="navbar.css">
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background-image: url('background.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
+      background-color: #f0f8ff;
     }
     h1 {
       color: #333;
@@ -56,15 +52,9 @@
   </style>
 </head>
 <body>
-  <div class="navbar">
-    <a href="/teams" class="active">Team Selection</a>
-    <a href="/leaderboard">Leaderboard</a>
-    <a href="/rules">Rules</a>
-  </div>
-
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
+  <input type="hidden" id="username" value="shawn"> <!-- Replace "shawn" dynamically with logged-in username -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
@@ -79,52 +69,40 @@
     let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
-    const usernameField = document.getElementById('username');
+    const username = document.getElementById('username').value;
 
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+    // Fetch the user's picked teams from the server
+    fetch(`/get-picked-teams?username=${username}`)
       .then(response => response.json())
       .then(data => {
-        usernameField.value = data.username;
+        const pickedTeams = data.pickedTeams || []; // Array of teams already picked
 
-        // Fetch the user's picked teams from the server
-        fetch(`/get-picked-teams?username=${data.username}`)
-          .then(response => response.json())
-          .then(data => {
-            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
+        // Render teams
+        teams.forEach(team => {
+          const teamDiv = document.createElement('div');
+          teamDiv.textContent = team;
+          teamDiv.classList.add('team');
 
-            // Render teams
-            teams.forEach(team => {
-              const teamDiv = document.createElement('div');
-              teamDiv.textContent = team;
-              teamDiv.classList.add('team');
+          // If the team is already picked, disable it
+          if (pickedTeams.includes(team)) {
+            teamDiv.classList.add('disabled');
+          }
 
-              // If the team is already picked, disable it
-              if (pickedTeams.includes(team)) {
-                teamDiv.classList.add('disabled');
-              }
-
-              teamDiv.addEventListener('click', () => {
-                if (!teamDiv.classList.contains('disabled')) {
-                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                  teamDiv.classList.add('selected');
-                  selectedTeam = team;
-                  submitButton.disabled = false;
-                }
-              });
-
-              teamList.appendChild(teamDiv);
-            });
+          teamDiv.addEventListener('click', () => {
+            if (!teamDiv.classList.contains('disabled')) {
+              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+              teamDiv.classList.add('selected');
+              selectedTeam = team;
+              submitButton.disabled = false;
+            }
           });
-      })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
+
+          teamList.appendChild(teamDiv);
+        });
       });
 
     // Submit the selected team
     submitButton.addEventListener('click', () => {
-      const username = usernameField.value;
       if (selectedTeam && username) {
         fetch('/select-team', {
           method: 'POST',
