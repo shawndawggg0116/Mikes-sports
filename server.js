@@ -415,7 +415,7 @@ async function scrapeNFLSchedule() {
   }
 }
 
-const puppeteer = require('puppeteer');
+
 
 async function scrapeNFLSchedule() {
     try {
