@@ -1,13 +1,12 @@
+// server.js
 import express from 'express';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-
-puppeteer.use(StealthPlugin());
+import puppeteer from 'puppeteer';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Root route
+let cachedSchedule = [];
+
 app.get('/', (req, res) => {
   res.send(`
     <h1>Welcome to the NFL Schedule Scraper</h1>
@@ -19,28 +18,24 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Route to scrape the schedule
 app.get('/scrape-schedule', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: '/usr/bin/google-chrome-stable', // Adjust this to the correct path
     });
-
     const page = await browser.newPage();
-    await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'load', timeout: 0 });
 
-    // Scrape schedule data
+    // Example of a smaller, simpler site to scrape
+    await page.goto('https://example.com'); // Replace with a simple site URL
+
     const schedule = await page.evaluate(() => {
-      const data = [];
-      document.querySelectorAll('.schedule-list').forEach((item) => {
-        data.push(item.innerText);
-      });
-      return data;
+      // Adjust selectors to match the new site's structure
+      return Array.from(document.querySelectorAll('p')).map(el => el.textContent);
     });
 
-    console.log('Schedule scraped successfully:', schedule);
+    cachedSchedule = schedule;
+
     await browser.close();
 
     res.json({ success: true, schedule });
@@ -50,12 +45,13 @@ app.get('/scrape-schedule', async (req, res) => {
   }
 });
 
-// Route to get cached schedule (if you have caching logic)
 app.get('/schedule', (req, res) => {
-  res.status(503).send('No schedule data available. Please try again later.');
+  if (cachedSchedule.length === 0) {
+    return res.status(503).send('No schedule data available. Please try again later.');
+  }
+  res.json(cachedSchedule);
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
