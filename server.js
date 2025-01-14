@@ -47,6 +47,15 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// New route for live schedule data
+app.get('/live-schedule', (req, res) => {
+  if (cachedSchedule.length === 0) {
+    return res.status(503).send('Live schedule data is not available yet. Please try again later.');
+  }
+  res.json(cachedSchedule);
+});
+
+
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
@@ -330,5 +339,37 @@ app.get('/nfl-teams', (req, res) => {
   }
   res.json(cachedTeams);
 });
+
+async function scrapeNFLSchedule() {
+  try {
+    const url = 'https://www.nfl.com/schedules/';
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const schedule = [];
+
+    $('.nfl-o-matchup-group').each((i, el) => {
+      const week = $(el).find('.d3-o-section-title').text().trim();
+      $(el).find('.nfl-c-matchup-strip').each((j, game) => {
+        const homeTeam = $(game).find('.nfl-c-matchup-strip__team-fullname--home').text().trim();
+        const awayTeam = $(game).find('.nfl-c-matchup-strip__team-fullname--away').text().trim();
+        const status = $(game).find('.nfl-c-matchup-strip__date').text().trim();
+
+        if (homeTeam && awayTeam && week) {
+          schedule.push({ week, homeTeam, awayTeam, status });
+        }
+      });
+    });
+
+    cachedSchedule = schedule;
+    console.log('NFL schedule updated!');
+  } catch (error) {
+    console.error('Error scraping NFL schedule:', error);
+  }
+}
+
+scrapeNFLSchedule();
+cron.schedule('0 */6 * * *', scrapeNFLSchedule);
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
