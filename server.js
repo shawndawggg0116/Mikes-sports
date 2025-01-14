@@ -413,5 +413,47 @@ async function scrapeNFLSchedule() {
   }
 }
 
+const puppeteer = require('puppeteer');
+
+async function scrapeNFLSchedule() {
+    try {
+        const url = 'https://www.nfl.com/schedules/';
+        console.log('Fetching NFL schedule from:', url);
+
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+        const schedule = await page.evaluate(() => {
+            const scheduleData = [];
+            document.querySelectorAll('.nfl-o-matchup-group').forEach(group => {
+                const week = group.querySelector('.d3-o-section-title')?.innerText.trim() || 'Unknown Week';
+                group.querySelectorAll('.nfl-c-matchup-strip').forEach(game => {
+                    const homeTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--home')?.innerText.trim();
+                    const awayTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--away')?.innerText.trim();
+                    const status = game.querySelector('.nfl-c-matchup-strip__date')?.innerText.trim();
+
+                    if (homeTeam && awayTeam) {
+                        scheduleData.push({ week, homeTeam, awayTeam, status: status || 'Pending' });
+                    }
+                });
+            });
+            return scheduleData;
+        });
+
+        await browser.close();
+
+        if (schedule.length === 0) {
+            console.error('No games found: Check the scraper logic or website structure.');
+        } else {
+            console.log('Scraped schedule:', schedule);
+        }
+
+        cachedSchedule = schedule;
+    } catch (error) {
+        console.error('Error scraping NFL schedule:', error.message);
+    }
+}
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
