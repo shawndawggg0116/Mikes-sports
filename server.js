@@ -419,11 +419,28 @@ async function scrapeNFLSchedule() {
 }
 
 
+const schedule = await page.evaluate(() => {
+    const scheduleData = [];
+    document.querySelectorAll('.nfl-o-matchup-group').forEach(group => {
+        const week = group.querySelector('.d3-o-section-title')?.innerText.trim();
+        group.querySelectorAll('.nfl-c-matchup-strip').forEach(game => {
+            const homeTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--home')?.innerText.trim();
+            const awayTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--away')?.innerText.trim();
+            const status = game.querySelector('.nfl-c-matchup-strip__date')?.innerText.trim();
 
+            if (homeTeam && awayTeam) {
+                scheduleData.push({ week, homeTeam, awayTeam, status });
+            }
+        });
+    });
+    return scheduleData;
+});
 
+await page.goto(url, { waitUntil: 'networkidle0' });
 
-
-
+console.log('Fetching NFL schedule...');
+console.log('Week:', week);
+console.log('Game Found:', { homeTeam, awayTeam, status });
 
 
 
