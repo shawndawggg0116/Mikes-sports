@@ -1,19 +1,20 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+let cachedSchedule = [];
 
-// Home route
+// Middleware to serve static files
+app.use(express.static('public'));
+
+// Homepage Route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(__dirname + '/public/index.html');
 });
 
-// Route to scrape NFL schedules
+// Scraper Route
 app.get('/scrape-schedule', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
@@ -22,10 +23,10 @@ app.get('/scrape-schedule', async (req, res) => {
     });
     const page = await browser.newPage();
 
-    console.log("Navigating to NFL schedules page...");
+    console.log('Navigating to NFL schedules page...');
     await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'domcontentloaded' });
 
-    console.log("Extracting schedule data...");
+    console.log('Extracting schedule data...');
     const schedule = await page.evaluate(() => {
       const scheduleData = [];
       document.querySelectorAll('.nfl-o-matchup-group').forEach(group => {
@@ -43,17 +44,26 @@ app.get('/scrape-schedule', async (req, res) => {
       return scheduleData;
     });
 
-    console.log("Schedule data extracted:", schedule);
-    await browser.close();
+    console.log('Schedule scraped successfully:', schedule);
+    cachedSchedule = schedule;
 
-    res.json(schedule);
+    await browser.close();
+    res.json({ success: true, schedule });
   } catch (error) {
-    console.error("Error occurred while scraping NFL schedules:", error);
+    console.error('Error scraping schedule:', error);
     res.status(500).send('An error occurred while fetching the schedule.');
   }
 });
 
-// Start server
+// Route to get the cached schedule
+app.get('/schedule', (req, res) => {
+  if (cachedSchedule.length === 0) {
+    return res.status(503).send('No schedule data available. Please try again later.');
+  }
+  res.json(cachedSchedule);
+});
+
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
