@@ -11,6 +11,7 @@ const puppeteer = require('puppeteer');
 process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
 
 
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -458,6 +459,16 @@ async function scrapeNFLSchedule() {
         console.error('Error scraping NFL schedule:', error.message);
     }
 }
+
+"scripts": {
+  "postinstall": "npx puppeteer install"
+}
+process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
+
+const browser = await puppeteer.launch({
+  executablePath: '/usr/bin/chromium-browser',
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+});
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
