@@ -140,27 +140,6 @@
       }
     });
 
-    async function loadLiveSchedule() {
-  try {
-    const response = await fetch('/live-schedule');
-    if (!response.ok) throw new Error('Failed to fetch live schedule.');
-
-    const schedule = await response.json();
-
-    const scheduleContainer = document.getElementById('live-schedule');
-    schedule.forEach(game => {
-      const gameDiv = document.createElement('div');
-      gameDiv.textContent = `${game.week}: ${game.awayTeam} @ ${game.homeTeam} (${game.status})`;
-      scheduleContainer.appendChild(gameDiv);
-    });
-  } catch (error) {
-    console.error('Error loading live schedule:', error);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', loadLiveSchedule);
-
-
     loadTeams();
   </script>
 </body>

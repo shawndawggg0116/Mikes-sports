@@ -47,12 +47,17 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// New route for live schedule data
+// Route for live game schedule data
 app.get('/live-schedule', (req, res) => {
   if (cachedSchedule.length === 0) {
     return res.status(503).send('Live schedule data is not available yet. Please try again later.');
   }
   res.json(cachedSchedule);
+});
+
+// Route to serve the games page
+app.get('/games', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'games.html'));
 });
 
 
@@ -340,6 +345,9 @@ app.get('/nfl-teams', (req, res) => {
   res.json(cachedTeams);
 });
 
+// Scraper for NFL schedules
+let cachedSchedule = [];
+
 async function scrapeNFLSchedule() {
   try {
     const url = 'https://www.nfl.com/schedules/';
@@ -347,7 +355,6 @@ async function scrapeNFLSchedule() {
     const $ = cheerio.load(data);
 
     const schedule = [];
-
     $('.nfl-o-matchup-group').each((i, el) => {
       const week = $(el).find('.d3-o-section-title').text().trim();
       $(el).find('.nfl-c-matchup-strip').each((j, game) => {
@@ -368,6 +375,7 @@ async function scrapeNFLSchedule() {
   }
 }
 
+// Run scraper initially and schedule it to run every 6 hours
 scrapeNFLSchedule();
 cron.schedule('0 */6 * * *', scrapeNFLSchedule);
 

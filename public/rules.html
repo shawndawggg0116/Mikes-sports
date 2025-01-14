@@ -100,13 +100,31 @@
       </li>
     </ul>
     
-    // New route for live schedule data
-app.get('/live-schedule', (req, res) => {
-  if (cachedSchedule.length === 0) {
-    return res.status(503).send('Live schedule data is not available yet. Please try again later.');
-  }
-  res.json(cachedSchedule);
-});
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rules</title>
+  <link rel="stylesheet" href="navbar.css">
+</head>
+<body>
+  <div class="navbar">
+    <a href="/">Home</a>
+    <a href="/rules" class="active">Rules</a>
+    <a href="/games">Games</a>
+  </div>
+  <h1>NFL Team Pick Game Rules and How to Play</h1>
+  <p>Welcome to the NFL Team Pick Game! Follow these simple steps and rules to compete for the jackpot. Good luck and have fun!</p>
+  <h2>Rules</h2>
+  <ul>
+    <li>Pick one team per week.</li>
+    <li>You cannot pick the same team twice during the season.</li>
+    <li>If your team wins, you earn 1 point.</li>
+    <li>The player with the most points at the end of the season wins the jackpot.</li>
+  </ul>
+</body>
+</html>
 
 
     <p>Good Luck and Have Fun!</p>
