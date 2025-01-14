@@ -463,10 +463,7 @@ async function scrapeNFLSchedule() {
 
 
 
-const browser = await puppeteer.launch({
-  executablePath: '/usr/bin/chromium-browser',
-  args: ['--no-sandbox', '--disable-setuid-sandbox'],
-});
+
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
