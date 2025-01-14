@@ -1,55 +1,38 @@
-// Import necessary modules
-const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require('puppeteer');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Route to scrape schedule data
-app.get("/scrape-schedule", async (req, res) => {
-  try {
-    console.log("Launching Puppeteer...");
-
+async function scrapeNFLStandings() {
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: 'C:/Users/shawn/Downloads/chrome-win/chrome-win/chrome.exe', // Update the path if necessary
     });
 
     const page = await browser.newPage();
+    await page.goto('https://www.pro-football-reference.com/years/2024/', { waitUntil: 'networkidle2' });
 
-    // Navigate to Pro-Football-Reference
-    await page.goto("https://www.pro-football-reference.com", {
-      waitUntil: "domcontentloaded",
+    // Extract table data
+    const standings = await page.evaluate(() => {
+        const data = [];
+        const tables = document.querySelectorAll('.sortable.stats_table tbody');
+        
+        tables.forEach((table) => {
+            const rows = table.querySelectorAll('tr[data-row]');
+            rows.forEach((row) => {
+                const team = row.querySelector('th[data-stat="team"] a')?.textContent || 'N/A';
+                const wins = row.querySelector('td[data-stat="wins"]')?.textContent || '0';
+                const losses = row.querySelector('td[data-stat="losses"]')?.textContent || '0';
+                const pct = row.querySelector('td[data-stat="win_loss_pct"]')?.textContent || '0.000';
+
+                data.push({ team, wins, losses, pct });
+            });
+        });
+
+        return data;
     });
-
-    console.log("Extracting schedule data...");
-
-    // Example: Modify this selector to target the correct data
-    const data = await page.evaluate(() => {
-      const result = [];
-      document.querySelectorAll(".some-selector").forEach((el) => {
-        result.push(el.innerText);
-      });
-      return result;
-    });
-
-    console.log("Schedule scraped successfully:", data);
 
     await browser.close();
+    return standings;
+}
 
-    res.json({ success: true, schedule: data });
-  } catch (error) {
-    console.error("Error scraping schedule:", error);
-    res.status(500).send("An error occurred while fetching the schedule.");
-  }
-});
-
-// Route to serve cached schedule (if needed)
-app.get("/schedule", (req, res) => {
-  res.status(503).send("No schedule data available. Please try again later.");
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Use the scraper function
+scrapeNFLStandings().then(data => console.log(data)).catch(err => console.error(err));
