@@ -1,55 +1,45 @@
+// Import necessary modules
 const express = require('express');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
+const PORT = 5000;
 let cachedSchedule = [];
 
-// Middleware to serve static files
-app.use(express.static('public'));
-
-// Homepage route
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-
-// Scraper route
+// Route to scrape the NFL schedule
 app.get('/scrape-schedule', async (req, res) => {
   try {
-    console.log('Navigating to NFL schedules page...');
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: process.env.CHROME_BIN || 'C:/Users/shawn/Downloads/chrome-win/chrome.exe', // Adjust path for Render or local
+      executablePath: 'C:/Users/shawn/Downloads/chrome-win/chrome.exe' // Update with your Chrome path
     });
 
     const page = await browser.newPage();
-    await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://www.espn.com/nfl/schedule', { waitUntil: 'domcontentloaded' });
 
-    console.log('Extracting schedule data...');
     const schedule = await page.evaluate(() => {
-      const scheduleData = [];
-      document.querySelectorAll('.nfl-o-matchup-group').forEach((group) => {
-        const week = group.querySelector('.d3-o-section-title')?.innerText || 'Unknown Week';
-        group.querySelectorAll('.nfl-c-matchup-strip').forEach((game) => {
-          const home = game.querySelector('.nfl-c-matchup-strip__team--home')?.innerText.trim();
-          const away = game.querySelector('.nfl-c-matchup-strip__team--away')?.innerText.trim();
-          const date = game.querySelector('.nfl-c-matchup-strip__date')?.innerText.trim();
-          scheduleData.push({ week, home, away, date });
-        });
+      const games = [];
+      document.querySelectorAll('.Table__TR--sm').forEach((row) => {
+        const teams = row.querySelector('.Table__TD')?.innerText;
+        const time = row.querySelector('.nfl-cp-schedule__time')?.innerText;
+        if (teams && time) {
+          games.push({ teams, time });
+        }
       });
-      return scheduleData;
+      return games;
     });
 
-    cachedSchedule = schedule; // Cache the schedule data
-    console.log('Schedule scraped successfully:', schedule);
-
+    cachedSchedule = schedule;
     await browser.close();
+
     res.json({ success: true, schedule });
   } catch (error) {
     console.error('Error scraping schedule:', error);
-    res.status(500).send('An error occurred while fetching the schedule.');
+    res.status(500).send('Failed to scrape schedule.');
   }
 });
 
