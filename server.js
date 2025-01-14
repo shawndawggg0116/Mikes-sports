@@ -3,74 +3,60 @@ const puppeteer = require('puppeteer');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Default landing page
-app.get('/', (req, res) => {
-  res.send(`
-    <h1>Welcome to the NFL Schedule Scraper</h1>
-    <p>Use the following routes:</p>
-    <ul>
-      <li><a href="/scrape-schedule">/scrape-schedule</a> - Scrape NFL standings</li>
-      <li><a href="/schedule">/schedule</a> - View cached standings</li>
-    </ul>
-  `);
-});
-
-// Cache for storing scraped standings
-let standingsCache = [];
-
-// Scrape schedule route
-app.get('/scrape-schedule', async (req, res) => {
+app.get('/scrape-standings', async (req, res) => {
   try {
-    console.log('Starting to scrape NFL standings...');
-
+    console.log('Launching Puppeteer...');
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: false, // Use 'true' for deployment
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: 'C:/Users/shawn/Downloads/chrome-win/chrome-win/chrome', // Update to your correct path
+      executablePath: 'C:/Users/shawn/Downloads/chrome-win/chrome', // Your Chromium path
     });
 
     const page = await browser.newPage();
-    await page.goto('https://www.pro-football-reference.com/years/2024/');
+    console.log('Navigating to Pro-Football-Reference...');
+    await page.goto('https://www.pro-football-reference.com/years/2024/', { waitUntil: 'networkidle2' });
 
-    const standingsData = await page.evaluate(() => {
-      const standings = [];
-      const rows = document.querySelectorAll('table.stats_table tbody tr');
+    console.log('Waiting for standings tables...');
+    await page.waitForSelector('table.stats_table', { timeout: 10000 });
 
-      rows.forEach((row) => {
-        const team = row.querySelector('th[data-stat="team"] a')?.innerText || '';
-        const wins = row.querySelector('td[data-stat="wins"]')?.innerText || '';
-        const losses = row.querySelector('td[data-stat="losses"]')?.innerText || '';
+    console.log('Extracting standings...');
+    const standings = await page.evaluate(() => {
+      const extractTeamData = (tableSelector) => {
+        const table = document.querySelector(tableSelector);
+        if (!table) return null;
 
-        if (team) {
-          standings.push({ team, wins, losses });
-        }
-      });
+        const rows = table.querySelectorAll('tbody tr');
+        const data = [];
+        rows.forEach(row => {
+          const teamName = row.querySelector('th[data-stat="team"] a')?.innerText || 'N/A';
+          const wins = row.querySelector('td[data-stat="wins"]')?.innerText || '0';
+          const losses = row.querySelector('td[data-stat="losses"]')?.innerText || '0';
+          data.push({ team: teamName, wins, losses });
+        });
+        return data;
+      };
 
-      return standings;
+      return {
+        AFC: extractTeamData('table#AFC_standings'),
+        NFC: extractTeamData('table#NFC_standings'),
+      };
     });
 
+    console.log('Closing browser...');
     await browser.close();
 
-    standingsCache = standingsData; // Cache the scraped standings
-    console.log('Scraped standings successfully:', standingsData);
+    if (!standings || !standings.AFC || !standings.NFC) {
+      throw new Error('Failed to extract standings data.');
+    }
 
-    res.json({ success: true, standings: standingsData });
+    console.log('Standings successfully extracted:', standings);
+    res.json({ success: true, standings });
   } catch (error) {
     console.error('Error scraping standings:', error.message);
-    res.status(500).send('An error occurred while fetching the standings.');
+    res.status(500).json({ success: false, message: 'Failed to scrape standings.' });
   }
 });
 
-// View cached schedule route
-app.get('/schedule', (req, res) => {
-  if (standingsCache.length === 0) {
-    res.send('No standings data available. Please try again later.');
-  } else {
-    res.json({ success: true, standings: standingsCache });
-  }
-});
-
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
