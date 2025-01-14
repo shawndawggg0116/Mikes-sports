@@ -379,5 +379,39 @@ async function scrapeNFLSchedule() {
 scrapeNFLSchedule();
 cron.schedule('0 */6 * * *', scrapeNFLSchedule);
 
+async function scrapeNFLSchedule() {
+  try {
+    const url = 'https://www.nfl.com/schedules/';
+    console.log('Fetching NFL schedule from:', url);
+
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    const schedule = [];
+    $('.nfl-o-matchup-group').each((i, el) => {
+      const week = $(el).find('.d3-o-section-title').text().trim() || `Week ${i + 1}`;
+      $(el).find('.nfl-c-matchup-strip').each((j, game) => {
+        const homeTeam = $(game).find('.nfl-c-matchup-strip__team-fullname--home').text().trim();
+        const awayTeam = $(game).find('.nfl-c-matchup-strip__team-fullname--away').text().trim();
+        const status = $(game).find('.nfl-c-matchup-strip__date').text().trim();
+
+        if (homeTeam && awayTeam) {
+          schedule.push({ week, homeTeam, awayTeam, status: status || 'Pending' });
+        }
+      });
+    });
+
+    if (schedule.length === 0) {
+      console.error('No games found: Check the scraper logic or website structure.');
+    } else {
+      console.log('Scraped schedule:', schedule);
+    }
+
+    cachedSchedule = schedule;
+  } catch (error) {
+    console.error('Error scraping NFL schedule:', error.message);
+  }
+}
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
