@@ -7,13 +7,25 @@ puppeteer.use(StealthPlugin());
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Root route
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>Welcome to the NFL Schedule Scraper</h1>
+    <p>Use the following routes:</p>
+    <ul>
+      <li><a href="/scrape-schedule">/scrape-schedule</a> - Scrape NFL schedule</li>
+      <li><a href="/schedule">/schedule</a> - View cached schedule</li>
+    </ul>
+  `);
+});
+
 // Route to scrape the schedule
 app.get('/scrape-schedule', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: '/usr/bin/google-chrome-stable', // Adjust to your Render environment's Chrome path
+      executablePath: '/usr/bin/google-chrome-stable', // Adjust this to the correct path
     });
 
     const page = await browser.newPage();
