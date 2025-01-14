@@ -8,6 +8,8 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 const puppeteer = require('puppeteer');
 
+process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
