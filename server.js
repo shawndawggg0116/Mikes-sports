@@ -20,6 +20,7 @@ app.get('/scrape-schedule', async (req, res) => {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: 'C:/Users/shawn/fakesite/chrome-win/chrome.exe', // Adjusted path
     });
     const page = await browser.newPage();
 
@@ -62,13 +63,6 @@ app.get('/schedule', (req, res) => {
   }
   res.json(cachedSchedule);
 });
-
-const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    executablePath: 'C:\\path\\to\\chromium\\chrome.exe', // Update this to your actual Chromium path
-  });
-  
 
 // Start the server
 app.listen(PORT, () => {
