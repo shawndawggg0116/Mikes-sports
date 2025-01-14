@@ -100,10 +100,14 @@
       </li>
     </ul>
     
-    <div id="live-schedule">
-      <h2>Live NFL Game Schedules</h2>
-    </div>
-    
+    // New route for live schedule data
+app.get('/live-schedule', (req, res) => {
+  if (cachedSchedule.length === 0) {
+    return res.status(503).send('Live schedule data is not available yet. Please try again later.');
+  }
+  res.json(cachedSchedule);
+});
+
 
     <p>Good Luck and Have Fun!</p>
   </div>
