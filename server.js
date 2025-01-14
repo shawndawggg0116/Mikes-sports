@@ -118,56 +118,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/get-logged-in-user', (req, res) => {
-  if (!req.session || !req.session.username) {
-    return res.status(401).send({ error: 'User not logged in' });
-  }
-  res.send({ username: req.session.username });
-});
-
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
-app.get('/get-picked-teams', async (req, res) => {
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).send({ success: false, message: 'Username is required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching picked teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
-  }
-});
-
-app.get('/get-leaderboard', async (req, res) => {
-  try {
-    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).send('Error fetching leaderboard.');
-  }
-});
-
-// Admin Routes
+// Admin functionalities
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
@@ -214,33 +165,17 @@ app.post('/admin/update-points', async (req, res) => {
   }
 });
 
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  if (!username) {
-    return res.status(400).send('Username is required.');
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
-// Puppeteer scraper for live schedules
+// Puppeteer-based scraper for live schedules
 async function scrapeNFLSchedule() {
   try {
     const url = 'https://www.nfl.com/schedules/';
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    console.log('Fetching NFL schedule from:', url);
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'domcontentloaded' });
 
@@ -252,22 +187,32 @@ async function scrapeNFLSchedule() {
           const homeTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--home')?.innerText.trim();
           const awayTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--away')?.innerText.trim();
           const status = game.querySelector('.nfl-c-matchup-strip__date')?.innerText.trim();
-          if (homeTeam && awayTeam) scheduleData.push({ week, homeTeam, awayTeam, status });
+
+          if (homeTeam && awayTeam) {
+            scheduleData.push({ week, homeTeam, awayTeam, status: status || 'Pending' });
+          }
         });
       });
       return scheduleData;
     });
 
     await browser.close();
+
+    if (schedule.length === 0) {
+      console.error('No games found: Check the scraper logic or website structure.');
+    } else {
+      console.log('Scraped schedule:', schedule);
+    }
+
     cachedSchedule = schedule;
   } catch (error) {
     console.error('Error scraping NFL schedule:', error.message);
   }
 }
 
-// Scrape on startup and every 6 hours
+// Run scraper initially and schedule it to run every 6 hours
 scrapeNFLSchedule();
 cron.schedule('0 */6 * * *', scrapeNFLSchedule);
 
-// Start server
+// Server start
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
