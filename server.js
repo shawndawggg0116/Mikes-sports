@@ -1,4 +1,3 @@
-// Import necessary modules
 const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -6,49 +5,42 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 const app = express();
-const PORT = 5000;
-let cachedSchedule = [];
+const PORT = process.env.PORT || 5000;
 
-// Route to scrape the NFL schedule
+// Route to scrape the schedule
 app.get('/scrape-schedule', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: 'C:/Users/shawn/Downloads/chrome-win/chrome.exe' // Update with your Chrome path
+      executablePath: '/usr/bin/google-chrome-stable', // Adjust to your Render environment's Chrome path
     });
 
     const page = await browser.newPage();
-    await page.goto('https://www.espn.com/nfl/schedule', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'load', timeout: 0 });
 
+    // Scrape schedule data
     const schedule = await page.evaluate(() => {
-      const games = [];
-      document.querySelectorAll('.Table__TR--sm').forEach((row) => {
-        const teams = row.querySelector('.Table__TD')?.innerText;
-        const time = row.querySelector('.nfl-cp-schedule__time')?.innerText;
-        if (teams && time) {
-          games.push({ teams, time });
-        }
+      const data = [];
+      document.querySelectorAll('.schedule-list').forEach((item) => {
+        data.push(item.innerText);
       });
-      return games;
+      return data;
     });
 
-    cachedSchedule = schedule;
+    console.log('Schedule scraped successfully:', schedule);
     await browser.close();
 
     res.json({ success: true, schedule });
   } catch (error) {
     console.error('Error scraping schedule:', error);
-    res.status(500).send('Failed to scrape schedule.');
+    res.status(500).send('An error occurred while fetching the schedule.');
   }
 });
 
-// Route to get the cached schedule
+// Route to get cached schedule (if you have caching logic)
 app.get('/schedule', (req, res) => {
-  if (cachedSchedule.length === 0) {
-    return res.status(503).send('No schedule data available. Please try again later.');
-  }
-  res.json(cachedSchedule);
+  res.status(503).send('No schedule data available. Please try again later.');
 });
 
 // Start the server
