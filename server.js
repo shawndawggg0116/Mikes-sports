@@ -460,9 +460,7 @@ async function scrapeNFLSchedule() {
     }
 }
 
-"scripts": {
-  "postinstall": "npx puppeteer install"
-}
+
 process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
 
 const browser = await puppeteer.launch({
