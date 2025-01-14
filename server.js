@@ -50,8 +50,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Live schedule route
-let cachedSchedule = [];
+// Route for live game schedule data
 app.get('/live-schedule', (req, res) => {
   if (cachedSchedule.length === 0) {
     return res.status(503).send('Live schedule data is not available yet. Please try again later.');
@@ -118,101 +117,125 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Admin functionalities
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
 });
 
-app.post('/admin/delete-user', async (req, res) => {
-  const { username } = req.body;
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+app.get('/rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+app.get('/get-picked-teams', async (req, res) => {
+  const { username } = req.query;
 
   if (!username) {
-    return res.status(400).send('Username is required.');
-  }
-
-  try {
-    const user = await User.findOneAndDelete({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    res.send('User deleted successfully!');
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send('Error deleting user.');
-  }
-});
-
-app.post('/admin/update-points', async (req, res) => {
-  const { username, points } = req.body;
-
-  if (!username || points === undefined) {
-    return res.status(400).send('Username and points are required.');
+    return res.status(400).send({ success: false, message: 'Username is required.' });
   }
 
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
-    user.points = points;
-    await user.save();
-    res.send('Points updated successfully!');
+    res.send({ success: true, pickedTeams: user.pickedTeams });
   } catch (error) {
-    console.error('Error updating points:', error);
-    res.status(500).send('Error updating points.');
+    console.error('Error fetching picked teams:', error);
+    res.status(500).send({ success: false, message: 'Error fetching picked teams.' });
   }
 });
 
-// Puppeteer-based scraper for live schedules
-async function scrapeNFLSchedule() {
+app.get('/get-leaderboard', async (req, res) => {
   try {
-    const url = 'https://www.nfl.com/schedules/';
-    console.log('Fetching NFL schedule from:', url);
+    const users = await User.find({}, 'username selectedTeam points').sort({ points: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).send('Error fetching leaderboard.');
+  }
+});
 
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found.' });
+    }
+
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
+    }
+
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
+    user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
+    await user.save();
+
+    res.send({ success: true, message: `You picked ${team}` });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
+  }
+});
+
+// Puppeteer Integration Example
+async function scrapeWithPuppeteer() {
+  try {
     const browser = await puppeteer.launch({
-      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
-
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+    await page.goto('https://www.nfl.com/schedules/', { waitUntil: 'domcontentloaded' });
 
     const schedule = await page.evaluate(() => {
       const scheduleData = [];
       document.querySelectorAll('.nfl-o-matchup-group').forEach(group => {
-        const week = group.querySelector('.d3-o-section-title')?.innerText.trim() || 'Unknown Week';
+        const week = group.querySelector('.d3-o-section-title')?.innerText.trim();
         group.querySelectorAll('.nfl-c-matchup-strip').forEach(game => {
           const homeTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--home')?.innerText.trim();
           const awayTeam = game.querySelector('.nfl-c-matchup-strip__team-fullname--away')?.innerText.trim();
           const status = game.querySelector('.nfl-c-matchup-strip__date')?.innerText.trim();
 
           if (homeTeam && awayTeam) {
-            scheduleData.push({ week, homeTeam, awayTeam, status: status || 'Pending' });
+            scheduleData.push({ week, homeTeam, awayTeam, status });
           }
         });
       });
       return scheduleData;
     });
 
+    console.log('Scraped schedule:', schedule);
     await browser.close();
-
-    if (schedule.length === 0) {
-      console.error('No games found: Check the scraper logic or website structure.');
-    } else {
-      console.log('Scraped schedule:', schedule);
-    }
-
-    cachedSchedule = schedule;
   } catch (error) {
-    console.error('Error scraping NFL schedule:', error.message);
+    console.error('Error scraping with Puppeteer:', error);
   }
 }
 
-// Run scraper initially and schedule it to run every 6 hours
-scrapeNFLSchedule();
-cron.schedule('0 */6 * * *', scrapeNFLSchedule);
+// Example of scheduling Puppeteer scrape
+cron.schedule('0 */6 * * *', scrapeWithPuppeteer);
 
-// Server start
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
