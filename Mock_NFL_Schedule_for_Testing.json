@@ -1,0 +1,2017 @@
+[
+    {
+        "week": 1,
+        "games": [
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-01-16",
+                "time": "15:45:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-01-16",
+                "time": "17:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-01-16",
+                "time": "20:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-01-16",
+                "time": "19:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-01-16",
+                "time": "17:00:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-01-19",
+                "time": "17:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-01-19",
+                "time": "15:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "New York Jets",
+                "date": "2025-01-19",
+                "time": "14:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-01-19",
+                "time": "17:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "New England Patriots",
+                "date": "2025-01-19",
+                "time": "19:30:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-01-20",
+                "time": "20:30:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-01-20",
+                "time": "18:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-01-20",
+                "time": "20:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "New England Patriots",
+                "date": "2025-01-20",
+                "time": "15:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-01-20",
+                "time": "17:30:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-01-23",
+                "time": "17:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 2,
+        "games": [
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-01-23",
+                "time": "18:00:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-01-23",
+                "time": "16:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-01-23",
+                "time": "17:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-01-23",
+                "time": "20:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-01-26",
+                "time": "13:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-01-26",
+                "time": "20:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-01-26",
+                "time": "16:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-01-26",
+                "time": "18:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-01-26",
+                "time": "13:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-01-27",
+                "time": "19:00:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-01-27",
+                "time": "20:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-01-27",
+                "time": "20:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-01-27",
+                "time": "13:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-01-27",
+                "time": "18:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-01-30",
+                "time": "17:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "New York Jets",
+                "date": "2025-01-30",
+                "time": "20:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 3,
+        "games": [
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "New England Patriots",
+                "date": "2025-01-30",
+                "time": "15:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-01-30",
+                "time": "17:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "New York Jets",
+                "date": "2025-01-30",
+                "time": "18:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-02-02",
+                "time": "19:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-02-02",
+                "time": "16:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-02",
+                "time": "14:45:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "New England Patriots",
+                "date": "2025-02-02",
+                "time": "15:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-02-02",
+                "time": "15:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-02-03",
+                "time": "15:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-03",
+                "time": "17:00:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-02-03",
+                "time": "20:15:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-03",
+                "time": "14:15:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-02-03",
+                "time": "20:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-02-06",
+                "time": "16:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-02-06",
+                "time": "18:15:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-06",
+                "time": "19:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 4,
+        "games": [
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "New England Patriots",
+                "date": "2025-02-06",
+                "time": "13:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-06",
+                "time": "14:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-02-09",
+                "time": "14:00:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-02-09",
+                "time": "15:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-02-09",
+                "time": "16:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "New York Jets",
+                "date": "2025-02-09",
+                "time": "13:30:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-02-09",
+                "time": "19:45:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-02-10",
+                "time": "16:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-10",
+                "time": "13:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-02-10",
+                "time": "13:45:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-02-10",
+                "time": "13:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-02-10",
+                "time": "14:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-13",
+                "time": "18:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-02-13",
+                "time": "15:15:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-13",
+                "time": "16:15:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-13",
+                "time": "16:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 5,
+        "games": [
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-13",
+                "time": "17:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-16",
+                "time": "13:15:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-16",
+                "time": "20:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-02-16",
+                "time": "18:15:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "New England Patriots",
+                "date": "2025-02-16",
+                "time": "16:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-02-16",
+                "time": "14:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-02-17",
+                "time": "16:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-02-17",
+                "time": "16:30:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-17",
+                "time": "14:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-17",
+                "time": "14:00:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-02-17",
+                "time": "16:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-02-20",
+                "time": "15:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-02-20",
+                "time": "15:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-02-20",
+                "time": "20:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-02-20",
+                "time": "18:00:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "New York Jets",
+                "date": "2025-02-20",
+                "time": "14:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 6,
+        "games": [
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-02-23",
+                "time": "15:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-02-23",
+                "time": "20:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-02-23",
+                "time": "20:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-02-23",
+                "time": "16:30:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-02-23",
+                "time": "18:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-02-24",
+                "time": "14:45:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-02-24",
+                "time": "16:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-02-24",
+                "time": "13:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-02-24",
+                "time": "18:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-02-24",
+                "time": "15:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-02-27",
+                "time": "16:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-02-27",
+                "time": "14:00:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-27",
+                "time": "15:45:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-02-27",
+                "time": "16:30:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-02-27",
+                "time": "18:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-03-02",
+                "time": "14:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 7,
+        "games": [
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-02",
+                "time": "20:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-03-02",
+                "time": "14:00:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-02",
+                "time": "13:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-02",
+                "time": "13:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-03-03",
+                "time": "16:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Washington Commanders",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-03-03",
+                "time": "13:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-03",
+                "time": "19:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-03-03",
+                "time": "19:00:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-03-03",
+                "time": "16:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-03-06",
+                "time": "19:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-03-06",
+                "time": "14:15:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-06",
+                "time": "14:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-03-06",
+                "time": "15:15:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "New York Jets",
+                "date": "2025-03-06",
+                "time": "13:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-03-09",
+                "time": "14:00:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-03-09",
+                "time": "20:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 8,
+        "games": [
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-09",
+                "time": "14:45:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-03-09",
+                "time": "20:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-09",
+                "time": "19:30:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-10",
+                "time": "16:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-10",
+                "time": "18:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-03-10",
+                "time": "20:30:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-03-10",
+                "time": "17:00:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-03-10",
+                "time": "13:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "New York Jets",
+                "date": "2025-03-13",
+                "time": "13:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "New England Patriots",
+                "date": "2025-03-13",
+                "time": "17:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-03-13",
+                "time": "18:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-03-13",
+                "time": "15:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-13",
+                "time": "14:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-03-16",
+                "time": "18:45:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-03-16",
+                "time": "18:30:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-16",
+                "time": "19:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 9,
+        "games": [
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-03-16",
+                "time": "16:45:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-03-16",
+                "time": "18:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-03-17",
+                "time": "17:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-17",
+                "time": "19:30:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-17",
+                "time": "14:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-17",
+                "time": "14:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "New England Patriots",
+                "date": "2025-03-17",
+                "time": "20:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-20",
+                "time": "13:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Washington Commanders",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-03-20",
+                "time": "18:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Washington Commanders",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-20",
+                "time": "20:30:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Washington Commanders",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-20",
+                "time": "13:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "San Francisco 49ers",
+                "date": "2025-03-20",
+                "time": "13:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-23",
+                "time": "18:30:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Los Angeles Rams",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-03-23",
+                "time": "17:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Buffalo Bills",
+                "date": "2025-03-23",
+                "time": "14:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-23",
+                "time": "14:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 10,
+        "games": [
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-03-23",
+                "time": "14:15:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-24",
+                "time": "16:45:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-03-24",
+                "time": "18:45:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-24",
+                "time": "18:15:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-03-24",
+                "time": "15:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Green Bay Packers",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-03-24",
+                "time": "14:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-03-27",
+                "time": "20:15:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-03-27",
+                "time": "19:30:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-27",
+                "time": "14:15:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-03-27",
+                "time": "15:30:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Green Bay Packers",
+                "date": "2025-03-27",
+                "time": "20:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-03-30",
+                "time": "13:45:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-30",
+                "time": "19:30:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-03-30",
+                "time": "16:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-30",
+                "time": "13:30:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-03-30",
+                "time": "18:15:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 11,
+        "games": [
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "New York Jets",
+                "date": "2025-03-31",
+                "time": "15:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-03-31",
+                "time": "14:45:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Chicago Bears",
+                "date": "2025-03-31",
+                "time": "18:15:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "New York Jets",
+                "date": "2025-03-31",
+                "time": "20:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Washington Commanders",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-03-31",
+                "time": "20:15:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-04-03",
+                "time": "17:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Carolina Panthers",
+                "date": "2025-04-03",
+                "time": "20:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-04-03",
+                "time": "16:45:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New England Patriots",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-04-03",
+                "time": "20:15:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-04-03",
+                "time": "15:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Arizona Cardinals",
+                "date": "2025-04-06",
+                "time": "19:30:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-04-06",
+                "time": "19:15:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Miami Dolphins",
+                "awayTeam": "Detroit Lions",
+                "date": "2025-04-06",
+                "time": "19:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Baltimore Ravens",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-04-06",
+                "time": "18:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cleveland Browns",
+                "awayTeam": "New York Jets",
+                "date": "2025-04-06",
+                "time": "14:30:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-04-07",
+                "time": "18:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 12,
+        "games": [
+            {
+                "homeTeam": "Minnesota Vikings",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-04-07",
+                "time": "13:30:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Cleveland Browns",
+                "date": "2025-04-07",
+                "time": "16:30:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-04-07",
+                "time": "14:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Detroit Lions",
+                "awayTeam": "Seattle Seahawks",
+                "date": "2025-04-07",
+                "time": "18:45:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-04-10",
+                "time": "16:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Arizona Cardinals",
+                "awayTeam": "New England Patriots",
+                "date": "2025-04-10",
+                "time": "15:45:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-04-10",
+                "time": "16:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "New England Patriots",
+                "date": "2025-04-10",
+                "time": "17:45:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Pittsburgh Steelers",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-04-10",
+                "time": "16:00:00",
+                "location": "Hard Rock Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Seattle Seahawks",
+                "awayTeam": "Baltimore Ravens",
+                "date": "2025-04-13",
+                "time": "19:30:00",
+                "location": "Bank of America Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Buffalo Bills",
+                "awayTeam": "Washington Commanders",
+                "date": "2025-04-13",
+                "time": "18:00:00",
+                "location": "U.S. Bank Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "San Francisco 49ers",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-04-13",
+                "time": "20:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Cincinnati Bengals",
+                "date": "2025-04-13",
+                "time": "20:30:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-04-13",
+                "time": "13:15:00",
+                "location": "State Farm Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Cincinnati Bengals",
+                "awayTeam": "Los Angeles Rams",
+                "date": "2025-04-14",
+                "time": "20:00:00",
+                "location": "Lambeau Field",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "Pittsburgh Steelers",
+                "date": "2025-04-14",
+                "time": "14:45:00",
+                "location": "SoFi Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    },
+    {
+        "week": 13,
+        "games": [
+            {
+                "homeTeam": "Carolina Panthers",
+                "awayTeam": "Minnesota Vikings",
+                "date": "2025-04-14",
+                "time": "19:00:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "Chicago Bears",
+                "awayTeam": "New England Patriots",
+                "date": "2025-04-14",
+                "time": "16:30:00",
+                "location": "Levi's Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            },
+            {
+                "homeTeam": "New York Jets",
+                "awayTeam": "Miami Dolphins",
+                "date": "2025-04-14",
+                "time": "15:15:00",
+                "location": "Highmark Stadium",
+                "status": "Scheduled",
+                "homeTeamScore": null,
+                "awayTeamScore": null
+            }
+        ]
+    }
+]
