@@ -5,15 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
-
-  <nav>
-    <a href="/teams">Team Selection</a>
-    <a href="/leaderboard">Leaderboard</a>
-    <a href="/rules">Rules</a>
-    <a href="/schedule">Schedule</a> <!-- New link for Schedule -->
-  </nav>
-  
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -155,54 +146,7 @@
             }
           });
       }
-      
     });
-    
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
-
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
-
-    const now = new Date();
-    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-
-    // Ensure one team pick per week
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
-    }
-
-    user.selectedTeam = team;
-    user.pickedTeams.push(team);
-    user.lastPickDate = now;
-    await user.save();
-
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
-});
-
-
-    
   </script>
-  <script src="teams.js" defer></script>
-  <div id="team-selection"></div>
-
-
 </body>
-
 </html>

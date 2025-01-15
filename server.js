@@ -7,15 +7,12 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
-
-  mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    dbName: 'nfl-picks-app', // Ensure this matches your target database
-    serverSelectionTimeoutMS: 30000 // Optional for connection timeout
-  });
-  
+// MongoDB connection
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
 app.use(express.json());
@@ -41,33 +38,6 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
-
-// Schedule schema
-const scheduleSchema = new mongoose.Schema({
-  week: { type: Number, required: true },
-  games: [
-    {
-      homeTeam: { type: String, required: true },
-      awayTeam: { type: String, required: true },
-      date: { type: String, required: true },
-      time: { type: String, required: true },
-      location: { type: String, required: true },
-      status: { type: String, default: "Scheduled" },
-      homeTeamScore: { type: Number, default: null },
-      awayTeamScore: { type: Number, default: null },
-    },
-  ],
-});
-
-const Schedule = mongoose.model('Schedule', scheduleSchema);
-
-mongoose.connect(process.env.MONGO_URI, 
-   {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000 // 30 seconds
-});
-
 
 // Routes
 
@@ -188,24 +158,6 @@ app.get('/get-leaderboard', async (req, res) => {
   }
 });
 
-// Fetch schedule for a specific week
-app.get('/schedules/:week', async (req, res) => {
-  const { week } = req.params;
-
-  try {
-    const schedule = await Schedule.findOne({ week: parseInt(week) });
-    if (!schedule) {
-      return res.status(404).send({ success: false, message: 'Schedule not found.' });
-    }
-
-    res.send({ success: true, schedule });
-  } catch (error) {
-    console.error('Error fetching schedule:', error);
-    res.status(500).send('Error fetching schedule.');
-  }
-});
-
-
 // Handle team selection
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
@@ -316,46 +268,6 @@ app.post('/admin/unlock-teams', async (req, res) => {
   }
 });
 
-// Reset all users' weekly picks (admin-only)
-app.post('/admin/reset-weekly-picks', async (req, res) => {
-  try {
-    await User.updateMany({}, { $set: { weeklyPicks: [], selectedTeam: null } });
-    res.send('Weekly picks reset successfully!');
-  } catch (error) {
-    console.error('Error resetting weekly picks:', error);
-    res.status(500).send('Error resetting weekly picks.');
-  }
-});
-
-// Update game statuses dynamically
-app.post('/admin/update-game-statuses', async (req, res) => {
-  const now = new Date();
-
-  try {
-    const schedules = await Schedule.find();
-
-    schedules.forEach(async (week) => {
-      week.games.forEach((game) => {
-        const gameTime = new Date(`${game.date}T${game.time}`);
-
-        if (now >= gameTime && game.status === "Scheduled") {
-          game.status = "Playing";
-        } else if (now > gameTime.getTime() + 3 * 60 * 60 * 1000) { // Assume games last 3 hours
-          game.status = "Completed";
-        }
-      });
-
-      await week.save();
-    });
-
-    res.send('Game statuses updated successfully!');
-  } catch (error) {
-    console.error('Error updating game statuses:', error);
-    res.status(500).send('Error updating game statuses.');
-  }
-});
-
-
 // Delete a user
 app.post('/admin/delete-user', async (req, res) => {
   const { username } = req.body;
@@ -369,20 +281,18 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-const cron = require('node-cron');
+const Schedule = require("./models/Schedule"); // Adjust path if needed
 
-// Weekly reset every Tuesday at midnight
-cron.schedule('0 0 * * 2', async () => {
+app.get("/current-schedule", async (req, res) => {
   try {
-    // Reset weekly picks
-    await User.updateMany({}, { $set: { weeklyPicks: [], selectedTeam: null } });
+    const now = new Date();
+    const week = Math.ceil((now - new Date("2025-01-01")) / (7 * 24 * 60 * 60 * 1000)); // Example calculation
+    const schedule = await Schedule.find({ week }); // Ensure your `Schedule` model uses `week`
 
-    // Reset game statuses for the new week
-    await Schedule.updateMany({}, { $set: { "games.$[].status": "Scheduled" } });
-
-    console.log('Weekly reset completed!');
+    res.json(schedule);
   } catch (error) {
-    console.error('Error during weekly reset:', error);
+    console.error("Error fetching current schedule:", error);
+    res.status(500).json({ message: "Error fetching schedule" });
   }
 });
 
