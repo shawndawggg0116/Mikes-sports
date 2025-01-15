@@ -27,7 +27,7 @@ app.use(
 );
 
 // User schema
-({
+const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   selectedTeam: { type: String, default: null },
@@ -280,8 +280,6 @@ app.post('/admin/delete-user', async (req, res) => {
     res.status(500).send('Error deleting user.');
   }
 });
-
-
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
