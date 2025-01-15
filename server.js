@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const cron = require('node-cron');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -310,6 +312,24 @@ const updateGameStatus = require('./update_game_status'); // Path to your update
 cron.schedule('*/15 * * * *', () => {
   console.log('Running cron job: Updating game statuses...');
   updateGameStatus(); // Call the function to update statuses
+});
+
+const MongoStore = require('connect-mongo');
+app.use(
+  session({
+    secret: 'your-secret-key', // Replace 'your-secret-key' with a strong secret key.
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+      mongoUrl: "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+      collectionName: 'sessions',
+    }),
+  })
+);
+
+cron.schedule('*/15 * * * *', () => {
+  console.log('Running cron job: Updating game statuses...');
+  updateGameStatus(); // Ensure this function is correctly implemented and imported
 });
 
 
