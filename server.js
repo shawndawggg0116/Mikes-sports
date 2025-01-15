@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const cron = require('node-cron');
+
 
 
 const app = express();
@@ -16,17 +16,6 @@ mongoose.connect(
 ).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
-app.use(
-  session({
-    secret: 'your-secret-key',
-    resave: false,
-    saveUninitialized: true,
-  })
-);
 
 // User schema
 const userSchema = new mongoose.Schema({
@@ -309,10 +298,10 @@ app.get("/current-schedule", async (req, res) => {
 const updateGameStatus = require('./update_game_status'); // Path to your update script
 
 // Schedule the job to run every 15 minutes
-cron.schedule('*/15 * * * *', () => {
+
   console.log('Running cron job: Updating game statuses...');
   updateGameStatus(); // Call the function to update statuses
-});
+
 
 const MongoStore = require('connect-mongo');
 app.use(
