@@ -8,6 +8,29 @@
   <style>
 
 .team.live {
+  animation: glow 1s infinite;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 1);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  }
+}
+
+.team.completed {
+  background-color: grey;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+
+.team.live {
   background-color: yellow;
   color: black;
   font-weight: bold;
@@ -171,6 +194,24 @@
           });
       }
     });
+
+    fetch('/current-schedule')
+  .then((response) => response.json())
+  .then((data) => {
+    data.games.forEach((game) => {
+      const teamDiv = document.querySelector(`[data-team="${game.homeTeam}"], [data-team="${game.awayTeam}"]`);
+      if (game.status === 'Live') {
+        teamDiv.classList.add('live');
+      } else if (game.status === 'Completed') {
+        teamDiv.classList.add('completed');
+      } else {
+        teamDiv.classList.remove('live', 'completed');
+      }
+    });
+  })
+  .catch((error) => console.error('Error fetching schedule:', error));
+
+
   </script>
 </body>
 </html>

@@ -304,6 +304,14 @@ app.get("/current-schedule", async (req, res) => {
 });
 
 
+const updateGameStatus = require('./update_game_status'); // Path to your update script
+
+// Schedule the job to run every 15 minutes
+cron.schedule('*/15 * * * *', () => {
+  console.log('Running cron job: Updating game statuses...');
+  updateGameStatus(); // Call the function to update statuses
+});
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
