@@ -20,12 +20,9 @@
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    h1 {
+    h1, h2 {
       text-align: center;
       color: #007bff;
-    }
-    h2 {
-      color: #333;
     }
     ul {
       padding-left: 20px;
@@ -39,17 +36,27 @@
       font-size: 14px;
       color: #555;
     }
-
-    
+    #game-schedule {
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #e6f7ff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    #game-schedule ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #game-schedule li {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-
   <h2>Game Schedule</h2>
-<div id="game-schedule">
-  <p>Loading the current week's schedule...</p>
-</div>
-
+  <div id="game-schedule">
+    <p>Loading the current week's schedule...</p>
+  </div>
 
   <div class="container">
     <h1>NFL Team Pick Game Rules and How to Play</h1>
@@ -111,5 +118,36 @@
     
     <p>Good Luck and Have Fun!</p>
   </div>
+
+  <script>
+    // Fetch and display the current week's schedule
+    async function fetchSchedule() {
+      try {
+        const response = await fetch('/current-schedule');
+        const schedule = await response.json();
+
+        const gameScheduleDiv = document.getElementById('game-schedule');
+        if (schedule.games && schedule.games.length > 0) {
+          gameScheduleDiv.innerHTML = '<ul>' + schedule.games.map(game => `
+            <li>
+              <strong>${game.homeTeam} vs ${game.awayTeam}</strong><br>
+              Date: ${game.date}<br>
+              Time: ${game.time}<br>
+              Location: ${game.location}<br>
+              Status: ${game.status}
+            </li>
+          `).join('') + '</ul>';
+        } else {
+          gameScheduleDiv.innerHTML = '<p>No games scheduled for this week.</p>';
+        }
+      } catch (error) {
+        console.error('Error fetching schedule:', error);
+        document.getElementById('game-schedule').innerHTML = '<p>Error loading the schedule.</p>';
+      }
+    }
+
+    // Call the function when the page loads
+    fetchSchedule();
+  </script>
 </body>
 </html>
