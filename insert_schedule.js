@@ -1,15 +1,8 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
 
-// MongoDB connection string (replace with your connection string)
-const MONGO_URI = 'your_mongodb_connection_string_here';
+const MONGO_URI = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority';
 
-// Connect to MongoDB
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch(err => console.error("Error connecting to MongoDB:", err));
-
-// Define the schema
 const scheduleSchema = new mongoose.Schema({
   week: { type: Number, required: true },
   games: [
@@ -28,16 +21,22 @@ const scheduleSchema = new mongoose.Schema({
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
-// Load the JSON data
-const scheduleData = JSON.parse(fs.readFileSync('./Mock_NFL_Schedule_for_Testing.json', 'utf8'));
-
-// Insert the data
-Schedule.insertMany(scheduleData)
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    console.log("NFL schedule inserted successfully!");
-    mongoose.connection.close();
+    console.log('Connected to MongoDB');
+    const data = JSON.parse(fs.readFileSync('./Mock_NFL_Schedule_for_Testing.json', 'utf8'));
+    console.log('Inserting schedule data:', data);
+
+    Schedule.insertMany(data)
+      .then(() => {
+        console.log('Schedule data inserted successfully!');
+        mongoose.connection.close();
+      })
+      .catch((err) => {
+        console.error('Error inserting schedule:', err);
+        mongoose.connection.close();
+      });
   })
-  .catch(err => {
-    console.error("Error inserting schedule:", err);
-    mongoose.connection.close();
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
   });
