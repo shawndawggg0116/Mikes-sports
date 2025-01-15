@@ -14,6 +14,13 @@ mongoose.connect(process.env.MONGO_URI, {
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+  mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: 'nfl-picks-app', // Ensure this matches your target database
+    serverSelectionTimeoutMS: 30000 // Optional for connection timeout
+  });
+  
 
 // Middleware
 app.use(express.json());
