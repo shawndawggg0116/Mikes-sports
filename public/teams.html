@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
+
+  <nav>
+    <a href="/teams">Team Selection</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/rules">Rules</a>
+    <a href="/schedule">Schedule</a> <!-- New link for Schedule -->
+  </nav>
+  
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -186,6 +195,7 @@ app.post('/select-team', async (req, res) => {
     res.status(500).send({ success: false, message: 'Error selecting team.' });
   }
 });
+
 
     
   </script>
