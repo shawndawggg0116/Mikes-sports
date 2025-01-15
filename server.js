@@ -285,16 +285,21 @@ const Schedule = require("./models/Schedule"); // Adjust path if needed
 
 app.get("/current-schedule", async (req, res) => {
   try {
-    const now = new Date();
-    const week = Math.ceil((now - new Date("2025-01-01")) / (7 * 24 * 60 * 60 * 1000)); // Example calculation
-    const schedule = await Schedule.find({ week }); // Ensure your `Schedule` model uses `week`
+      const now = new Date();
+      const week = Math.ceil((now - new Date("2025-01-01")) / (7 * 24 * 60 * 60 * 1000));
+      const schedule = await Schedule.findOne({ week }); // Ensure week is unique and matches in DB
 
-    res.json(schedule);
+      if (!schedule) {
+          return res.status(404).json({ message: "Schedule for the current week not found." });
+      }
+
+      res.json(schedule);
   } catch (error) {
-    console.error("Error fetching current schedule:", error);
-    res.status(500).json({ message: "Error fetching schedule" });
+      console.error("Error fetching current schedule:", error);
+      res.status(500).json({ message: "Error fetching schedule" });
   }
 });
+
 
 
 // Start the server
