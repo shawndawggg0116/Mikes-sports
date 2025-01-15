@@ -37,12 +37,8 @@
       color: white;
     }
     .team.disabled {
-      background-color: grey;
+      background-color: red;
       cursor: not-allowed;
-    }
-    .team.live {
-      border: 2px solid gold;
-      box-shadow: 0 0 10px gold;
     }
     button {
       padding: 10px 20px;
@@ -73,99 +69,84 @@
 
   <script>
     const teams = [
-      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals',
-      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts',
-      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings',
-      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers',
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
       'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
     ];
 
     let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
+    const usernameField = document.getElementById('username');
 
-    // Fetch the current schedule
-    async function fetchSchedule() {
-      try {
-        const scheduleResponse = await fetch('/current-schedule');
-        const scheduleData = await scheduleResponse.json();
-        const now = new Date();
+    // Fetch the logged-in username
+    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+      .then(response => response.json())
+      .then(data => {
+        usernameField.value = data.username;
 
-        renderTeams(scheduleData.games, now);
-      } catch (err) {
-        console.error('Error fetching schedule:', err);
-        alert('Error: Unable to load schedule data.');
-      }
-    }
+        // Fetch the user's picked teams from the server
+        fetch(`/get-picked-teams?username=${data.username}`)
+          .then(response => response.json())
+          .then(data => {
+            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
 
-    // Render the team buttons
-    function renderTeams(games, now) {
-      teams.forEach(team => {
-        const teamDiv = document.createElement('div');
-        teamDiv.textContent = team;
-        teamDiv.classList.add('team');
+            // Render teams
+            teams.forEach(team => {
+              const teamDiv = document.createElement('div');
+              teamDiv.textContent = team;
+              teamDiv.classList.add('team');
 
-        // Find the game's status
-        const game = games.find(g => g.homeTeam === team || g.awayTeam === team);
-        if (game) {
-          const gameTime = new Date(`${game.date}T${game.time}`);
-          const gameEnd = new Date(gameTime.getTime() + 3 * 60 * 60 * 1000); // 3-hour game duration
+              // If the team is already picked, disable it
+              if (pickedTeams.includes(team)) {
+                teamDiv.classList.add('disabled');
+              }
 
-          if (now > gameEnd) {
-            // Grey out for completed games
-            teamDiv.classList.add('disabled');
-            teamDiv.textContent += ' (Completed)';
-          } else if (now >= gameTime && now <= gameEnd) {
-            // Highlight for live games
-            teamDiv.classList.add('live');
-            teamDiv.textContent += ' (Live)';
-          }
-        }
+              teamDiv.addEventListener('click', () => {
+                if (!teamDiv.classList.contains('disabled')) {
+                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                  teamDiv.classList.add('selected');
+                  selectedTeam = team;
+                  submitButton.disabled = false;
+                }
+              });
 
-        teamDiv.addEventListener('click', () => {
-          if (!teamDiv.classList.contains('disabled') && !teamDiv.classList.contains('live')) {
-            document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-            teamDiv.classList.add('selected');
-            selectedTeam = team;
-            submitButton.disabled = false;
-          }
-        });
-
-        teamList.appendChild(teamDiv);
+              teamList.appendChild(teamDiv);
+            });
+          });
+      })
+      .catch(err => {
+        console.error('Error fetching username:', err);
+        alert('Error: Unable to fetch logged-in user.');
       });
-    }
 
     // Submit the selected team
-    submitButton.addEventListener('click', async () => {
-      const username = document.getElementById('username').value;
+    submitButton.addEventListener('click', () => {
+      const username = usernameField.value;
       if (selectedTeam && username) {
-        try {
-          const response = await fetch('/select-team', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, team: selectedTeam })
-          });
-
-          const data = await response.json();
-          if (data.success) {
-            alert(`You picked ${selectedTeam}`);
-            const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent.includes(selectedTeam));
-            if (selectedDiv) {
-              selectedDiv.classList.add('disabled');
-              selectedDiv.classList.remove('selected');
+        fetch('/select-team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, team: selectedTeam })
+        }).then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(`You picked ${selectedTeam}`);
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
+              submitButton.disabled = true;
+            } else {
+              alert(data.message);
             }
-            selectedTeam = null;
-            submitButton.disabled = true;
-          } else {
-            alert(data.message);
-          }
-        } catch (error) {
-          console.error('Error selecting team:', error);
-        }
+          });
       }
     });
-
-    fetchSchedule();
   </script>
 </body>
 </html>
