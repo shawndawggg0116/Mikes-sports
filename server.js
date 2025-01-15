@@ -286,17 +286,15 @@ const Schedule = require("./models/Schedule"); // Adjust path if needed
 app.get("/current-schedule", async (req, res) => {
   try {
     const now = new Date();
-    const week = Math.ceil((now - new Date("2025-01-01")) / (7 * 24 * 60 * 60 * 1000));
+    const startDate = new Date("2025-01-01"); // Adjust start of season if needed
+    const daysSinceStart = Math.floor((now - startDate) / (24 * 60 * 60 * 1000)); // Total days since season start
+    const week = Math.ceil((daysSinceStart + 1) / 7); // Add 1 to include the first day in Week 1
+
     const schedule = await Schedule.findOne({ week });
 
     if (!schedule) {
       return res.status(404).json({ message: "Schedule for the current week not found." });
     }
-
-    console.log("Fetched schedule times:");
-    schedule.games.forEach((game) => {
-      console.log(`Game: ${game.homeTeam} vs ${game.awayTeam}, Time: ${game.time}`);
-    });
 
     res.json(schedule);
   } catch (error) {
@@ -304,6 +302,7 @@ app.get("/current-schedule", async (req, res) => {
     res.status(500).json({ message: "Error fetching schedule" });
   }
 });
+
 
 
 // Start the server
