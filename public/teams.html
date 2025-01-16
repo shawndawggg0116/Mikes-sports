@@ -53,6 +53,11 @@
       background-color: #ccc;
       cursor: not-allowed;
     }
+    @keyframes glow {
+      0% { box-shadow: 0 0 5px yellow; }
+      50% { box-shadow: 0 0 20px yellow; }
+      100% { box-shadow: 0 0 5px yellow; }
+    }
   </style>
 </head>
 <body>
@@ -66,6 +71,7 @@
   <div class="team-list"></div>
   <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
   <button id="submitButton" disabled>Submit</button>
+  <div id="schedule"></div>
 
   <script>
     const teams = [
@@ -147,6 +153,43 @@
           });
       }
     });
+
+    // Load schedules and apply visual effects
+    async function loadTeams() {
+      try {
+        const response = await fetch('/teams');
+        const data = await response.json();
+
+        if (data.success) {
+          const scheduleContainer = document.getElementById('schedule');
+          scheduleContainer.innerHTML = ''; // Clear old content
+
+          data.schedules.forEach(schedule => {
+            schedule.games.forEach(game => {
+              const gameDiv = document.createElement('div');
+              gameDiv.textContent = `${game.home} vs ${game.away} - ${game.date} at ${game.time}`;
+
+              // Apply visual effects based on game status
+              if (game.status === 'Live') {
+                gameDiv.style.animation = 'glow 1s infinite';
+                gameDiv.style.cursor = 'not-allowed';
+              } else if (game.status === 'Completed') {
+                gameDiv.style.color = 'grey';
+                gameDiv.style.cursor = 'not-allowed';
+              } else {
+                gameDiv.style.color = 'black';
+              }
+
+              scheduleContainer.appendChild(gameDiv);
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading teams:', error);
+      }
+    }
+
+    loadTeams();
   </script>
 </body>
 </html>
