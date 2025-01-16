@@ -105,35 +105,8 @@ app.get('/get-logged-in-user', (req, res) => {
 });
 
 // Serve the team selection page
-app.get('/teams', async (req, res) => {
-  try {
-    const schedules = await Schedule.find({}); // Fetch schedule data
-    const now = new Date();
-    const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-
-    // Update game statuses dynamically
-    const updatedSchedules = schedules.map(schedule => {
-      schedule.games = schedule.games.map(game => {
-        const gameDate = new Date(`${game.date}T${game.time}Z`);
-        const gameEnd = new Date(gameDate.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours
-
-        if (estTime < gameDate) {
-          game.status = 'Scheduled';
-        } else if (estTime >= gameDate && estTime <= gameEnd) {
-          game.status = 'Live';
-        } else {
-          game.status = 'Completed';
-        }
-        return game;
-      });
-      return schedule;
-    });
-
-    res.json({ success: true, schedules: updatedSchedules }); // Send updated schedules
-  } catch (error) {
-    console.error('Error fetching schedules:', error);
-    res.status(500).send('Error fetching schedules.');
-  }
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
 // Serve the leaderboard page
