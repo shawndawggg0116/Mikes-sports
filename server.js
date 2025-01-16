@@ -284,13 +284,15 @@ cron.schedule('*/15 * * * *', () => {
 
 app.get('/get-schedule', async (req, res) => {
   try {
-    const schedule = await Schedule.find();
-    res.json(schedule);
+    const schedules = await Schedule.find();
+    const games = schedules.flatMap(schedule => schedule.games); // Extract all games
+    res.json(games);
   } catch (error) {
     console.error('Error fetching schedule:', error);
     res.status(500).send('Error fetching schedule.');
   }
 });
+
 
 
 // Start the server

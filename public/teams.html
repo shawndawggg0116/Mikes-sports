@@ -176,30 +176,35 @@
 <script>
  
 
-  fetch('/get-schedule')
-    .then(response => response.json())
-    .then(schedule => {
-      schedule.forEach(game => {
-        const teamDiv = document.createElement('div');
-        teamDiv.textContent = game.team; // Replace `game.team` with the correct field
-        teamDiv.classList.add('team');
+ fetch('/get-schedule')
+  .then(response => response.json())
+  .then(games => {
+    games.forEach(game => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = `${game.homeTeam} vs. ${game.awayTeam}`; // Display teams
+      teamDiv.classList.add('team');
 
-        const now = new Date();
-        const gameTime = new Date(game.date); // Replace `game.date` with the correct field
-        const endTime = new Date(gameTime.getTime() + 3 * 60 * 60 * 1000);
+      const now = new Date();
+      const gameDate = new Date(`${game.date}T${game.time}`); // Combine date and time
+      const endTime = new Date(gameDate.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours
 
-        if (now < gameTime) {
-          teamDiv.classList.add('upcoming');
-        } else if (now >= gameTime && now <= endTime) {
-          teamDiv.classList.add('live'); // Add glowing effect
-          teamDiv.style.animation = 'glow 1s infinite alternate';
-        } else {
-          teamDiv.classList.add('disabled'); // Greyed out
-        }
+      if (now < gameDate) {
+        teamDiv.classList.add('upcoming');
+      } else if (now >= gameDate && now <= endTime) {
+        teamDiv.classList.add('live');
+        teamDiv.style.animation = 'glow 1s infinite alternate'; // Glowing effect
+      } else {
+        teamDiv.classList.add('disabled'); // Greyed out
+        teamDiv.style.cursor = 'not-allowed';
+      }
 
-        teamList.appendChild(teamDiv);
-      });
+      document.querySelector('.team-list').appendChild(teamDiv);
     });
+  })
+  .catch(error => {
+    console.error('Error fetching schedule:', error);
+  });
+
 
   // CSS for glowing effect
   const style = document.createElement('style');

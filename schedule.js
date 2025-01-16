@@ -1,28 +1,19 @@
 const mongoose = require('mongoose');
-const Schedule = require('./models/schedule'); // Adjust the path as needed
 
-async function updateGameStatus() {
-  try {
-    const now = new Date();
-    const schedules = await Schedule.find();
+const gameSchema = new mongoose.Schema({
+  homeTeam: { type: String, required: true },
+  awayTeam: { type: String, required: true },
+  date: { type: String, required: true }, // Date in "YYYY-MM-DD"
+  time: { type: String, required: true }, // Time in "HH:mm:ss"
+  location: { type: String, required: true },
+  status: { type: String, default: 'Scheduled' },
+  homeTeamScore: { type: Number, default: null },
+  awayTeamScore: { type: Number, default: null },
+});
 
-    schedules.forEach(async (game) => {
-      const gameTime = new Date(game.date); // Ensure your `date` field is in UTC
-      const endTime = new Date(gameTime.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours
+const scheduleSchema = new mongoose.Schema({
+  week: { type: Number, required: true },
+  games: [gameSchema], // Array of games
+});
 
-      if (now < gameTime) {
-        game.status = 'upcoming'; // Game has not started yet
-      } else if (now >= gameTime && now <= endTime) {
-        game.status = 'live'; // Game is live
-      } else {
-        game.status = 'completed'; // Game has ended
-      }
-
-      await game.save();
-    });
-  } catch (error) {
-    console.error('Error updating game status:', error);
-  }
-}
-
-module.exports = updateGameStatus;
+module.exports = mongoose.model('Schedule', scheduleSchema);
