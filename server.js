@@ -282,5 +282,16 @@ cron.schedule('*/15 * * * *', () => {
   updateGameStatus();
 });
 
+app.get('/get-schedule', async (req, res) => {
+  try {
+    const schedule = await Schedule.find();
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    res.status(500).send('Error fetching schedule.');
+  }
+});
+
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
