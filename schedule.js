@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+const Schedule = require('./models/schedule');
+
+
 const gameSchema = new mongoose.Schema({
   homeTeam: { type: String, required: true },
   awayTeam: { type: String, required: true },
