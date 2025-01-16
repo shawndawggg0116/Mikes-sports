@@ -4,7 +4,8 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron');
-const Schedule = require('./Schedule');
+const Schedule = require('./models/Schedule');
+
 
 
 
