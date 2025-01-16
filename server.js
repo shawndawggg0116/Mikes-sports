@@ -4,8 +4,6 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron');
-const Schedule = require('./schedule'); // Adjust the path if necessary
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -283,19 +281,6 @@ cron.schedule('*/15 * * * *', () => {
   console.log('Updating game statuses...');
   updateGameStatus();
 });
-
-app.get('/get-schedule', async (req, res) => {
-  try {
-    const schedules = await Schedule.find();
-    const games = schedules.flatMap(schedule => schedule.games); // Extract all games
-    res.json(games);
-  } catch (error) {
-    console.error('Error fetching schedule:', error);
-    res.status(500).send('Error fetching schedule.');
-  }
-});
-
-
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
