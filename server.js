@@ -4,10 +4,6 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron');
-const Schedule = require('./models/Schedule');
-
-
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -109,50 +105,8 @@ app.get('/get-logged-in-user', (req, res) => {
 });
 
 // Serve the team selection page
-
-app.get('/teams', async (req, res) => {
-  try {
-    const teamsData = require('./data/Mock_NFL_Schedule_for_Testing.json');
-    res.render('teams', { teams: teamsData });
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams.');
-  }
-}); // Ensure proper closing braces
-
-        // Replace with actual logic or mock data
-        const teamsData = require('./data/Mock_NFL_Schedule_for_Testing.json');
-        res.render('teams', { teams: teamsData }); // Use your rendering logic
-    } catch (error) {
-        console.error('Error fetching teams:', error);
-        res.status(500).send('Error fetching teams.');
-    }
-});
-
-    // Update game statuses dynamically
-    const updatedSchedules = schedules.map(schedule => {
-      schedule.games = schedule.games.map(game => {
-        const gameDate = new Date(`${game.date}T${game.time}Z`);
-        const gameEnd = new Date(gameDate.getTime() + 3 * 60 * 60 * 1000);
-
-        if (currentEST < gameDate) {
-          game.status = 'Scheduled'; // Before game time
-        } else if (currentEST >= gameDate && currentEST <= gameEnd) {
-          game.status = 'Live'; // During game time
-        } else {
-          game.status = 'Completed'; // After game time
-        }
-        return game;
-      });
-      return schedule;
-    });
-
-    // Send the response including game statuses
-    res.json({ success: true, schedules: updatedSchedules });
-  } catch (error) {
-    console.error('Error fetching schedules:', error);
-    res.status(500).send('Error fetching schedules.');
-  }
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
 // Serve the leaderboard page
