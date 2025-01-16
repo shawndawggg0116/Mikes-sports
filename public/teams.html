@@ -6,6 +6,27 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px yellow;
+  }
+  to {
+    box-shadow: 0 0 15px yellow;
+  }
+}
+
+.live {
+  background-color: yellow;
+  animation: glow 1s infinite alternate;
+}
+
+.disabled {
+  background-color: grey;
+  cursor: not-allowed;
+}
+
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -122,6 +143,8 @@
         alert('Error: Unable to fetch logged-in user.');
       });
 
+      
+
     // Submit the selected team
     submitButton.addEventListener('click', () => {
       const username = usernameField.value;
@@ -147,6 +170,60 @@
           });
       }
     });
+    
   </script>
+
+<script>
+ 
+
+  fetch('/get-schedule')
+    .then(response => response.json())
+    .then(schedule => {
+      schedule.forEach(game => {
+        const teamDiv = document.createElement('div');
+        teamDiv.textContent = game.team; // Replace `game.team` with the correct field
+        teamDiv.classList.add('team');
+
+        const now = new Date();
+        const gameTime = new Date(game.date); // Replace `game.date` with the correct field
+        const endTime = new Date(gameTime.getTime() + 3 * 60 * 60 * 1000);
+
+        if (now < gameTime) {
+          teamDiv.classList.add('upcoming');
+        } else if (now >= gameTime && now <= endTime) {
+          teamDiv.classList.add('live'); // Add glowing effect
+          teamDiv.style.animation = 'glow 1s infinite alternate';
+        } else {
+          teamDiv.classList.add('disabled'); // Greyed out
+        }
+
+        teamList.appendChild(teamDiv);
+      });
+    });
+
+  // CSS for glowing effect
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px yellow;
+      }
+      to {
+        box-shadow: 0 0 15px yellow;
+      }
+    }
+    .live {
+      background-color: yellow;
+      animation: glow 1s infinite alternate;
+    }
+    .disabled {
+      background-color: grey;
+      cursor: not-allowed;
+    }
+  `;
+  document.head.appendChild(style);
+</script>
+
+
 </body>
 </html>
