@@ -1,18 +1,12 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const mongoose = require('./db'); // Centralized MongoDB connection
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// MongoDB connection
-mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-).then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
 app.use(express.json());
@@ -34,9 +28,8 @@ const userSchema = new mongoose.Schema({
   pickedTeams: { type: [String], default: [] },
   lastPickDate: { type: Date, default: null },
   points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
-
 const User = mongoose.model('User', userSchema);
 
 // Routes
@@ -279,6 +272,14 @@ app.post('/admin/delete-user', async (req, res) => {
     console.error('Error deleting user:', error);
     res.status(500).send('Error deleting user.');
   }
+});
+
+const updateGameStatus = require('./update_game_status');
+
+// Schedule game status updates
+cron.schedule('*/15 * * * *', () => {
+  console.log('Updating game statuses...');
+  updateGameStatus();
 });
 
 // Start the server
