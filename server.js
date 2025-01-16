@@ -110,11 +110,15 @@ app.get('/get-logged-in-user', (req, res) => {
 
 // Serve the team selection page
 app.get('/teams', async (req, res) => {
-  try {
-    const schedules = await Schedule.find({}); // Fetch schedules
-    const now = new Date();
-    const options = { timeZone: 'America/New_York' }; // Convert to EST
-    const currentEST = new Date(now.toLocaleString('en-US', options));
+    try {
+        // Replace with actual logic or mock data
+        const teamsData = require('./data/Mock_NFL_Schedule_for_Testing.json');
+        res.render('teams', { teams: teamsData }); // Use your rendering logic
+    } catch (error) {
+        console.error('Error fetching teams:', error);
+        res.status(500).send('Error fetching teams.');
+    }
+});
 
     // Update game statuses dynamically
     const updatedSchedules = schedules.map(schedule => {
