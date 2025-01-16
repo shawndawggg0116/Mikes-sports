@@ -109,8 +109,17 @@ app.get('/get-logged-in-user', (req, res) => {
 });
 
 // Serve the team selection page
+
 app.get('/teams', async (req, res) => {
-    try {
+  try {
+    const teamsData = require('./data/Mock_NFL_Schedule_for_Testing.json');
+    res.render('teams', { teams: teamsData });
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams.');
+  }
+}); // Ensure proper closing braces
+
         // Replace with actual logic or mock data
         const teamsData = require('./data/Mock_NFL_Schedule_for_Testing.json');
         res.render('teams', { teams: teamsData }); // Use your rendering logic
