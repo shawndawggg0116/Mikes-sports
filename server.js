@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron');
+const Schedule = require('./schedule'); // Adjust the path if necessary
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
