@@ -67,40 +67,7 @@
   <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
   <button id="submitButton" disabled>Submit</button>
 
-  
-    <script>
-    const updateTeamStyles = (schedule) => {
-      const now = new Date();
-      const estNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      const teamElements = document.querySelectorAll('.team');
-
-      schedule.forEach(game => {
-        const gameTime = new Date(game.time); // Expecting game.time in ISO 8601 format
-        const threeHoursBefore = new Date(gameTime.getTime() - 3 * 60 * 60 * 1000);
-        const threeHoursAfter = new Date(gameTime.getTime() + 3 * 60 * 60 * 1000);
-
-        teamElements.forEach(teamElement => {
-          if (teamElement.textContent === game.team) {
-            if (estNow >= threeHoursBefore && estNow <= threeHoursAfter) {
-              teamElement.classList.add('glowing');
-            } else if (estNow > threeHoursAfter) {
-              teamElement.classList.add('disabled');
-              teamElement.classList.remove('selected');
-              teamElement.style.cursor = 'not-allowed';
-            }
-          }
-        });
-      });
-    };
-
-    // Fetch the game schedule from the server
-    fetch('/fetch-schedule')
-      .then(response => response.json())
-      .then(schedule => {
-        updateTeamStyles(schedule);
-      })
-      .catch(err => console.error('Error fetching schedule:', err));
-    
+  <script>
     const teams = [
       'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
       'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
