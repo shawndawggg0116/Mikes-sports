@@ -1,4 +1,3 @@
-
 const express = require('express');
 const mongoose = require('./db'); // Centralized MongoDB connection
 const bcrypt = require('bcrypt');
@@ -286,23 +285,41 @@ cron.schedule('*/15 * * * *', () => {
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+// Define the Schedule schema and model if not already defined
+const mongoose = require('mongoose');
 
-// Additional route to fetch current game schedules with glowing/grey-out logic
-app.get('/api/games', async (req, res) => {
-    try {
-        const currentWeek = getCurrentWeek();
-        const schedules = await Schedule.findOne({ week: currentWeek });
-        res.json(schedules);
-    } catch (error) {
-        console.error('Error fetching games:', error);
-        res.status(500).json({ message: 'Error fetching games.' });
-    }
+const scheduleSchema = new mongoose.Schema({
+  week: Number,
+  games: [
+    {
+      homeTeam: String,
+      awayTeam: String,
+      startTime: Date,
+    },
+  ],
 });
 
-// Function to determine the current week
+const Schedule = mongoose.model('Schedule', scheduleSchema);
+
+// Add the /api/games endpoint
+app.get('/api/games', async (req, res) => {
+  try {
+    const currentWeek = getCurrentWeek();
+    const schedules = await Schedule.findOne({ week: currentWeek });
+    if (!schedules) {
+      return res.status(404).json({ message: 'No schedules found for the current week.' });
+    }
+    res.json(schedules);
+  } catch (error) {
+    console.error('Error fetching games:', error);
+    res.status(500).json({ message: 'Error fetching games.' });
+  }
+});
+
+// Function to determine the current week dynamically
 function getCurrentWeek() {
-    const seasonStartDate = new Date('2025-09-07T00:00:00Z'); // Example start date
-    const now = new Date();
-    const diff = now - seasonStartDate;
-    return Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
+  const seasonStartDate = new Date('2025-09-07T00:00:00Z'); // Replace with actual start date
+  const now = new Date();
+  const diff = now - seasonStartDate;
+  return Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
 }
