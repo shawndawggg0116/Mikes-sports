@@ -303,21 +303,28 @@ const Schedule = mongoose.models.Schedule || mongoose.model('Schedule', schedule
 app.get('/api/games', async (req, res) => {
   try {
     const currentWeek = getCurrentWeek();
+    console.log(`[DEBUG] Fetching schedules for week: ${currentWeek}`);
+    
     const schedules = await Schedule.findOne({ week: currentWeek });
     if (!schedules) {
+      console.warn(`[DEBUG] No schedules found for week: ${currentWeek}`);
       return res.status(404).json({ message: 'No schedules found for the current week.' });
     }
+    
+    console.log(`[DEBUG] Schedules retrieved: ${JSON.stringify(schedules)}`);
     res.json(schedules);
   } catch (error) {
-    console.error('Error fetching games:', error);
-    res.status(500).json({ message: 'Error fetching games.' });
+    console.error(`[DEBUG] Error fetching schedules: ${error.message}`);
+    res.status(500).json({ message: 'Error fetching schedules.' });
   }
 });
 
 // Function to determine the current week dynamically
 function getCurrentWeek() {
-  const seasonStartDate = new Date('2025-09-07T00:00:00Z'); // Replace with actual start date
+  const seasonStartDate = new Date('2025-09-07T00:00:00Z'); // Adjust this to match the real season start
   const now = new Date();
   const diff = now - seasonStartDate;
-  return Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
+  const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
+  console.log(`[DEBUG] Current week calculated: ${week}`);
+  return week;
 }
