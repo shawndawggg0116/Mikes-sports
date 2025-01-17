@@ -321,7 +321,7 @@ app.get('/api/games', async (req, res) => {
 
 // Function to determine the current week dynamically
 function getCurrentWeek() {
-  const seasonStartDate = new Date('2025-09-07T00:00:00Z'); // Adjust this to match the real season start
+  const seasonStartDate = new Date('2024-09-07T00:00:00Z'); // Adjusted for testing with a realistic start date
   const now = new Date();
   const diff = now - seasonStartDate;
   const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
