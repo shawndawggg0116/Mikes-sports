@@ -286,8 +286,6 @@ cron.schedule('*/15 * * * *', () => {
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Define the Schedule schema and model if not already defined
-const mongoose = require('mongoose');
-
 const scheduleSchema = new mongoose.Schema({
   week: Number,
   games: [
