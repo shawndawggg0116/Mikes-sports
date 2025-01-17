@@ -297,7 +297,7 @@ const scheduleSchema = new mongoose.Schema({
   ],
 });
 
-const Schedule = mongoose.model('Schedule', scheduleSchema);
+const Schedule = mongoose.models.Schedule || mongoose.model('Schedule', scheduleSchema);
 
 // Add the /api/games endpoint
 app.get('/api/games', async (req, res) => {
