@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -150,3 +151,27 @@
   </script>
 </body>
 </html>
+
+
+<script>
+    async function fetchGames() {
+        const response = await fetch('/api/games');
+        const games = await response.json();
+
+        const now = new Date();
+        games.games.forEach(game => {
+            const startTime = new Date(game.startTime);
+            const endTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after start
+            const button = document.getElementById(`${game.homeTeam}-${game.awayTeam}`);
+
+            if (now >= startTime && now <= endTime) {
+                button.classList.add('glow');
+                button.disabled = true;
+            } else if (now > endTime) {
+                button.classList.add('greyed-out');
+            }
+        });
+    }
+
+    window.onload = fetchGames;
+</script>
