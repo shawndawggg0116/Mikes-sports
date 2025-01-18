@@ -6,22 +6,26 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
+    /* General team button styles */
     .team {
       padding: 10px 20px;
       border: 1px solid #ccc;
       border-radius: 5px;
       cursor: pointer;
-      color: white;
+      color: white !important;
+      font-size: 16px;
+      margin: 5px;
     }
 
+    /* Status-specific styles */
     .team.upcoming {
       background-color: #28a745 !important; /* Bright green */
     }
 
     .team.ongoing {
       background-color: #ffc107 !important; /* Yellow */
-      box-shadow: 0 0 10px 2px yellow; /* Glow effect */
-      color: black;
+      box-shadow: 0 0 10px 2px yellow !important; /* Glow effect */
+      color: black !important;
     }
 
     .team.completed {
@@ -30,6 +34,7 @@
       opacity: 0.7;
     }
 
+    /* Submit button styles */
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -55,12 +60,13 @@
 
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
+  <input type="hidden" id="username" value=""> <!-- Dynamically filled -->
   <button id="submitButton" disabled>Submit</button>
 
   <script>
     const teamList = document.querySelector('.team-list');
 
+    // Fetch games and dynamically render teams
     async function fetchGames() {
       try {
         const response = await fetch('/api/games');
@@ -68,15 +74,17 @@
 
         const data = await response.json();
 
+        // Loop through games and render them
         data.games.forEach(game => {
           const gameDiv = document.createElement('div');
-          gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam} - ${game.status}`;
+          gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
           gameDiv.classList.add('team');
 
           // Add the correct status class
           const statusClass = game.status.toLowerCase();
           gameDiv.classList.add(statusClass);
 
+          // Append to the team list
           teamList.appendChild(gameDiv);
         });
       } catch (error) {
@@ -84,6 +92,7 @@
       }
     }
 
+    // Initialize the page
     window.onload = fetchGames;
   </script>
 </body>
