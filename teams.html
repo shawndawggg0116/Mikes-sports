@@ -61,88 +61,30 @@
       'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
     ];
 
-    let selectedTeam = null;
     const teamList = document.querySelector('.team-list');
-    const submitButton = document.getElementById('submitButton');
-    const usernameField = document.getElementById('username');
-
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user') // Fetch username dynamically from the server
-      .then(response => response.json())
-      .then(data => {
-        usernameField.value = data.username;
-
-        // Fetch the user's picked teams from the server
-        fetch(`/get-picked-teams?username=${data.username}`)
-          .then(response => response.json())
-          .then(data => {
-            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
-
-            // Render teams
-            teams.forEach(team => {
-              const teamDiv = document.createElement('div');
-              teamDiv.textContent = team;
-              teamDiv.classList.add('team');
-
-              // If the team is already picked, disable it
-              if (pickedTeams.includes(team)) {
-                teamDiv.classList.add('disabled');
-              }
-
-              teamDiv.addEventListener('click', () => {
-                if (!teamDiv.classList.contains('disabled')) {
-                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                  teamDiv.classList.add('selected');
-                  selectedTeam = team;
-                  submitButton.disabled = false;
-                }
-              });
-
-              teamList.appendChild(teamDiv);
-            });
-          });
-      })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
-      });
-
-    // Submit the selected team
-    submitButton.addEventListener('click', () => {
-      const username = usernameField.value;
-      if (selectedTeam && username) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, team: selectedTeam })
-        }).then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert(`You picked ${selectedTeam}`);
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
-              }
-              selectedTeam = null;
-              submitButton.disabled = true;
-            } else {
-              alert(data.message);
-            }
-          });
-      }
-    });
 
     async function fetchGames() {
       try {
         const response = await fetch('/api/games');
+        if (!response.ok) throw new Error('Failed to fetch games.');
+
         const data = await response.json();
         const now = new Date();
 
         data.games.forEach(game => {
           const gameDiv = document.createElement('div');
           gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam} - ${game.status}`;
-          gameDiv.classList.add('team', game.status.toLowerCase());
+          gameDiv.classList.add('team');
+
+          // Apply the appropriate class based on game status
+          if (game.status.toLowerCase() === 'upcoming') {
+            gameDiv.classList.add('upcoming');
+          } else if (game.status.toLowerCase() === 'ongoing') {
+            gameDiv.classList.add('ongoing');
+          } else if (game.status.toLowerCase() === 'completed') {
+            gameDiv.classList.add('completed');
+          }
+
           teamList.appendChild(gameDiv);
         });
       } catch (error) {
