@@ -354,3 +354,38 @@ app.get('/api/games', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+
+// Importing moment-timezone for consistent timezone handling
+const moment = require("moment-timezone");
+
+// Function to update game statuses based on current time
+async function updateGameStatuses() {
+    try {
+        const games = await Game.find(); // Fetch all games from the database
+        const currentTime = moment().tz("America/New_York"); // Current time in EST
+
+        for (const game of games) {
+            const gameStartTime = moment(game.startTime).tz("America/New_York"); // Game start time
+            const gameEndTime = gameStartTime.clone().add(3, "hours"); // Game end time (3-hour duration)
+
+            // Determine the game status
+            if (currentTime.isBefore(gameStartTime)) {
+                game.status = "Upcoming";
+            } else if (currentTime.isBetween(gameStartTime, gameEndTime)) {
+                game.status = "Ongoing";
+            } else if (currentTime.isAfter(gameEndTime)) {
+                game.status = "Completed";
+            }
+
+            await game.save(); // Save the updated game status
+        }
+
+        console.log("Game statuses updated successfully.");
+    } catch (error) {
+        console.error("Error updating game statuses:", error);
+    }
+}
+
+// Schedule the updateGameStatuses function to run every 60 seconds
+setInterval(updateGameStatuses, 60000);
