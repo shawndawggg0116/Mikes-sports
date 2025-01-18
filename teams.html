@@ -6,49 +6,34 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-image: url('background.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-    h1 {
-      color: #333;
-    }
-    .team-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .team {
-      padding: 10px 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: #4caf50;
-      color: white;
-      cursor: pointer;
-    }
-    .team.selected {
-      background-color: #007bff;
+    .team.upcoming {
+      background-color: #28a745; /* Bright green */
       color: white;
     }
-    .team.disabled {
-      background-color: red;
-      cursor: not-allowed;
+
+    .team.ongoing {
+      background-color: #ffc107; /* Yellow */
+      box-shadow: 0 0 10px 2px yellow; /* Glow effect */
+      color: black;
     }
+
+    .team.completed {
+      background-color: #6c757d; /* Grey */
+      color: white;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
     button {
       padding: 10px 20px;
       font-size: 16px;
       color: white;
-      background-color: #4caf50;
+      background-color: #007bff; /* Blue */
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
+
     button:disabled {
       background-color: #ccc;
       cursor: not-allowed;
@@ -151,34 +136,14 @@
     async function fetchGames() {
       try {
         const response = await fetch('/api/games');
-        if (!response.ok) {
-          console.error('Failed to fetch games:', await response.json());
-          return;
-        }
-
-        const games = await response.json();
+        const data = await response.json();
         const now = new Date();
 
-        games.games.forEach(game => {
-          const gameStart = new Date(game.startTime);
-          const gameEnd = new Date(gameStart.getTime() + 3 * 60 * 60 * 1000); // 3 hours after start
-
-          const teamDiv = document.createElement('div');
-          teamDiv.classList.add('team');
-          teamDiv.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
-
-          if (now >= gameStart && now <= gameEnd) {
-            teamDiv.classList.add('glow'); // Ongoing game
-            teamDiv.style.boxShadow = '0 0 10px 2px yellow';
-          } else if (now > gameEnd) {
-            teamDiv.classList.add('disabled'); // Completed game
-            teamDiv.style.backgroundColor = 'grey';
-            teamDiv.style.pointerEvents = 'none';
-          } else {
-            teamDiv.style.backgroundColor = 'green'; // Upcoming game
-          }
-
-          teamList.appendChild(teamDiv);
+        data.games.forEach(game => {
+          const gameDiv = document.createElement('div');
+          gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam} - ${game.status}`;
+          gameDiv.classList.add('team', game.status.toLowerCase());
+          teamList.appendChild(gameDiv);
         });
       } catch (error) {
         console.error('Error fetching game data:', error);
@@ -189,34 +154,3 @@
   </script>
 </body>
 </html>
-
-<script>
-  async function fetchGames() {
-    try {
-      const response = await fetch('/api/games');
-      const data = await response.json();
-      const now = new Date();
-
-      data.games.forEach(game => {
-        const gameDiv = document.createElement('div');
-        gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam} - ${game.status}`;
-        gameDiv.classList.add('team');
-
-        if (game.status === 'Ongoing') {
-          gameDiv.classList.add('glow');
-        } else if (game.status === 'Completed') {
-          gameDiv.style.backgroundColor = 'grey';
-          gameDiv.style.pointerEvents = 'none';
-        } else {
-          gameDiv.style.backgroundColor = 'green';
-        }
-
-        document.querySelector('.team-list').appendChild(gameDiv);
-      });
-    } catch (error) {
-      console.error('Error fetching game data:', error);
-    }
-  }
-
-  window.onload = fetchGames;
-</script>
