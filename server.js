@@ -328,3 +328,29 @@ function getCurrentWeek() {
   console.log(`[DEBUG] Current week calculated: ${week}`);
   return week;
 }
+
+// Added functionality to fix game status updates and debugging logs
+function getGameStatus(game) {
+  const now = new Date();
+  const startTime = new Date(game.startTime);
+  const endTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000); // 3-hour duration
+
+  if (now < startTime) return 'Upcoming';
+  if (now >= startTime && now <= endTime) return 'Ongoing';
+  return 'Completed';
+}
+
+app.get('/api/games', async (req, res) => {
+  try {
+    const games = await Game.find();
+    const gamesWithStatus = games.map(game => ({
+      ...game.toObject(),
+      status: getGameStatus(game)
+    }));
+    console.log('Game statuses updated:', gamesWithStatus);
+    res.json({ games: gamesWithStatus });
+  } catch (error) {
+    console.error('Error fetching games:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
