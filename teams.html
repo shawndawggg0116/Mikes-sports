@@ -12,7 +12,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
       cursor: pointer;
-      color: white !important;
+      color: white;
       font-size: 16px;
       margin: 5px;
     }
@@ -25,7 +25,7 @@
     .team.ongoing {
       background-color: #ffc107 !important; /* Yellow */
       box-shadow: 0 0 10px 2px yellow !important; /* Glow effect */
-      color: black !important;
+      color: black;
     }
 
     .team.completed {
@@ -80,7 +80,7 @@
           gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
           gameDiv.classList.add('team');
 
-          // Add the correct status class
+          // Convert status to lowercase to ensure consistent class application
           const statusClass = game.status.toLowerCase();
           gameDiv.classList.add(statusClass);
 
