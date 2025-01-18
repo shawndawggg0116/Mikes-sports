@@ -6,20 +6,26 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
-    .team.upcoming {
-      background-color: #28a745; /* Bright green */
+    .team {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: pointer;
       color: white;
     }
 
+    .team.upcoming {
+      background-color: #28a745 !important; /* Bright green */
+    }
+
     .team.ongoing {
-      background-color: #ffc107; /* Yellow */
+      background-color: #ffc107 !important; /* Yellow */
       box-shadow: 0 0 10px 2px yellow; /* Glow effect */
       color: black;
     }
 
     .team.completed {
-      background-color: #6c757d; /* Grey */
-      color: white;
+      background-color: #6c757d !important; /* Grey */
       pointer-events: none;
       opacity: 0.7;
     }
@@ -28,7 +34,7 @@
       padding: 10px 20px;
       font-size: 16px;
       color: white;
-      background-color: #007bff; /* Blue */
+      background-color: #007bff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
@@ -53,14 +59,6 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    const teams = [
-      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
-      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
-      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
-      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
-      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-    ];
-
     const teamList = document.querySelector('.team-list');
 
     async function fetchGames() {
@@ -69,21 +67,15 @@
         if (!response.ok) throw new Error('Failed to fetch games.');
 
         const data = await response.json();
-        const now = new Date();
 
         data.games.forEach(game => {
           const gameDiv = document.createElement('div');
           gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam} - ${game.status}`;
           gameDiv.classList.add('team');
 
-          // Apply the appropriate class based on game status
-          if (game.status.toLowerCase() === 'upcoming') {
-            gameDiv.classList.add('upcoming');
-          } else if (game.status.toLowerCase() === 'ongoing') {
-            gameDiv.classList.add('ongoing');
-          } else if (game.status.toLowerCase() === 'completed') {
-            gameDiv.classList.add('completed');
-          }
+          // Add the correct status class
+          const statusClass = game.status.toLowerCase();
+          gameDiv.classList.add(statusClass);
 
           teamList.appendChild(gameDiv);
         });
