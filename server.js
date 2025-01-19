@@ -391,3 +391,34 @@ async function updateGameStatuses() {
 
 // Schedule the updateGameStatuses function to run every 60 seconds
 setInterval(updateGameStatuses, 60000);
+
+const updateGameStatuses = async () => {
+    const currentTime = new Date(); // Ensure this is in UTC
+    try {
+        const games = await Game.find(); // Fetch all games
+        for (const game of games) {
+            const startTimeUTC = new Date(game.startTime); // Convert to UTC
+            const endTimeUTC = new Date(game.endTime); // Convert to UTC
+
+            let newStatus = '';
+            if (startTimeUTC > currentTime) {
+                newStatus = 'Upcoming';
+            } else if (startTimeUTC <= currentTime && endTimeUTC > currentTime) {
+                newStatus = 'Ongoing';
+            } else if (endTimeUTC <= currentTime) {
+                newStatus = 'Completed';
+            }
+
+            if (game.status !== newStatus) {
+                console.log(`Updating game ID ${game._id}: ${game.status} -> ${newStatus}`);
+                game.status = newStatus;
+                await game.save();
+            }
+        }
+    } catch (error) {
+        console.error('Error updating game statuses:', error);
+    }
+};
+
+// Schedule status updates to run every minute
+setInterval(updateGameStatuses, 60000);
