@@ -1,6 +1,6 @@
 import express from 'express';
 import db from './db.js';
-const Game = require('./models/Game');
+import Game from './models/Game.js';
  // Centralized MongoDB connection
 const bcrypt = require('bcrypt');
 const path = require('path');
