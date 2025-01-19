@@ -1,99 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Select Your Team</title>
-  <link rel="stylesheet" href="navbar.css">
-  <style>
-    /* General team button styles */
-    .team {
-      padding: 10px 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      cursor: pointer;
-      color: white;
-      font-size: 16px;
-      margin: 5px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Team</title>
+    <style>
+        .team {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
 
-    /* Status-specific styles */
-    .team.upcoming {
-      background-color: #28a745 !important; /* Bright green */
-    }
+        .team.completed {
+            background-color: gray;
+            cursor: not-allowed;
+        }
 
-    .team.ongoing {
-      background-color: #ffc107 !important; /* Yellow */
-      box-shadow: 0 0 10px 2px yellow !important; /* Glow effect */
-      color: black;
-    }
+        .team.ongoing {
+            background-color: orange;
+        }
 
-    .team.completed {
-      background-color: #6c757d !important; /* Grey */
-      pointer-events: none;
-      opacity: 0.7;
-    }
+        .team.upcoming {
+            background-color: blue;
+        }
 
-    /* Submit button styles */
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      color: white;
-      background-color: #007bff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-  </style>
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .team-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="navbar">
-    <a href="/teams" class="active">Team Selection</a>
-    <a href="/leaderboard">Leaderboard</a>
-    <a href="/rules">Rules</a>
-  </div>
+    <div class="navbar">
+        <h1>Select Your Team</h1>
+    </div>
+    <div class="team-list" id="teamList">
+        <!-- Teams will be dynamically rendered here -->
+    </div>
+    <button id="submitButton" disabled>Submit</button>
 
-  <h1>Select Your Team</h1>
-  <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- Dynamically filled -->
-  <button id="submitButton" disabled>Submit</button>
+    <script>
+        // Mock Data
+        const teams = [
+            { homeTeam: "Cardinals", awayTeam: "Bears", status: "Completed" },
+            { homeTeam: "Jets", awayTeam: "Dolphins", status: "Completed" },
+            { homeTeam: "Packers", awayTeam: "Vikings", status: "Ongoing" },
+            { homeTeam: "Lions", awayTeam: "Giants", status: "Upcoming" }
+        ];
 
-  <script>
-    const teamList = document.querySelector('.team-list');
+        const teamList = document.getElementById('teamList');
 
-    // Fetch games and dynamically render teams
-    async function fetchGames() {
-      try {
-        const response = await fetch('/api/games');
-        if (!response.ok) throw new Error('Failed to fetch games.');
-
-        const data = await response.json();
-
-        // Loop through games and render them
-        data.games.forEach(game => {
-          const gameDiv = document.createElement('div');
-          gameDiv.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
-          gameDiv.classList.add('team');
-
-          // Convert status to lowercase to ensure consistent class application
-          const statusClass = game.status.toLowerCase();
-          gameDiv.classList.add(statusClass);
-
-          // Append to the team list
-          teamList.appendChild(gameDiv);
+        // Render Teams
+        teams.forEach(game => {
+            const div = document.createElement('div');
+            div.className = `team ${game.status.toLowerCase()}`;
+            div.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
+            if (game.status === "Completed") {
+                div.style.cursor = "not-allowed";
+            }
+            teamList.appendChild(div);
         });
-      } catch (error) {
-        console.error('Error fetching game data:', error);
-      }
-    }
 
-    // Initialize the page
-    window.onload = fetchGames;
-  </script>
+        // Enable Submit Button for Ongoing or Upcoming Teams
+        const submitButton = document.getElementById('submitButton');
+        const hasSelectableTeams = teams.some(game => game.status === "Ongoing" || game.status === "Upcoming");
+        if (hasSelectableTeams) {
+            submitButton.disabled = false;
+        }
+    </script>
 </body>
 </html>
