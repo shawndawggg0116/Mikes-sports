@@ -391,3 +391,32 @@ async function updateGameStatuses() {
 
 // Schedule the updateGameStatuses function to run every 60 seconds
 setInterval(updateGameStatuses, 60000);
+
+// Adding required logic for glowing and grey-out feature based on game time
+
+app.get('/api/game-status', async (req, res) => {
+    try {
+        const currentTime = new Date();
+        const games = await db.collection('games').find().toArray();
+
+        const updatedGames = games.map(game => {
+            const gameTime = new Date(game.gameTime); // Assuming gameTime is stored in ISO format
+            const timeDifference = (gameTime - currentTime) / (1000 * 60 * 60); // Difference in hours
+
+            if (timeDifference >= 0 && timeDifference <= 3) {
+                game.status = 'glow'; // Glowing condition: 3 hours before or during the game
+            } else if (timeDifference < 0) {
+                game.status = 'complete'; // Grey-out condition: after the game
+            } else {
+                game.status = 'upcoming'; // Default state
+            }
+
+            return game;
+        });
+
+        res.json(updatedGames);
+    } catch (error) {
+        console.error('Error fetching game status:', error);
+        res.status(500).send('Internal server error');
+    }
+});
