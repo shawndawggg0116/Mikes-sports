@@ -1,5 +1,7 @@
 const express = require('express');
-const mongoose = require('./db'); // Centralized MongoDB connection
+const mongoose = require('./db');
+const Game = require('./models/Game');
+ // Centralized MongoDB connection
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
