@@ -389,3 +389,42 @@ async function updateGameStatuses() {
 
 // Schedule the updateGameStatuses function to run every 60 seconds
 setInterval(updateGameStatuses, 60000);
+
+
+
+// Utility function to update game statuses
+const updateGameStatuses = async () => {
+    const currentTime = new Date(); // Current server time
+    console.log("Current Server Time:", currentTime);
+
+    try {
+        const games = await Game.find(); // Fetch all games from the database
+
+        for (let game of games) {
+            const { startTime, endTime } = game;
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            console.log("Game Start Time:", start, "Game End Time:", end);
+
+            let newStatus = '';
+            if (start > currentTime) {
+                newStatus = 'Upcoming';
+            } else if (start <= currentTime && end > currentTime) {
+                newStatus = 'Ongoing';
+            } else if (end <= currentTime) {
+                newStatus = 'Completed';
+            }
+
+            if (game.status !== newStatus) {
+                game.status = newStatus; // Update status only if it has changed
+                await game.save();
+                console.log(\`Updated game ID \${game._id} status to \${newStatus}\`);
+            }
+        }
+    } catch (error) {
+        console.error("Error updating game statuses:", error);
+    }
+};
+
+// Schedule a cron job to update statuses every minute
+cron.schedule('* * * * *', updateGameStatuses);
