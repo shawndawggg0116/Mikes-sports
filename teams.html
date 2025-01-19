@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,33 +60,32 @@
     <button id="submitButton" disabled>Submit</button>
 
     <script>
-        // Mock Data
-        const teams = [
-            { homeTeam: "Cardinals", awayTeam: "Bears", status: "Completed" },
-            { homeTeam: "Jets", awayTeam: "Dolphins", status: "Completed" },
-            { homeTeam: "Packers", awayTeam: "Vikings", status: "Ongoing" },
-            { homeTeam: "Lions", awayTeam: "Giants", status: "Upcoming" }
-        ];
-
-        const teamList = document.getElementById('teamList');
-
-        // Render Teams
-        teams.forEach(game => {
-            const div = document.createElement('div');
-            div.className = `team ${game.status.toLowerCase()}`;
-            div.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
-            if (game.status === "Completed") {
-                div.style.cursor = "not-allowed";
-            }
-            teamList.appendChild(div);
-        });
-
-        // Enable Submit Button for Ongoing or Upcoming Teams
-        const submitButton = document.getElementById('submitButton');
-        const hasSelectableTeams = teams.some(game => game.status === "Ongoing" || game.status === "Upcoming");
-        if (hasSelectableTeams) {
-            submitButton.disabled = false;
+        async function fetchTeams() {
+            const response = await fetch('/api/games');
+            const teams = await response.json();
+            renderTeams(teams);
         }
+
+        function renderTeams(teams) {
+            const teamList = document.getElementById('teamList');
+            teamList.innerHTML = '';
+            teams.forEach(game => {
+                const div = document.createElement('div');
+                div.className = `team ${game.status.toLowerCase()}`;
+                div.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
+                if (game.status === "Completed") {
+                    div.style.cursor = "not-allowed";
+                }
+                teamList.appendChild(div);
+            });
+
+            const submitButton = document.getElementById('submitButton');
+            const hasSelectableTeams = teams.some(game => game.status === "Ongoing" || game.status === "Upcoming");
+            submitButton.disabled = !hasSelectableTeams;
+        }
+
+        fetchTeams();
+        setInterval(fetchTeams, 60000); // Refresh every minute
     </script>
 </body>
 </html>
