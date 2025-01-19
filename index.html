@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Game Updates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .game {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .in-progress {
+            background-color: yellow;
+        }
+        .completed {
+            background-color: lightgrey;
+            text-decoration: line-through;
+        }
+        .upcoming {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>NFL Live Game Updates</h1>
+    <div id="games"></div>
+
+    <script>
+        async function fetchGames() {
+            try {
+                // Replace this URL with your actual API endpoint
+                const response = await fetch('https://mikes-sports.onrender.com/api/schedules');
+                const data = await response.json();
+
+                // Target the container
+                const gamesContainer = document.getElementById('games');
+                gamesContainer.innerHTML = '';
+
+                data.games.forEach(game => {
+                    const gameDiv = document.createElement('div');
+                    gameDiv.className = 'game';
+
+                    // Determine the status and apply styling
+                    if (game.status === 'Completed') {
+                        gameDiv.classList.add('completed');
+                    } else if (isGameInProgress(game)) {
+                        gameDiv.classList.add('in-progress');
+                    } else {
+                        gameDiv.classList.add('upcoming');
+                    }
+
+                    // Add game details
+                    gameDiv.innerHTML = `
+                        <strong>${game.homeTeam} vs ${game.awayTeam}</strong><br>
+                        Status: ${game.status}
+                    `;
+                    gamesContainer.appendChild(gameDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching games:', error);
+            }
+        }
+
+        function isGameInProgress(game) {
+            const now = new Date();
+            const gameTime = new Date(game.dateTime); // Make sure to include `dateTime` in your MongoDB data
+            return now >= gameTime && now <= new Date(gameTime.getTime() + 3 * 60 * 60 * 1000); // Game is within a 3-hour window
+        }
+
+        // Fetch games every 30 seconds
+        fetchGames();
+        setInterval(fetchGames, 30000);
+    </script>
+</body>
+</html>
