@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const mongoose = require('./db');
 const Game = require('./models/Game');
  // Centralized MongoDB connection
