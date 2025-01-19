@@ -1,5 +1,5 @@
 import express from 'express';
-const mongoose = require('./db');
+import db from './db.js';
 const Game = require('./models/Game');
  // Centralized MongoDB connection
 const bcrypt = require('bcrypt');
