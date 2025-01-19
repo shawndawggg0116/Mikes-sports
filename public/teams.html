@@ -1,91 +1,152 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Your Team</title>
-    <style>
-        .team {
-            padding: 10px 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #4caf50;
-            color: white;
-            cursor: pointer;
-        }
-
-        .team.completed {
-            background-color: gray;
-            cursor: not-allowed;
-        }
-
-        .team.ongoing {
-            background-color: orange;
-        }
-
-        .team.upcoming {
-            background-color: blue;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #4caf50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .team-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Team</title>
+  <link rel="stylesheet" href="navbar.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-image: url('background.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    h1 {
+      color: #333;
+    }
+    .team-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .team {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    .team.selected {
+      background-color: #007bff;
+      color: white;
+    }
+    .team.disabled {
+      background-color: red;
+      cursor: not-allowed;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #4caf50;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-    <div class="navbar">
-        <h1>Select Your Team</h1>
-    </div>
-    <div class="team-list" id="teamList">
-        <!-- Teams will be dynamically rendered here -->
-    </div>
-    <button id="submitButton" disabled>Submit</button>
+  <div class="navbar">
+    <a href="/teams" class="active">Team Selection</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/rules">Rules</a>
+  </div>
 
-    <script>
-        async function fetchTeams() {
-            const response = await fetch('/api/games');
-            const teams = await response.json();
-            renderTeams(teams);
-        }
+  <h1>Select Your Team</h1>
+  <div class="team-list"></div>
+  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
+  <button id="submitButton" disabled>Submit</button>
 
-        function renderTeams(teams) {
-            const teamList = document.getElementById('teamList');
-            teamList.innerHTML = '';
-            teams.forEach(game => {
-                const div = document.createElement('div');
-                div.className = `team ${game.status.toLowerCase()}`;
-                div.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
-                if (game.status === "Completed") {
-                    div.style.cursor = "not-allowed";
+  <script>
+    const teams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+    ];
+
+    let selectedTeam = null;
+    const teamList = document.querySelector('.team-list');
+    const submitButton = document.getElementById('submitButton');
+    const usernameField = document.getElementById('username');
+
+    // Fetch the logged-in username
+    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+      .then(response => response.json())
+      .then(data => {
+        usernameField.value = data.username;
+
+        // Fetch the user's picked teams from the server
+        fetch(`/get-picked-teams?username=${data.username}`)
+          .then(response => response.json())
+          .then(data => {
+            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
+
+            // Render teams
+            teams.forEach(team => {
+              const teamDiv = document.createElement('div');
+              teamDiv.textContent = team;
+              teamDiv.classList.add('team');
+
+              // If the team is already picked, disable it
+              if (pickedTeams.includes(team)) {
+                teamDiv.classList.add('disabled');
+              }
+
+              teamDiv.addEventListener('click', () => {
+                if (!teamDiv.classList.contains('disabled')) {
+                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                  teamDiv.classList.add('selected');
+                  selectedTeam = team;
+                  submitButton.disabled = false;
                 }
-                teamList.appendChild(div);
+              });
+
+              teamList.appendChild(teamDiv);
             });
+          });
+      })
+      .catch(err => {
+        console.error('Error fetching username:', err);
+        alert('Error: Unable to fetch logged-in user.');
+      });
 
-            const submitButton = document.getElementById('submitButton');
-            const hasSelectableTeams = teams.some(game => game.status === "Ongoing" || game.status === "Upcoming");
-            submitButton.disabled = !hasSelectableTeams;
-        }
-
-        fetchTeams();
-        setInterval(fetchTeams, 60000); // Refresh every minute
-    </script>
+    // Submit the selected team
+    submitButton.addEventListener('click', () => {
+      const username = usernameField.value;
+      if (selectedTeam && username) {
+        fetch('/select-team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, team: selectedTeam })
+        }).then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(`You picked ${selectedTeam}`);
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
+              if (selectedDiv) {
+                selectedDiv.classList.add('disabled');
+                selectedDiv.classList.remove('selected');
+              }
+              selectedTeam = null;
+              submitButton.disabled = true;
+            } else {
+              alert(data.message);
+            }
+          });
+      }
+    });
+  </script>
 </body>
 </html>
