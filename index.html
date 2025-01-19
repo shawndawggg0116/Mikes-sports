@@ -34,11 +34,9 @@
     <script>
         async function fetchGames() {
             try {
-                // Replace this URL with your actual API endpoint
-                const response = await fetch('https://mikes-sports.onrender.com/api/schedules');
+                const response = await fetch('/api/schedules');
                 const data = await response.json();
 
-                // Target the container
                 const gamesContainer = document.getElementById('games');
                 gamesContainer.innerHTML = '';
 
@@ -46,7 +44,6 @@
                     const gameDiv = document.createElement('div');
                     gameDiv.className = 'game';
 
-                    // Determine the status and apply styling
                     if (game.status === 'Completed') {
                         gameDiv.classList.add('completed');
                     } else if (isGameInProgress(game)) {
@@ -55,7 +52,6 @@
                         gameDiv.classList.add('upcoming');
                     }
 
-                    // Add game details
                     gameDiv.innerHTML = `
                         <strong>${game.homeTeam} vs ${game.awayTeam}</strong><br>
                         Status: ${game.status}
@@ -69,11 +65,10 @@
 
         function isGameInProgress(game) {
             const now = new Date();
-            const gameTime = new Date(game.dateTime); // Make sure to include `dateTime` in your MongoDB data
-            return now >= gameTime && now <= new Date(gameTime.getTime() + 3 * 60 * 60 * 1000); // Game is within a 3-hour window
+            const gameTime = new Date(game.dateTime);
+            return now >= gameTime && now <= new Date(gameTime.getTime() + 3 * 60 * 60 * 1000);
         }
 
-        // Fetch games every 30 seconds
         fetchGames();
         setInterval(fetchGames, 30000);
     </script>
