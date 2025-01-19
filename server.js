@@ -392,6 +392,11 @@ async function updateGameStatuses() {
 // Schedule the updateGameStatuses function to run every 60 seconds
 setInterval(updateGameStatuses, 60000);
 
+
+
+// Schedule status updates to run every minute
+setInterval(updateGameStatuses, 60000);
+
 const updateGameStatuses = async () => {
     const currentTime = new Date(); // Ensure this is in UTC
     try {
