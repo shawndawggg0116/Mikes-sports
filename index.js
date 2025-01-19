@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -36,10 +37,10 @@ const scheduleSchema = new mongoose.Schema({
 const Schedule = mongoose.model('Schedule', scheduleSchema, 'schedules');
 
 // API route to fetch schedules
-app.get('/api/schedules', async (req, res) => {
+app.get('/api/nfl-schedule', async (req, res) => {
     try {
         const schedules = await Schedule.find(); // Fetch all schedules
-        res.json(schedules);
+        res.json({ games: schedules });
     } catch (err) {
         console.error('Error fetching schedules:', err);
         res.status(500).json({ error: 'Failed to fetch schedules' });
