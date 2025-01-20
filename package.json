@@ -1,0 +1,15 @@
+
+{
+  "name": "simple-login-football",
+  "version": "1.0.0",
+  "description": "A simple login system with football team selection and points tracking",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.3"
+  }
+}
