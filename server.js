@@ -23,6 +23,14 @@ mongoose.connect(
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Models
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
@@ -41,7 +49,6 @@ const ScheduleSchema = new mongoose.Schema({
 });
 const Schedule = mongoose.model('Schedule', ScheduleSchema);
 
-// Routes
 // User registration
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
