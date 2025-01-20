@@ -1,4 +1,3 @@
-
 // Import required modules
 const express = require('express');
 const mongoose = require('mongoose');
@@ -18,9 +17,11 @@ app.use(cors());
 
 // MongoDB connection
 mongoose.connect(
-  mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new,
+  'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority',
   { useNewUrlParser: true, useUnifiedTopology: true }
-).then(() => console.log('Connected to MongoDB')).catch(err => console.error('MongoDB connection error:', err));
+)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Models
 const UserSchema = new mongoose.Schema({
