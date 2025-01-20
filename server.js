@@ -49,6 +49,21 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Serve the admin dashboard
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Serve the leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
 // Register a user
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
@@ -98,7 +113,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Get all teams
-app.get('/teams', async (req, res) => {
+app.get('/api/teams', async (req, res) => {
   try {
     const teams = await Schedule.find();
     const currentTime = new Date();
@@ -120,7 +135,7 @@ app.get('/teams', async (req, res) => {
 });
 
 // Select a team
-app.post('/select-team', async (req, res) => {
+app.post('/api/select-team', async (req, res) => {
   const { username, team } = req.body;
 
   try {
@@ -148,7 +163,7 @@ app.post('/select-team', async (req, res) => {
 });
 
 // Admin: Set game result
-app.post('/admin/set-result', async (req, res) => {
+app.post('/api/admin/set-result', async (req, res) => {
   const { team, completed } = req.body;
 
   try {
@@ -166,7 +181,7 @@ app.post('/admin/set-result', async (req, res) => {
 });
 
 // Admin: Update points
-app.post('/admin/update-points', async (req, res) => {
+app.post('/api/admin/update-points', async (req, res) => {
   const { team } = req.body;
 
   try {
@@ -184,7 +199,7 @@ app.post('/admin/update-points', async (req, res) => {
 });
 
 // Leaderboard
-app.get('/leaderboard', async (req, res) => {
+app.get('/api/leaderboard', async (req, res) => {
   try {
     const users = await User.find().sort({ points: -1 });
     res.json(users);
