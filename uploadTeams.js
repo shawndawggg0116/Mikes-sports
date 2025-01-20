@@ -13,7 +13,8 @@ mongoose.connect(process.env.MONGO_URI || 'your-mongodb-connection-string', {
     .catch((error) => console.error('MongoDB connection error:', error));
 
 // Load teams from JSON
-const teams = JSON.parse(fs.readFileSync('teams.json', 'utf8'));
+const teams = JSON.parse(fs.readFileSync('./public/teams.json', 'utf8'));
+
 
 // Upload teams to the database
 const uploadTeams = async () => {
