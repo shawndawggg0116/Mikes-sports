@@ -1,7 +1,0 @@
-
-[
-    { "name": "Cardinals", "city": "Arizona", "logo": "url-to-cardinals-logo" },
-    { "name": "Falcons", "city": "Atlanta", "logo": "url-to-falcons-logo" },
-    { "name": "Ravens", "city": "Baltimore", "logo": "url-to-ravens-logo" },
-    { "name": "Bills", "city": "Buffalo", "logo": "url-to-bills-logo" }
-]
