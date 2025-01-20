@@ -1,37 +1,75 @@
-app.post('/register', async (req, res) => {
-  // Log the incoming request body
-  console.log('Request body:', req.body);
-
-  const { username, password } = req.body;
-
-  // Check if username and password are provided
-  if (!username || !password) {
-    console.log('Missing username or password');
-    return res.status(400).send('Username and password are required.');
-  }
-
-  try {
-    // Check if the username already exists
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      console.log('Username already exists:', username);
-      return res.status(400).send('Username already exists.');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login for Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
+    h1 {
+      margin-top: 20px;
+      color: #333;
+    }
+    form {
+      margin: 20px auto;
+      padding: 20px;
+      width: 300px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin: 10px 0 5px;
+    }
+    input {
+      width: 90%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Login</h1>
+  <form id="adminLoginForm" method="POST" action="/admin-login">
+    <label for="username">Admin Username:</label>
+    <input type="text" id="username" name="username" placeholder="Enter admin username" required>
+    
+    <label for="password">Admin Password:</label>
+    <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+    
+    <button type="submit">Login</button>
+  </form>
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
+  <h1>Register User</h1>
+  <form id="registerForm" action="/register" method="POST">
+    <label for="registerUsername">Username:</label>
+    <input type="text" id="registerUsername" name="username" placeholder="Enter username" required>
 
-    // Save the new user to the database
-    await newUser.save();
+    <label for="registerPassword">Password:</label>
+    <input type="password" id="registerPassword" name="password" placeholder="Enter password" required>
 
-    // Log the saved user
-    console.log('New user registered:', newUser);
-
-    res.status(201).send('User registered successfully!');
-  } catch (error) {
-    // Log any errors during registration
-    console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
-  }
-});
+    <button type="submit">Register</button>
+  </form>
+</body>
+</html>
