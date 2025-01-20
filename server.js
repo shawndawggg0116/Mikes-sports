@@ -89,7 +89,19 @@ function authenticate(req, res, next) {
 // Get all teams (with game statuses)
 app.get('/teams', authenticate, async (req, res) => {
   const teams = await Schedule.find();
-  res.json(teams);
+
+  const currentTime = new Date();
+  const updatedTeams = teams.map(team => {
+    const gameStartTime = new Date(team.gameTime);
+    const gameEndTime = new Date(gameStartTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after game start
+
+    return {
+      ...team._doc,
+      status: currentTime >= gameStartTime && currentTime <= gameEndTime ? 'glowing' : currentTime > gameEndTime ? 'greyed out' : 'normal'
+    };
+  });
+
+  res.json(updatedTeams);
 });
 
 // Admin-only route to update game results
