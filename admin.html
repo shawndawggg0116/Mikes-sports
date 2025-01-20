@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <h2>Set Game Result</h2>
+    <form id="set-result">
+        <label for="team">Team:</label>
+        <input type="text" id="team" name="team" required>
+        <label for="completed">Completed:</label>
+        <select id="completed" name="completed" required>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+        <button type="submit">Update</button>
+    </form>
+    <h2>Update Points</h2>
+    <form id="update-points">
+        <label for="team-points">Team:</label>
+        <input type="text" id="team-points" name="team" required>
+        <button type="submit">Update Points</button>
+    </form>
+    <script>
+        document.getElementById('set-result').onsubmit = e => {
+            e.preventDefault();
+            const team = e.target.team.value;
+            const completed = e.target.completed.value === 'true';
+            fetch('/api/admin/set-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team, completed })
+            }).then(() => alert('Game result updated!'));
+        };
+        document.getElementById('update-points').onsubmit = e => {
+            e.preventDefault();
+            const team = e.target.team.value;
+            fetch('/api/admin/update-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team })
+            }).then(() => alert('Points updated!'));
+        };
+    </script>
+</body>
+</html>

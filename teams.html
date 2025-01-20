@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams</title>
+    <style>
+        .team { display: inline-block; margin: 10px; padding: 10px; border: 1px solid #000; }
+        .glowing { background-color: yellow; }
+        .greyed-out { background-color: lightgrey; }
+    </style>
+</head>
+<body>
+    <h1>Team Selection</h1>
+    <div id="teams"></div>
+    <script>
+        fetch('/api/teams')
+            .then(response => response.json())
+            .then(data => {
+                const teamsContainer = document.getElementById('teams');
+                data.forEach(team => {
+                    const teamDiv = document.createElement('div');
+                    teamDiv.className = `team ${team.status}`;
+                    teamDiv.textContent = team.team;
+                    const selectButton = document.createElement('button');
+                    selectButton.textContent = 'Select';
+                    selectButton.onclick = () => {
+                        fetch('/api/select-team', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: 'testuser', team: team.team })
+                        }).then(() => alert('Team selected!'));
+                    };
+                    teamDiv.appendChild(selectButton);
+                    teamsContainer.appendChild(teamDiv);
+                });
+            });
+    </script>
+</body>
+</html>
