@@ -1,138 +1,105 @@
-// Import required modules
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
 const path = require('path');
 
-// Initialize the app
 const app = express();
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = 'your-secure-secret';
-
-// Middleware
-app.use(express.json());
-app.use(cors());
+const PORT = process.env.PORT || 5000; // Use Render's PORT variable
 
 // MongoDB connection
 mongoose.connect(
-  'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority',
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new",
   { useNewUrlParser: true, useUnifiedTopology: true }
-)
-  .then(() => console.log('Connected to MongoDB'))
+).then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Models
-const UserSchema = new mongoose.Schema({
+// User schema
+const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
-  points: { type: Number, default: 0 },
   selectedTeam: { type: String, default: null },
-  lastPickDate: { type: Date, default: null }
+  points: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
 });
-const User = mongoose.model('User', UserSchema);
 
-const ScheduleSchema = new mongoose.Schema({
-  team: { type: String, required: true },
-  gameTime: { type: Date, required: true },
-  completed: { type: Boolean, default: false }
+const User = mongoose.model('User', userSchema);
+
+// Routes
+
+// Root Route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-const Schedule = mongoose.model('Schedule', ScheduleSchema);
 
-// User registration
+// Serve the registration page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Register a user
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).send('Missing username or password');
+  console.log('Request body:', req.body); // Log incoming data
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ username, password: hashedPassword });
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
   try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      console.log('Username already exists:', username);
+      return res.status(400).send('Username already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
-    res.status(201).send('User registered successfully');
-  } catch (err) {
-    res.status(400).send('Error registering user: ' + err.message);
+
+    console.log('New user registered:', newUser); // Log saved user
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
   }
 });
 
-// User login
+// Login Route
 app.post('/login', async (req, res) => {
+  console.log('Login request body:', req.body); // Log incoming data
+
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).send('Missing username or password');
 
-  const user = await User.findOne({ username });
-  if (!user) return res.status(404).send('User not found');
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(401).send('Invalid credentials');
-
-  const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-  res.json({ token });
-});
-
-// Middleware to authenticate requests
-function authenticate(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).send('Access denied');
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).send('Invalid token');
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
   }
-}
-
-// Get all teams (with game statuses)
-app.get('/teams', authenticate, async (req, res) => {
-  const teams = await Schedule.find();
-
-  const currentTime = new Date();
-  const updatedTeams = teams.map(team => {
-    const gameStartTime = new Date(team.gameTime);
-    const gameEndTime = new Date(gameStartTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after game start
-
-    return {
-      ...team._doc,
-      status: currentTime >= gameStartTime && currentTime <= gameEndTime ? 'glowing' : currentTime > gameEndTime ? 'greyed out' : 'normal'
-    };
-  });
-
-  res.json(updatedTeams);
-});
-
-// Admin-only route to update game results
-app.post('/admin/update-game', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).send('Access denied');
-
-  const { team, completed } = req.body;
-  try {
-    await Schedule.updateOne({ team }, { completed });
-    res.send('Game updated');
-  } catch (err) {
-    res.status(400).send('Error updating game: ' + err.message);
-  }
-});
-
-// Admin-only route to manage users
-app.delete('/admin/delete-user/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).send('Access denied');
 
   try {
-    await User.findByIdAndDelete(req.params.id);
-    res.send('User deleted');
-  } catch (err) {
-    res.status(400).send('Error deleting user: ' + err.message);
+    const user = await User.findOne({ username });
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(404).send('User not found.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
+      return res.status(401).send('Invalid credentials.');
+    }
+
+    console.log('User logged in successfully:', username);
+    res.status(200).send('Login successful');
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
   }
 });
 
