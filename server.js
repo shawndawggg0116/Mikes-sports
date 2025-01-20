@@ -22,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
   selectedTeam: { type: String, default: null },
   points: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
@@ -36,6 +37,17 @@ const scheduleSchema = new mongoose.Schema({
 });
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);
+
+// Middleware to check admin role
+function checkAdmin(req, res, next) {
+  const { username } = req.body;
+  User.findOne({ username }, (err, user) => {
+    if (err || !user || user.role !== 'admin') {
+      return res.status(403).send('Access denied: Admins only');
+    }
+    next();
+  });
+}
 
 // Routes
 
@@ -54,19 +66,14 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'teams.html'));
 });
 
-// Serve the admin dashboard
-app.get('/admin', (req, res) => {
+// Admin dashboard embedded in the register section
+app.post('/admin', checkAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// Serve the leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'leaderboard.html'));
 });
 
 // Register a user
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
 
   if (!username || !password) {
     return res.status(400).send('Username and password are required.');
@@ -79,7 +86,7 @@ app.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username, password: hashedPassword, role });
     await newUser.save();
     res.status(201).send('User registered successfully!');
   } catch (error) {
@@ -163,7 +170,7 @@ app.post('/api/select-team', async (req, res) => {
 });
 
 // Admin: Set game result
-app.post('/api/admin/set-result', async (req, res) => {
+app.post('/api/admin/set-result', checkAdmin, async (req, res) => {
   const { team, completed } = req.body;
 
   try {
@@ -181,7 +188,7 @@ app.post('/api/admin/set-result', async (req, res) => {
 });
 
 // Admin: Update points
-app.post('/api/admin/update-points', async (req, res) => {
+app.post('/api/admin/update-points', checkAdmin, async (req, res) => {
   const { team } = req.body;
 
   try {
