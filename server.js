@@ -41,27 +41,27 @@ const Schedule = mongoose.model('Schedule', scheduleSchema);
 
 // Root Route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 // Serve the registration page
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+  res.sendFile(path.join(__dirname, 'register.html'));
 });
 
 // Serve the team selection page
 app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+  res.sendFile(path.join(__dirname, 'teams.html'));
 });
 
 // Serve the admin dashboard
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Serve the leaderboard page
 app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+  res.sendFile(path.join(__dirname, 'leaderboard.html'));
 });
 
 // Register a user
@@ -106,7 +106,7 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    res.status(200).send('Login successful');
+    res.redirect('/teams');
   } catch (error) {
     res.status(500).send('Error logging in.');
   }
