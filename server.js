@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+const scheduleSchema = new mongoose.Schema({
+  team: { type: String, required: true },
+  gameTime: { type: Date, required: true },
+  completed: { type: Boolean, default: false }
+});
+
+const Schedule = mongoose.model('Schedule', scheduleSchema);
+
 // Routes
 
 // Root Route
@@ -43,63 +51,145 @@ app.get('/register', (req, res) => {
 
 // Register a user
 app.post('/register', async (req, res) => {
-  console.log('Request body:', req.body); // Log incoming data
-
   const { username, password } = req.body;
 
   if (!username || !password) {
-    console.log('Missing username or password');
     return res.status(400).send('Username and password are required.');
   }
 
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      console.log('Username already exists:', username);
       return res.status(400).send('Username already exists.');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
-
-    console.log('New user registered:', newUser); // Log saved user
     res.status(201).send('User registered successfully!');
   } catch (error) {
-    console.error('Error registering user:', error);
     res.status(500).send('Error registering user.');
   }
 });
 
 // Login Route
 app.post('/login', async (req, res) => {
-  console.log('Login request body:', req.body); // Log incoming data
-
   const { username, password } = req.body;
 
   if (!username || !password) {
-    console.log('Missing username or password');
     return res.status(400).send('Username and password are required.');
   }
 
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      console.log('User not found:', username);
       return res.status(404).send('User not found.');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      console.log('Invalid password for user:', username);
       return res.status(401).send('Invalid credentials.');
     }
 
-    console.log('User logged in successfully:', username);
     res.status(200).send('Login successful');
   } catch (error) {
-    console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
+  }
+});
+
+// Get all teams
+app.get('/teams', async (req, res) => {
+  try {
+    const teams = await Schedule.find();
+    const currentTime = new Date();
+
+    const updatedTeams = teams.map(team => {
+      const gameStartTime = new Date(team.gameTime);
+      const gameEndTime = new Date(gameStartTime.getTime() + 3 * 60 * 60 * 1000);
+
+      return {
+        ...team._doc,
+        status: currentTime >= gameStartTime && currentTime <= gameEndTime ? 'glowing' : currentTime > gameEndTime ? 'greyed out' : 'normal'
+      };
+    });
+
+    res.json(updatedTeams);
+  } catch (error) {
+    res.status(500).send('Error fetching teams.');
+  }
+});
+
+// Select a team
+app.post('/select-team', async (req, res) => {
+  const { username, team } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    const teamData = await Schedule.findOne({ team });
+    if (!teamData) {
+      return res.status(404).send('Team not found.');
+    }
+
+    const currentTime = new Date();
+    if (currentTime > new Date(teamData.gameTime)) {
+      return res.status(400).send('Cannot select a team after the game has started.');
+    }
+
+    user.selectedTeam = team;
+    await user.save();
+    res.status(200).send('Team selected successfully!');
+  } catch (error) {
+    res.status(500).send('Error selecting team.');
+  }
+});
+
+// Admin: Set game result
+app.post('/admin/set-result', async (req, res) => {
+  const { team, completed } = req.body;
+
+  try {
+    const game = await Schedule.findOne({ team });
+    if (!game) {
+      return res.status(404).send('Game not found.');
+    }
+
+    game.completed = completed;
+    await game.save();
+    res.status(200).send('Game result updated successfully!');
+  } catch (error) {
+    res.status(500).send('Error updating game result.');
+  }
+});
+
+// Admin: Update points
+app.post('/admin/update-points', async (req, res) => {
+  const { team } = req.body;
+
+  try {
+    const users = await User.find({ selectedTeam: team });
+    for (const user of users) {
+      user.points += 1;
+      user.selectedTeam = null; // Reset team selection
+      await user.save();
+    }
+
+    res.status(200).send('Points updated successfully!');
+  } catch (error) {
+    res.status(500).send('Error updating points.');
+  }
+});
+
+// Leaderboard
+app.get('/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find().sort({ points: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).send('Error fetching leaderboard.');
   }
 });
 
