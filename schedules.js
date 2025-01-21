@@ -1,39 +1,47 @@
 const schedules = [
+    // Example of live and completed games
     {
-        gameId: "1",
-        teamA: "Buffalo Bills",
-        teamB: "Kansas City Chiefs",
-        startTime: new Date(new Date().getTime() - 2 * 60 * 60 * 1000), // Started 2 hours ago
-        endTime: new Date(new Date().getTime() + 1 * 60 * 60 * 1000), // Ends in 1 hour
+      teamA: 'Bills',
+      teamB: 'Chiefs',
+      startTime: '2025-01-20T18:00:00Z',
+      endTime: '2025-01-20T21:00:00Z',
     },
     {
-        gameId: "2",
-        teamA: "Dallas Cowboys",
-        teamB: "San Francisco 49ers",
-        startTime: new Date(new Date().getTime() - 5 * 60 * 60 * 1000), // Started 5 hours ago
-        endTime: new Date(new Date().getTime() - 3 * 60 * 60 * 1000), // Ended 3 hours ago
+      teamA: 'Cowboys',
+      teamB: '49ers',
+      startTime: '2025-01-20T20:00:00Z',
+      endTime: '2025-01-20T23:00:00Z',
     },
-    {
-        gameId: "3",
-        teamA: "Green Bay Packers",
-        teamB: "Chicago Bears",
-        startTime: new Date(new Date().getTime() + 2 * 60 * 60 * 1000), // Starts in 2 hours
-        endTime: new Date(new Date().getTime() + 5 * 60 * 60 * 1000), // Ends in 5 hours
-    },
-    {
-        gameId: "4",
-        teamA: "Miami Dolphins",
-        teamB: "New York Jets",
-        startTime: new Date(new Date().getTime() - 4 * 60 * 60 * 1000), // Started 4 hours ago
-        endTime: new Date(new Date().getTime() - 1 * 60 * 60 * 1000), // Ended 1 hour ago
-    },
-    {
-        gameId: "5",
-        teamA: "Seattle Seahawks",
-        teamB: "Arizona Cardinals",
-        startTime: new Date(new Date().getTime() + 4 * 60 * 60 * 1000), // Starts in 4 hours
-        endTime: new Date(new Date().getTime() + 7 * 60 * 60 * 1000), // Ends in 7 hours
-    },
-];
-
-module.exports = schedules;
+    // Placeholder for all other teams as "available"
+    { teamA: 'Cardinals', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Falcons', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Ravens', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Panthers', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Bears', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Bengals', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Browns', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Broncos', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Lions', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Packers', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Texans', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Colts', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Jaguars', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Raiders', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Chargers', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Rams', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Dolphins', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Vikings', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Patriots', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Saints', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Giants', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Jets', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Eagles', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Steelers', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Seahawks', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Buccaneers', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Titans', teamB: null, startTime: null, endTime: null },
+    { teamA: 'Commanders', teamB: null, startTime: null, endTime: null },
+  ];
+  
+  module.exports = schedules;
+  
