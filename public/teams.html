@@ -33,11 +33,12 @@
       cursor: pointer;
     }
     .team.selected {
-      background-color: #007bff;
+      background-color: red; /* User's picked team */
       color: white;
     }
     .team.disabled {
-      background-color: red;
+      background-color: grey; /* Completed games */
+      color: white;
       cursor: not-allowed;
     }
     .team.glowing {
@@ -52,15 +53,6 @@
       to {
         box-shadow: 0 0 20px #ffd700;
       }
-    }
-    .team.greyed-out {
-      color: grey;
-      text-decoration: line-through;
-      cursor: not-allowed;
-    }
-    .team.upcoming {
-      font-weight: bold;
-      color: green;
     }
     button {
       padding: 10px 20px;
@@ -94,84 +86,59 @@
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
     let selectedTeam = null;
+    let userPickedTeam = null;
 
-    // Fetch game schedules dynamically from schedules.js
+    // Fetch all team schedules from schedules.js dynamically
     fetch('/api/game-status')
       .then(response => response.json())
       .then(schedules => {
-        console.log('Schedules fetched:', schedules); // Debugging log
+        console.log('Schedules fetched:', schedules);
 
-        schedules.forEach(game => {
-          // Create a button for teamA
-          const teamAButton = document.createElement('div');
-          teamAButton.textContent = game.teamA;
-          teamAButton.classList.add('team');
+        fetch('/get-logged-in-user')
+          .then(response => response.json())
+          .then(userData => {
+            usernameField.value = userData.username;
+            userPickedTeam = userData.selectedTeam || null;
 
-          // Apply status
-          const now = new Date();
-          if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
-            teamAButton.classList.add('glowing'); // Game is live
-            teamAButton.classList.add('disabled'); // Disable selection
-          } else if (now > new Date(game.endTime)) {
-            teamAButton.classList.add('greyed-out'); // Game is over
-            teamAButton.classList.add('disabled'); // Disable selection
-          } else {
-            teamAButton.classList.add('upcoming'); // Upcoming game
-          }
+            schedules.forEach(game => {
+              const teams = [game.teamA, game.teamB].filter(Boolean); // Filter out null values
+              teams.forEach(team => {
+                if (!team) return; // Skip null teams
 
-          // Click event
-          teamAButton.addEventListener('click', () => {
-            if (!teamAButton.classList.contains('disabled')) {
-              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-              teamAButton.classList.add('selected');
-              selectedTeam = game.teamA;
-              submitButton.disabled = false;
-            }
+                const teamDiv = document.createElement('div');
+                teamDiv.textContent = team;
+                teamDiv.classList.add('team');
+
+                const now = new Date();
+                if (userPickedTeam === team) {
+                  teamDiv.classList.add('selected'); // User's picked team
+                } else if (game.startTime && game.endTime) {
+                  if (now > new Date(game.endTime)) {
+                    teamDiv.classList.add('disabled'); // Completed game
+                  } else if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
+                    teamDiv.classList.add('glowing'); // Game is live
+                  }
+                }
+
+                teamDiv.addEventListener('click', () => {
+                  if (!teamDiv.classList.contains('disabled')) {
+                    document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                    teamDiv.classList.add('selected');
+                    selectedTeam = team;
+                    submitButton.disabled = false;
+                  }
+                });
+
+                teamList.appendChild(teamDiv);
+              });
+            });
+          })
+          .catch(err => {
+            console.error('Error fetching user data:', err);
+            alert('Error: Unable to fetch user data.');
           });
-
-          teamList.appendChild(teamAButton);
-
-          // Create a button for teamB
-          const teamBButton = document.createElement('div');
-          teamBButton.textContent = game.teamB;
-          teamBButton.classList.add('team');
-
-          // Apply status
-          if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
-            teamBButton.classList.add('glowing'); // Game is live
-            teamBButton.classList.add('disabled'); // Disable selection
-          } else if (now > new Date(game.endTime)) {
-            teamBButton.classList.add('greyed-out'); // Game is over
-            teamBButton.classList.add('disabled'); // Disable selection
-          } else {
-            teamBButton.classList.add('upcoming'); // Upcoming game
-          }
-
-          // Click event
-          teamBButton.addEventListener('click', () => {
-            if (!teamBButton.classList.contains('disabled')) {
-              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-              teamBButton.classList.add('selected');
-              selectedTeam = game.teamB;
-              submitButton.disabled = false;
-            }
-          });
-
-          teamList.appendChild(teamBButton);
-        });
       })
       .catch(err => console.error('Error fetching schedules:', err));
-
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user')
-      .then(response => response.json())
-      .then(data => {
-        usernameField.value = data.username;
-      })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
-      });
 
     // Submit the selected team
     submitButton.addEventListener('click', () => {
@@ -185,10 +152,10 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
+              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
               const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
               if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
+                selectedDiv.classList.add('selected');
               }
               selectedTeam = null;
               submitButton.disabled = true;
