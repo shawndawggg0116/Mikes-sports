@@ -88,7 +88,7 @@
     let selectedTeam = null;
     let userPickedTeam = null;
 
-    // Fetch all team schedules from schedules.js dynamically
+    // Fetch all team schedules dynamically from schedules.js
     fetch('/api/game-status')
       .then(response => response.json())
       .then(schedules => {
@@ -100,14 +100,18 @@
             usernameField.value = userData.username;
             userPickedTeam = userData.selectedTeam || null;
 
+            // Create a set to track all teams added
+            const teamsAdded = new Set();
+
             schedules.forEach(game => {
               const teams = [game.teamA, game.teamB].filter(Boolean); // Filter out null values
               teams.forEach(team => {
-                if (!team) return; // Skip null teams
+                if (!team || teamsAdded.has(team)) return; // Skip null or already added teams
 
                 const teamDiv = document.createElement('div');
                 teamDiv.textContent = team;
                 teamDiv.classList.add('team');
+                teamsAdded.add(team); // Mark team as added
 
                 const now = new Date();
                 if (userPickedTeam === team) {
@@ -118,6 +122,8 @@
                   } else if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
                     teamDiv.classList.add('glowing'); // Game is live
                   }
+                } else {
+                  teamDiv.classList.add('upcoming'); // Available team
                 }
 
                 teamDiv.addEventListener('click', () => {
@@ -131,6 +137,29 @@
 
                 teamList.appendChild(teamDiv);
               });
+            });
+
+            // Add remaining available teams
+            const allTeams = [
+              'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+              'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+              'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+              'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+              'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+            ];
+            allTeams.forEach(team => {
+              if (!teamsAdded.has(team)) {
+                const teamDiv = document.createElement('div');
+                teamDiv.textContent = team;
+                teamDiv.classList.add('team', 'upcoming'); // Mark as available
+                teamDiv.addEventListener('click', () => {
+                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+                  teamDiv.classList.add('selected');
+                  selectedTeam = team;
+                  submitButton.disabled = false;
+                });
+                teamList.appendChild(teamDiv);
+              }
             });
           })
           .catch(err => {
