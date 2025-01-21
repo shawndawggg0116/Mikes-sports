@@ -90,54 +90,77 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
-    const teams = [
-      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
-      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
-      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
-      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
-      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-    ];
-    
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
     let selectedTeam = null;
 
-    // Fetch game statuses from the backend
+    // Fetch game schedules dynamically from schedules.js
     fetch('/api/game-status')
       .then(response => response.json())
-      .then(games => {
-        teams.forEach(team => {
-          const game = games.find(g => g.teamA === team || g.teamB === team);
-          const teamDiv = document.createElement('div');
-          teamDiv.textContent = team;
-          teamDiv.classList.add('team');
+      .then(schedules => {
+        console.log('Schedules fetched:', schedules); // Debugging log
 
-          if (game) {
-            if (game.status === 'glowing') {
-              teamDiv.classList.add('glowing');
-              teamDiv.classList.add('disabled');
-            } else if (game.status === 'greyed-out') {
-              teamDiv.classList.add('greyed-out');
-              teamDiv.classList.add('disabled');
-            } else if (game.status === 'upcoming') {
-              teamDiv.classList.add('upcoming');
-            }
+        schedules.forEach(game => {
+          // Create a button for teamA
+          const teamAButton = document.createElement('div');
+          teamAButton.textContent = game.teamA;
+          teamAButton.classList.add('team');
+
+          // Apply status
+          const now = new Date();
+          if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
+            teamAButton.classList.add('glowing'); // Game is live
+            teamAButton.classList.add('disabled'); // Disable selection
+          } else if (now > new Date(game.endTime)) {
+            teamAButton.classList.add('greyed-out'); // Game is over
+            teamAButton.classList.add('disabled'); // Disable selection
+          } else {
+            teamAButton.classList.add('upcoming'); // Upcoming game
           }
 
-          teamDiv.addEventListener('click', () => {
-            if (!teamDiv.classList.contains('disabled')) {
+          // Click event
+          teamAButton.addEventListener('click', () => {
+            if (!teamAButton.classList.contains('disabled')) {
               document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-              teamDiv.classList.add('selected');
-              selectedTeam = team;
+              teamAButton.classList.add('selected');
+              selectedTeam = game.teamA;
               submitButton.disabled = false;
             }
           });
 
-          teamList.appendChild(teamDiv);
+          teamList.appendChild(teamAButton);
+
+          // Create a button for teamB
+          const teamBButton = document.createElement('div');
+          teamBButton.textContent = game.teamB;
+          teamBButton.classList.add('team');
+
+          // Apply status
+          if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
+            teamBButton.classList.add('glowing'); // Game is live
+            teamBButton.classList.add('disabled'); // Disable selection
+          } else if (now > new Date(game.endTime)) {
+            teamBButton.classList.add('greyed-out'); // Game is over
+            teamBButton.classList.add('disabled'); // Disable selection
+          } else {
+            teamBButton.classList.add('upcoming'); // Upcoming game
+          }
+
+          // Click event
+          teamBButton.addEventListener('click', () => {
+            if (!teamBButton.classList.contains('disabled')) {
+              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+              teamBButton.classList.add('selected');
+              selectedTeam = game.teamB;
+              submitButton.disabled = false;
+            }
+          });
+
+          teamList.appendChild(teamBButton);
         });
       })
-      .catch(err => console.error('Error fetching game statuses:', err));
+      .catch(err => console.error('Error fetching schedules:', err));
 
     // Fetch the logged-in username
     fetch('/get-logged-in-user')
