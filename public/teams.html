@@ -90,6 +90,14 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
+    const teams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
+      'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
+      'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
+      'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
+      'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+    ];
+    
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
@@ -99,20 +107,29 @@
     fetch('/api/game-status')
       .then(response => response.json())
       .then(games => {
-        games.forEach(game => {
+        teams.forEach(team => {
+          const game = games.find(g => g.teamA === team || g.teamB === team);
           const teamDiv = document.createElement('div');
-          teamDiv.textContent = `${game.teamA} vs. ${game.teamB}`;
-          teamDiv.classList.add('team', game.status);
+          teamDiv.textContent = team;
+          teamDiv.classList.add('team');
 
-          if (game.status === 'glowing' || game.status === 'greyed-out') {
-            teamDiv.classList.add('disabled'); // Disable selection for glowing or greyed-out games
+          if (game) {
+            if (game.status === 'glowing') {
+              teamDiv.classList.add('glowing');
+              teamDiv.classList.add('disabled');
+            } else if (game.status === 'greyed-out') {
+              teamDiv.classList.add('greyed-out');
+              teamDiv.classList.add('disabled');
+            } else if (game.status === 'upcoming') {
+              teamDiv.classList.add('upcoming');
+            }
           }
 
           teamDiv.addEventListener('click', () => {
             if (!teamDiv.classList.contains('disabled')) {
               document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
               teamDiv.classList.add('selected');
-              selectedTeam = game.teamA; // Set the selected team (can be adjusted as needed)
+              selectedTeam = team;
               submitButton.disabled = false;
             }
           });
@@ -145,7 +162,7 @@
           .then(data => {
             if (data.success) {
               alert(`You picked ${selectedTeam}`);
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent.includes(selectedTeam));
+              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
               if (selectedDiv) {
                 selectedDiv.classList.add('disabled');
                 selectedDiv.classList.remove('selected');
