@@ -1,9 +1,13 @@
+// Integration of requested functionality into the NFL Picks App
+
+// Import required packages
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-
+const cron = require('node-cron');
+const schedules = require('./schedules'); // Import hard-coded schedules
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -40,6 +44,25 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Routes
+
+// Fetch game statuses dynamically using hard-coded schedules
+app.get('/api/game-status', (req, res) => {
+    try {
+        const now = new Date();
+        const updatedSchedules = schedules.map(game => {
+            if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
+                return { ...game, status: 'glowing' };
+            } else if (now > new Date(game.endTime)) {
+                return { ...game, status: 'greyed-out' };
+            } else {
+                return { ...game, status: 'upcoming' };
+            }
+        });
+        res.status(200).json(updatedSchedules);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching game statuses', error });
+    }
+});
 
 // Root Route
 app.get('/', (req, res) => {
@@ -279,6 +302,16 @@ app.post('/admin/delete-user', async (req, res) => {
     console.error('Error deleting user:', error);
     res.status(500).send('Error deleting user.');
   }
+});
+
+// Reset team selections every Tuesday
+cron.schedule('0 0 * * 2', async () => {
+    try {
+        const users = await User.updateMany({}, { selectedTeam: null });
+        console.log('Team selections reset for all users');
+    } catch (error) {
+        console.error('Error resetting team selections:', error);
+    }
 });
 
 // Start the server
