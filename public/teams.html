@@ -1,199 +1,65 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Select Your Team</title>
-  <link rel="stylesheet" href="navbar.css">
+  <title>Team Selection</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-image: url('background.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-    h1 {
-      color: #333;
-    }
-    .team-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
     .team {
-      padding: 10px 20px;
+      padding: 10px;
+      margin: 5px;
+      display: inline-block;
       border: 1px solid #ccc;
       border-radius: 5px;
-      background-color: #4caf50;
-      color: white;
       cursor: pointer;
     }
-    .team.selected {
-      background-color: red; /* User's picked team */
-      color: white;
+    .glowing {
+      background-color: yellow;
+      animation: glow 1s infinite;
     }
-    .team.disabled {
-      background-color: grey; /* Completed games */
+    .greyed-out {
+      background-color: grey;
       color: white;
-      cursor: not-allowed;
+      pointer-events: none;
     }
-    .team.glowing {
-      animation: glow 1s infinite alternate;
-      background-color: #ffeb3b;
-      color: black;
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
     }
     @keyframes glow {
-      from {
-        box-shadow: 0 0 5px #ffd700;
-      }
-      to {
-        box-shadow: 0 0 20px #ffd700;
-      }
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      color: white;
-      background-color: #4caf50;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
+      from { box-shadow: 0 0 10px yellow; }
+      to { box-shadow: 0 0 20px orange; }
     }
   </style>
 </head>
 <body>
-  <div class="navbar">
-    <a href="/teams" class="active">Team Selection</a>
-    <a href="/leaderboard">Leaderboard</a>
-    <a href="/rules">Rules</a>
-  </div>
-
   <h1>Select Your Team</h1>
-  <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
-  <button id="submitButton" disabled>Submit</button>
-
+  <div id="team-list"></div>
   <script>
-    const teamList = document.querySelector('.team-list');
-    const submitButton = document.getElementById('submitButton');
-    const usernameField = document.getElementById('username');
-    let selectedTeam = null;
-    let userPickedTeam = null;
+    async function fetchGameStatus() {
+      const username = 'current-user'; // Replace with the logged-in user's name
+      const response = await fetch(`/api/game-status?username=${username}`);
+      const games = await response.json();
 
-    // Fetch all team schedules dynamically from schedules.js
-    fetch('/api/game-status')
-      .then(response => response.json())
-      .then(schedules => {
-        console.log('Schedules fetched:', schedules);
+      const teamList = document.getElementById('team-list');
+      teamList.innerHTML = '';
 
-        fetch('/get-logged-in-user')
-          .then(response => response.json())
-          .then(userData => {
-            usernameField.value = userData.username;
-            userPickedTeam = userData.selectedTeam || null;
+      games.forEach((game) => {
+        const teamDiv = document.createElement('div');
+        teamDiv.textContent = `${game.teamA} vs ${game.teamB || 'N/A'}`;
+        teamDiv.className = `team ${game.status} ${game.disabled ? 'disabled' : ''}`;
+        teamDiv.onclick = () => {
+          if (!game.disabled) {
+            alert(`You picked ${game.teamA}`);
+          }
+        };
+        teamList.appendChild(teamDiv);
+      });
+    }
 
-            // Create a set to track all teams added
-            const teamsAdded = new Set();
-
-            schedules.forEach(game => {
-              const teams = [game.teamA, game.teamB].filter(Boolean); // Filter out null values
-              teams.forEach(team => {
-                if (!team || teamsAdded.has(team)) return; // Skip null or already added teams
-
-                const teamDiv = document.createElement('div');
-                teamDiv.textContent = team;
-                teamDiv.classList.add('team');
-                teamsAdded.add(team); // Mark team as added
-
-                const now = new Date();
-                if (userPickedTeam === team) {
-                  teamDiv.classList.add('selected'); // User's picked team
-                } else if (game.startTime && game.endTime) {
-                  if (now > new Date(game.endTime)) {
-                    teamDiv.classList.add('disabled'); // Completed game
-                  } else if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
-                    teamDiv.classList.add('glowing'); // Game is live
-                  }
-                } else {
-                  teamDiv.classList.add('upcoming'); // Available team
-                }
-
-                teamDiv.addEventListener('click', () => {
-                  if (!teamDiv.classList.contains('disabled')) {
-                    document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                    teamDiv.classList.add('selected');
-                    selectedTeam = team;
-                    submitButton.disabled = false;
-                  }
-                });
-
-                teamList.appendChild(teamDiv);
-              });
-            });
-
-            // Add remaining available teams
-            const allTeams = [
-              'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 
-              'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 
-              'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings', 
-              'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers', 
-              'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-            ];
-            allTeams.forEach(team => {
-              if (!teamsAdded.has(team)) {
-                const teamDiv = document.createElement('div');
-                teamDiv.textContent = team;
-                teamDiv.classList.add('team', 'upcoming'); // Mark as available
-                teamDiv.addEventListener('click', () => {
-                  document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                  teamDiv.classList.add('selected');
-                  selectedTeam = team;
-                  submitButton.disabled = false;
-                });
-                teamList.appendChild(teamDiv);
-              }
-            });
-          })
-          .catch(err => {
-            console.error('Error fetching user data:', err);
-            alert('Error: Unable to fetch user data.');
-          });
-      })
-      .catch(err => console.error('Error fetching schedules:', err));
-
-    // Submit the selected team
-    submitButton.addEventListener('click', () => {
-      const username = usernameField.value;
-      if (selectedTeam && username) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, team: selectedTeam })
-        }).then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert(`You picked ${selectedTeam}`);
-              document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('selected');
-              }
-              selectedTeam = null;
-              submitButton.disabled = true;
-            } else {
-              alert(data.message);
-            }
-          });
-      }
-    });
+    setInterval(fetchGameStatus, 10000);
+    fetchGameStatus();
   </script>
 </body>
 </html>
