@@ -201,9 +201,12 @@ app.post('/select-team', async (req, res) => {
 
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
-    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
-      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    
+    // Check if the last pick was made within the last minute
+    if (lastPickDate && now - lastPickDate < 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per minute.' });
     }
+    
 
     user.selectedTeam = team;
     user.pickedTeams.push(team);
@@ -305,14 +308,15 @@ app.post('/admin/delete-user', async (req, res) => {
 });
 
 // Reset team selections every Tuesday
-cron.schedule('01 * * * *', async () => {
-    try {
-        const users = await User.updateMany({}, { selectedTeam: null });
-        console.log('Team selections reset for all users');
-    } catch (error) {
-        console.error('Error resetting team selections:', error);
-    }
+cron.schedule('* * * * *', async () => {
+  try {
+      const users = await User.updateMany({}, { selectedTeam: null }); // Reset team picks for all users
+      console.log('Team selections reset for all users');
+  } catch (error) {
+      console.error('Error resetting team selections:', error);
+  }
 });
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
