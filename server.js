@@ -305,7 +305,7 @@ app.post('/admin/delete-user', async (req, res) => {
 });
 
 // Reset team selections every Tuesday
-cron.schedule('0 0 * * 2', async () => {
+cron.schedule('01 * * * *', async () => {
     try {
         const users = await User.updateMany({}, { selectedTeam: null });
         console.log('Team selections reset for all users');
