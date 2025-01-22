@@ -9,6 +9,7 @@ const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron');
 const schedules = require('./schedules'); // Import hard-coded schedules
+const User = require('./models/User'); // Ensure User model is correctly imported
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -27,7 +28,7 @@ app.use(
   session({
     secret: 'your-secret-key',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
   })
 );
 
@@ -47,23 +48,7 @@ const User = mongoose.model('User', userSchema);
 // Routes
 
 // Fetch game statuses dynamically using hard-coded schedules
-app.get('/api/game-status', (req, res) => {
-    try {
-        const now = new Date();
-        const updatedSchedules = schedules.map(game => {
-            if (now >= new Date(game.startTime) && now <= new Date(game.endTime)) {
-                return { ...game, status: 'glowing' };
-            } else if (now > new Date(game.endTime)) {
-                return { ...game, status: 'greyed-out' };
-            } else {
-                return { ...game, status: 'upcoming' };
-            }
-        });
-        res.status(200).json(updatedSchedules);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching game statuses', error });
-    }
-});
+
 
 // Root Route
 app.get('/', (req, res) => {
@@ -184,21 +169,18 @@ app.get('/get-leaderboard', async (req, res) => {
 
 // Handle team selection
 app.post('/select-team', async (req, res) => {
-  const { username, team } = req.body;
-
-  if (!username || !team) {
-    return res.status(400).send({ success: false, message: 'Username and team are required.' });
-  }
+  const { userId, team } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found.' });
-    }
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).send({ success: false, message: 'User not found' });
+      }
 
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team.' });
-    }
+
+    if (user.pickedTeams && user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'You already picked this team' });
+  }
 
     const now = new Date();
     const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
@@ -210,15 +192,15 @@ app.post('/select-team', async (req, res) => {
     
 
     user.selectedTeam = team;
+    user.pickedTeams = user.pickedTeams || []; // Initialize if undefined
     user.pickedTeams.push(team);
-    user.lastPickDate = now;
     await user.save();
 
-    res.send({ success: true, message: `You picked ${team}` });
-  } catch (error) {
+    res.send({ success: true, message: 'Team selected successfully' });
+} catch (error) {
     console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Error selecting team.' });
-  }
+    res.status(500).send({ success: false, message: 'Server error' });
+}
 });
 
 // Admin Routes
@@ -320,23 +302,29 @@ cron.schedule('* * * * *', async () => {
 
 
 // Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 
 // Fetch user-picked teams dynamically
 app.get('/api/user-picks/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send({ success: false, message: 'User not found' });
-        }
-        res.send({ success: true, pickedTeams: user.pickedTeams || [] });
-    } catch (error) {
-        console.error('Error fetching user picks:', error);
-        res.status(500).send({ success: false, message: 'Server error' });
-    }
+  try {
+      const userId = req.params.userId;
+      console.log('Fetching picked teams for userId:', userId);
+
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).send({ success: false, message: 'User not found' });
+      }
+
+      res.send({ success: true, pickedTeams: user.pickedTeams || [] });
+  } catch (error) {
+      console.error('Error fetching user picks:', error);
+      res.status(500).send({ success: false, message: 'Server error' });
+  }
 });
+
 
 // Example dynamic game-status API using MongoDB (replace schedules logic if static)
 app.get('/api/game-status', async (req, res) => {
