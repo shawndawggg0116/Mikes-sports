@@ -1,4 +1,5 @@
 // Integration of requested functionality into the NFL Picks App
+// Integration of requested functionality into the NFL Picks App
 
 // Import required packages
 const express = require('express');
@@ -320,3 +321,30 @@ cron.schedule('* * * * *', async () => {
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+// Fetch user-picked teams dynamically
+app.get('/api/user-picks/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ success: false, message: 'User not found' });
+        }
+        res.send({ success: true, pickedTeams: user.pickedTeams || [] });
+    } catch (error) {
+        console.error('Error fetching user picks:', error);
+        res.status(500).send({ success: false, message: 'Server error' });
+    }
+});
+
+// Example dynamic game-status API using MongoDB (replace schedules logic if static)
+app.get('/api/game-status', async (req, res) => {
+    try {
+        const games = await schedules.find({}); // Assuming schedules is a model
+        res.send(games);
+    } catch (error) {
+        console.error('Error fetching game status:', error);
+        res.status(500).send({ success: false, message: 'Server error' });
+    }
+});
