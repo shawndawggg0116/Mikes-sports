@@ -284,31 +284,32 @@ app.post('/admin/delete-user', async (req, res) => {
 // Fetch game status
 app.get('/api/game-status', async (req, res) => {
   try {
-    const games = [
-      { teamA: 'Packers', teamB: 'Bears', startTime: '2025-01-23T13:00:00Z', endTime: '2025-01-23T16:00:00Z' },
-      { teamA: 'Chiefs', teamB: 'Raiders', startTime: '2025-01-23T17:00:00Z', endTime: '2025-01-23T20:00:00Z' },
-    ];
-    res.json(games);
+      const games = await schedules.find({}); // Fetch game data from database
+      res.json(games); // Send the data to the frontend
   } catch (error) {
-    console.error('Error fetching game status:', error);
-    res.status(500).send({ success: false, message: 'Server error' });
+      console.error('Error fetching game status:', error);
+      res.status(500).send({ success: false, message: 'Error fetching game data.' });
   }
 });
+
 
 // Fetch user picks
 app.get('/api/user-picks/:userId', async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
-    }
-    res.send({ success: true, pickedTeams: user.pickedTeams || [] });
+      const userId = req.params.userId; // Get the userId from the request URL
+      const user = await User.findById(userId); // Find the user by ID in the database
+
+      if (!user) {
+          return res.status(404).send({ success: false, message: 'User not found.' });
+      }
+
+      res.send({ success: true, pickedTeams: user.pickedTeams || [] }); // Send user's picked teams
   } catch (error) {
-    console.error('Error fetching user picks:', error);
-    res.status(500).send({ success: false, message: 'Server error' });
+      console.error('Error fetching user picks:', error);
+      res.status(500).send({ success: false, message: 'Error fetching user picks.' });
   }
 });
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
