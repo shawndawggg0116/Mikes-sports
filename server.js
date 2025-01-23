@@ -281,24 +281,13 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
+// Fetch game status
 app.get('/api/game-status', async (req, res) => {
   try {
-    // Replace this with actual logic to fetch schedules from an API or database
     const games = [
-      {
-        teamA: "Packers",
-        teamB: "Bears",
-        startTime: "2025-01-22T18:00:00Z", // Game starts at 1 PM EST (converted to UTC)
-        endTime: "2025-01-22T21:00:00Z"
-      },
-      {
-        teamA: "Cowboys",
-        teamB: "Giants",
-        startTime: "2025-01-22T19:00:00Z",
-        endTime: "2025-01-22T22:00:00Z"
-      }
+      { teamA: 'Packers', teamB: 'Bears', startTime: '2025-01-23T13:00:00Z', endTime: '2025-01-23T16:00:00Z' },
+      { teamA: 'Chiefs', teamB: 'Raiders', startTime: '2025-01-23T17:00:00Z', endTime: '2025-01-23T20:00:00Z' },
     ];
-
     res.json(games);
   } catch (error) {
     console.error('Error fetching game status:', error);
@@ -306,6 +295,20 @@ app.get('/api/game-status', async (req, res) => {
   }
 });
 
+// Fetch user picks
+app.get('/api/user-picks/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found' });
+    }
+    res.send({ success: true, pickedTeams: user.pickedTeams || [] });
+  } catch (error) {
+    console.error('Error fetching user picks:', error);
+    res.status(500).send({ success: false, message: 'Server error' });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

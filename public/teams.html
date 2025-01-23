@@ -80,13 +80,12 @@
 
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
-  <input type="hidden" id="username" value=""> <!-- This will be filled dynamically -->
+  <input type="hidden" id="username" value="">
   <button id="submitButton" disabled>Submit</button>
 
   <script>
     async function loadTeams() {
       try {
-        // Fetch game statuses and user-picked teams
         const [gameResponse, userResponse] = await Promise.all([
           fetch('/api/game-status'),
           fetch(`/api/user-picks/${document.getElementById('username').value}`)
@@ -101,6 +100,8 @@
 
         const now = new Date();
         const teamList = document.querySelector('.team-list');
+        teamList.innerHTML = ''; // Clear previous teams to prevent duplication
+
         const allTeams = [
           'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals',
           'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts',
@@ -136,10 +137,10 @@
             }
           }
 
-          teamDiv.addEventListener('click', () => {
-            if (!teamDiv.classList.contains('disabled')) {
+          teamDiv.addEventListener('click', (event) => {
+            if (!event.target.classList.contains('disabled')) {
               document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-              teamDiv.classList.add('selected');
+              event.target.classList.add('selected');
               document.getElementById('submitButton').disabled = false;
             }
           });
@@ -152,14 +153,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      loadTeams(); // Initial load
-    setInterval(loadTeams, 30000); // Refresh teams every 30 seconds
-      // Fetch the logged-in username
-      fetch('/get-logged-in-user') 
+      fetch('/get-logged-in-user')
         .then(response => response.json())
         .then(data => {
           document.getElementById('username').value = data.username;
           loadTeams();
+          setInterval(loadTeams, 30000); // Auto-refresh every 30 seconds
         })
         .catch(err => {
           console.error('Error fetching username:', err);
