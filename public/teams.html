@@ -53,6 +53,26 @@
       background-color: #ccc;
       cursor: not-allowed;
     }
+    /* Flashing effect for ongoing games */
+    .team.flashing {
+      animation: flashing 1s infinite alternate;
+    }
+
+    /* Greyed-out effect for completed games */
+    .team.disabled {
+      opacity: 0.5;
+      pointer-events: none; /* Prevent clicking */
+    }
+
+    /* Keyframes for the flashing effect */
+    @keyframes flashing {
+      from {
+        background-color: orange;
+      }
+      to {
+        background-color: yellow;
+      }
+    }
   </style>
 </head>
 <body>
@@ -147,6 +167,33 @@
           });
       }
     });
+
+    // Load and refresh game statuses
+    function loadGameStatuses() {
+      fetch('/api/game-status') 
+        .then(response => response.json())
+        .then(data => {
+          // Update the team boxes based on the status
+          document.querySelectorAll('.team').forEach(teamDiv => {
+            const teamName = teamDiv.textContent;
+            const game = data.find(g => g.teamA === teamName || g.teamB === teamName);
+
+            if (game) {
+              teamDiv.classList.remove('flashing', 'disabled');
+              if (game.status === 'flashing') {
+                teamDiv.classList.add('flashing');
+              } else if (game.status === 'disabled') {
+                teamDiv.classList.add('disabled');
+              }
+            }
+          });
+        })
+        .catch(err => console.error('Error loading game statuses:', err));
+    }
+
+    // Initial load and periodic refresh every 30 seconds
+    loadGameStatuses();
+    setInterval(loadGameStatuses, 30000);
   </script>
 </body>
 </html>
