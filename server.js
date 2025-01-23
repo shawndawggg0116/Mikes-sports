@@ -39,6 +39,16 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Schedule schema
+const scheduleSchema = new mongoose.Schema({
+  team: { type: String, required: true },
+  startTime: { type: Date, required: true },
+  endTime: { type: Date, required: true },
+  status: { type: String, default: 'upcoming' }
+});
+
+const schedules = mongoose.model('Schedule', scheduleSchema);
+
 // Routes
 
 // Root Route
@@ -249,25 +259,6 @@ app.post('/admin/update-points', async (req, res) => {
   }
 });
 
-// Unlock a user's picked teams
-app.post('/admin/unlock-teams', async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    user.pickedTeams = [];
-    await user.save();
-    res.send('Teams unlocked successfully!');
-  } catch (error) {
-    console.error('Error unlocking teams:', error);
-    res.status(500).send('Error unlocking teams.');
-  }
-});
-
 // Delete a user
 app.post('/admin/delete-user', async (req, res) => {
   const { username } = req.body;
@@ -278,6 +269,35 @@ app.post('/admin/delete-user', async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).send('Error deleting user.');
+  }
+});
+
+// Route to fetch real-time game statuses
+app.get('/api/game-status', async (req, res) => {
+  try {
+    const games = await schedules.find({}); // Ensure 'schedules' is defined and imported correctly
+    const now = new Date();
+
+    // Determine the status for each game
+    const updatedGames = games.map(game => {
+      const startTime = new Date(game.startTime);
+      const endTime = new Date(game.endTime);
+
+      if (now >= startTime && now <= endTime) {
+        game.status = 'flashing'; // Game is currently ongoing
+      } else if (now > endTime) {
+        game.status = 'disabled'; // Game has ended
+      } else {
+        game.status = 'upcoming'; // Game has not started yet
+      }
+
+      return game;
+    });
+
+    res.json(updatedGames);
+  } catch (error) {
+    console.error('Error fetching game status:', error);
+    res.status(500).send({ success: false, message: 'Error fetching game status.' });
   }
 });
 
