@@ -337,13 +337,14 @@ app.get('/api/user-picks/:userId', async (req, res) => {
 });
 
 
+
 // Example dynamic game-status API using MongoDB (replace schedules logic if static)
 app.get('/api/game-status', async (req, res) => {
-    try {
-        const games = await schedules.find({}); // Assuming schedules is a model
-        res.send(games);
-    } catch (error) {
-        console.error('Error fetching game status:', error);
-        res.status(500).send({ success: false, message: 'Server error' });
-    }
+  try {
+      const games = await schedules.find({}); // Assuming schedules is a model
+      res.send(games);
+  } catch (error) {
+      console.error('Error fetching game status:', error);
+      res.status(500).send({ success: false, message: 'Server error' });
+  }
 });
