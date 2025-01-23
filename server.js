@@ -41,11 +41,13 @@ const User = mongoose.model('User', userSchema);
 
 // Schedule schema
 const scheduleSchema = new mongoose.Schema({
-  team: { type: String, required: true },
+  homeTeam: { type: String, required: true },
+  awayTeam: { type: String, required: true },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
-  status: { type: String, default: 'upcoming' }
+  status: { type: String, default: 'upcoming' },
 });
+
 
 const schedules = mongoose.model('Schedule', scheduleSchema);
 
@@ -300,6 +302,14 @@ app.get('/api/game-status', async (req, res) => {
     res.status(500).send({ success: false, message: 'Error fetching game status.' });
   }
 });
+
+updatedGames.forEach(async (game) => {
+  await schedules.updateOne(
+    { _id: game._id },
+    { $set: { status: game.status } }
+  );
+});
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
