@@ -277,31 +277,40 @@ app.post('/admin/delete-user', async (req, res) => {
 // Route to fetch real-time game statuses
 app.get('/api/game-status', async (req, res) => {
   try {
-    const games = await schedules.find({}); // Ensure 'schedules' is defined and imported correctly
+    const games = await schedules.find({}); // Ensure schedules is defined and connected to your DB
     const now = new Date();
 
-    // Determine the status for each game
-    const updatedGames = games.map(game => {
+    // Map over games to determine status
+    const updatedGames = games.map((game) => {
       const startTime = new Date(game.startTime);
       const endTime = new Date(game.endTime);
 
       if (now >= startTime && now <= endTime) {
-        game.status = 'flashing'; // Game is currently ongoing
+        game.status = 'flashing'; // Game is ongoing
       } else if (now > endTime) {
         game.status = 'disabled'; // Game has ended
       } else {
-        game.status = 'upcoming'; // Game has not started yet
+        game.status = 'upcoming'; // Game has not started
       }
 
       return game;
     });
 
+    // Save the updated status to the database (optional)
+    await Promise.all(
+      updatedGames.map(async (game) => {
+        await schedules.updateOne({ _id: game._id }, { $set: { status: game.status } });
+      })
+    );
+
+    // Send the updated games back as the response
     res.json(updatedGames);
   } catch (error) {
     console.error('Error fetching game status:', error);
     res.status(500).send({ success: false, message: 'Error fetching game status.' });
   }
 });
+
 
 updatedGames.forEach(async (game) => {
   await schedules.updateOne(
