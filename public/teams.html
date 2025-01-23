@@ -84,6 +84,39 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
+    async function loadPageData() {
+      const userId = getLoggedInUserId(); // Replace with your logic to fetch the logged-in user's ID.
+
+      try {
+        // Fetch user picks
+        const userPicksResponse = await fetch(`/api/user-picks/${userId}`);
+        const userPicksData = await userPicksResponse.json();
+
+        // Fetch game schedules
+        const schedulesResponse = await fetch('/api/game-status');
+        const schedulesData = await schedulesResponse.json();
+
+        if (userPicksData.success && schedulesData) {
+          // Merge user picks and schedules for display
+          renderTeams(userPicksData.pickedTeams, schedulesData);
+        } else {
+          console.error('Error loading data:', userPicksData.message);
+        }
+      } catch (error) {
+        console.error('Error loading page data:', error);
+      }
+    }
+
+    function renderTeams(pickedTeams, schedules) {
+      schedules.forEach(schedule => {
+        const teamA = schedule.teamA;
+        const teamB = schedule.teamB;
+
+        // Add logic to display teams with flashing/disabled effects
+        // and show user picks alongside real-time schedules.
+      });
+    }
+
     async function loadTeams() {
       try {
         const [gameResponse, userResponse] = await Promise.all([
@@ -152,39 +185,6 @@
       }
     }
 
-    fetch('/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username, password })
-})
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      sessionStorage.setItem('userId', data.userId); // Store userId after login
-      window.location.href = '/teams'; // Redirect to team selection page
-    } else {
-      alert('Login failed: ' + data.message);
-    }
-  });
-
-  const userId = sessionStorage.getItem('userId');
-if (userId) {
-  fetch(`/api/user-picks/${userId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        console.log('User picks:', data.pickedTeams);
-        // Update the UI with the user's picked teams
-      } else {
-        console.error('Error fetching picks:', data.message);
-      }
-    });
-} else {
-  console.error('User ID not found. Please log in again.');
-  window.location.href = '/';
-}
-
-
     document.addEventListener('DOMContentLoaded', () => {
       fetch('/get-logged-in-user')
         .then(response => response.json())
@@ -198,6 +198,9 @@ if (userId) {
           alert('Error: Unable to fetch logged-in user.');
         });
     });
+
+    // Call loadPageData when the page loads
+    loadPageData();
   </script>
 </body>
 </html>
