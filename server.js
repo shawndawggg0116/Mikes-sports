@@ -300,6 +300,17 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+app.get('/api/teams', (req, res) => {
+  const teams = [
+    'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals',
+    'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts',
+    'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings',
+    'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers',
+    'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
+  ];
+  res.json(teams);
+});
+
 
 // Start the server
 app.listen(PORT, () => {

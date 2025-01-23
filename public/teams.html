@@ -113,23 +113,34 @@
       }
     }
 
-    async function loadTeams(userId) {
-      const pickedTeams = await getUserPicks(userId);
-      const response = await fetch('/api/game-status');
-      const games = await response.json();
-
-      games.forEach(game => {
-        [game.teamA, game.teamB].forEach(team => {
-          const teamDiv = document.createElement('div');
-          teamDiv.textContent = team;
-          teamDiv.className = 'team';
-          if (pickedTeams.includes(team)) {
-            teamDiv.classList.add('disabled');
-          }
-          document.querySelector('.team-list').appendChild(teamDiv);
-        });
-      });
+    async function loadTeams() {
+  try {
+    const response = await fetch('/api/teams');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch teams: ${response.statusText}`);
     }
+    const teams = await response.json();
+    const teamList = document.querySelector('.team-list');
+
+    teams.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = team;
+      teamDiv.classList.add('team');
+      teamDiv.addEventListener('click', () => {
+        document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
+        teamDiv.classList.add('selected');
+        document.getElementById('submitButton').disabled = false;
+      });
+      teamList.appendChild(teamDiv);
+    });
+  } catch (error) {
+    console.error('Error loading teams:', error);
+    alert('Could not load teams. Please try again later.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadTeams);
+
 
     document.addEventListener('DOMContentLoaded', async () => {
       const username = await getLoggedInUser();
