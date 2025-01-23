@@ -1,15 +1,9 @@
-// Integration of requested functionality into the NFL Picks App
-// Integration of requested functionality into the NFL Picks App
-
-// Import required packages
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const cron = require('node-cron');
-const schedules = require('./schedules'); // Import hard-coded schedules
-const User = require('./models/User'); // Ensure User model is correctly imported
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -28,7 +22,7 @@ app.use(
   session({
     secret: 'your-secret-key',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
   })
 );
 
@@ -43,7 +37,7 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-
+const User = mongoose.model('User', userSchema);
 
 // Routes
 
@@ -168,24 +162,35 @@ app.get('/get-leaderboard', async (req, res) => {
 app.post('/select-team', async (req, res) => {
   const { username, team } = req.body;
 
+  if (!username || !team) {
+    return res.status(400).send({ success: false, message: 'Username and team are required.' });
+  }
+
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
+      return res.status(404).send({ success: false, message: 'User not found.' });
     }
 
     if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'You already picked this team' });
+      return res.status(400).send({ success: false, message: 'You already picked this team.' });
     }
 
-    user.pickedTeams.push(team);
+    const now = new Date();
+    const lastPickDate = user.lastPickDate ? new Date(user.lastPickDate) : null;
+    if (lastPickDate && now - lastPickDate < 7 * 24 * 60 * 60 * 1000) {
+      return res.status(400).send({ success: false, message: 'You can only pick one team per week.' });
+    }
+
     user.selectedTeam = team;
+    user.pickedTeams.push(team);
+    user.lastPickDate = now;
     await user.save();
 
-    res.send({ success: true, message: 'Team selected successfully' });
+    res.send({ success: true, message: `You picked ${team}` });
   } catch (error) {
     console.error('Error selecting team:', error);
-    res.status(500).send({ success: false, message: 'Server error' });
+    res.status(500).send({ success: false, message: 'Error selecting team.' });
   }
 });
 
@@ -195,14 +200,22 @@ app.get('/admin', (req, res) => {
 });
 
 // Admin Login
-app.post('/admin-login', (req, res) => {
+app.post('/admin-login', async (req, res) => {
   const { username, password } = req.body;
 
-  if (username === 'admin' && password === 'password') {
-    req.session.isAdmin = true;
-    res.redirect('/admin');
-  } else {
-    res.status(401).send('Invalid admin credentials');
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    if (username === 'admin' && password === 'password') {
+      res.redirect('/admin'); // Redirect to admin dashboard
+    } else {
+      res.status(401).send('Invalid admin credentials.');
+    }
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).send('Error during admin login.');
   }
 });
 
@@ -268,58 +281,5 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
-// Reset team selections every Tuesday
-cron.schedule('0 0 * * 2', async () => {
-  try {
-    await User.updateMany({}, { $set: { selectedTeam: null } });
-    console.log('Weekly reset of selected teams complete.');
-  } catch (error) {
-    console.error('Error during weekly reset:', error);
-  }
-});
-
-// Fetch all teams
-app.get('/api/teams', (req, res) => {
-  const teams = [
-    'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals',
-    'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts',
-    'Jaguars', 'Chiefs', 'Raiders', 'Chargers', 'Rams', 'Dolphins', 'Vikings',
-    'Patriots', 'Saints', 'Giants', 'Jets', 'Eagles', 'Steelers', '49ers',
-    'Seahawks', 'Buccaneers', 'Titans', 'Commanders'
-  ];
-
-  res.json(teams);
-});
-
-// Fetch user-picked teams dynamically
-app.get('/api/user-picks/:username', async (req, res) => {
-  try {
-    const { username } = req.params;
-    const user = await User.findOne({ username });
-
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
-    }
-
-    res.send({ success: true, pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching user picks:', error);
-    res.status(500).send({ success: false, message: 'Server error' });
-  }
-});
-
-// Example dynamic game-status API using MongoDB (replace schedules logic if static)
-app.get('/api/game-status', async (req, res) => {
-  try {
-    const games = await schedules.find({}); // Assuming schedules is a model
-    res.send(games);
-  } catch (error) {
-    console.error('Error fetching game status:', error);
-    res.status(500).send({ success: false, message: 'Server error' });
-  }
-});
-
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
