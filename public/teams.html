@@ -6,6 +6,23 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
+.flashing {
+  animation: flash 1s infinite;
+}
+@keyframes flash {
+  0% { background-color: yellow; }
+  50% { background-color: red; }
+  100% { background-color: yellow; }
+}
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.upcoming {
+  background-color: green;
+}
+
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -190,6 +207,22 @@
         })
         .catch(err => console.error('Error loading game statuses:', err));
     }
+
+    async function loadGameStatuses() {
+  const response = await fetch('/api/game-status');
+  const games = await response.json();
+
+  games.forEach(game => {
+    const teamButton = document.querySelector(`#${game.homeTeam}`);
+    if (teamButton) {
+      teamButton.classList.remove('flashing', 'disabled', 'upcoming');
+      teamButton.classList.add(game.status);
+    }
+  });
+}
+
+setInterval(loadGameStatuses, 30000); // Refresh every 30 seconds
+
 
     // Initial load and periodic refresh every 30 seconds
     loadGameStatuses();
