@@ -281,5 +281,31 @@ app.post('/admin/delete-user', async (req, res) => {
   }
 });
 
+app.get('/api/game-status', async (req, res) => {
+  try {
+    // Replace this with actual logic to fetch schedules from an API or database
+    const games = [
+      {
+        teamA: "Packers",
+        teamB: "Bears",
+        startTime: "2025-01-22T18:00:00Z", // Game starts at 1 PM EST (converted to UTC)
+        endTime: "2025-01-22T21:00:00Z"
+      },
+      {
+        teamA: "Cowboys",
+        teamB: "Giants",
+        startTime: "2025-01-22T19:00:00Z",
+        endTime: "2025-01-22T22:00:00Z"
+      }
+    ];
+
+    res.json(games);
+  } catch (error) {
+    console.error('Error fetching game status:', error);
+    res.status(500).send({ success: false, message: 'Server error' });
+  }
+});
+
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
