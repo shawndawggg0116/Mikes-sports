@@ -297,18 +297,28 @@ app.get('/api/game-status', async (req, res) => {
 
 // Fetch user picks
 app.get('/api/user-picks/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  // Validate the userId format
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).send({ success: false, message: 'Invalid userId format' });
+  }
+
   try {
-    const userId = req.params.userId;
+    // Find the user by ID
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).send({ success: false, message: 'User not found' });
     }
+
+    // Respond with the user's picked teams
     res.send({ success: true, pickedTeams: user.pickedTeams || [] });
   } catch (error) {
     console.error('Error fetching user picks:', error);
     res.status(500).send({ success: false, message: 'Server error' });
   }
 });
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

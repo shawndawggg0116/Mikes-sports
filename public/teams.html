@@ -152,6 +152,39 @@
       }
     }
 
+    fetch('/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username, password })
+})
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      sessionStorage.setItem('userId', data.userId); // Store userId after login
+      window.location.href = '/teams'; // Redirect to team selection page
+    } else {
+      alert('Login failed: ' + data.message);
+    }
+  });
+
+  const userId = sessionStorage.getItem('userId');
+if (userId) {
+  fetch(`/api/user-picks/${userId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('User picks:', data.pickedTeams);
+        // Update the UI with the user's picked teams
+      } else {
+        console.error('Error fetching picks:', data.message);
+      }
+    });
+} else {
+  console.error('User ID not found. Please log in again.');
+  window.location.href = '/';
+}
+
+
     document.addEventListener('DOMContentLoaded', () => {
       fetch('/get-logged-in-user')
         .then(response => response.json())
