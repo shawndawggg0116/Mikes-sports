@@ -3,6 +3,7 @@
   padding: 10px;
   margin: 5px;
   text-align: center;
+  border: 1px solid #000;
 }
 
 .flashing {
@@ -20,6 +21,7 @@
 
 .disabled {
   background-color: grey;
+  opacity: 0.6;
   pointer-events: none;
 }
 
