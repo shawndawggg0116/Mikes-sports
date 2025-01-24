@@ -319,11 +319,11 @@ app.get('/api/game-status', async (req, res) => {
   }
 });
 
-const express = require('express');
-const mongoose = require('mongoose');
-const app = express();
 
-const scheduleSchema = new mongoose.Schema({
+const mongoose = require('mongoose');
+
+
+({
   homeTeam: { type: String, required: true },
   awayTeam: { type: String, required: true },
   startTime: { type: Date, required: true },
