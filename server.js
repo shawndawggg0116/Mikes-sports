@@ -303,6 +303,14 @@ app.get('/api/game-status', async (req, res) => {
       })
     );
 
+    updatedGames.forEach(async (game) => {
+      await schedules.updateOne(
+        { _id: game._id },
+        { $set: { status: game.status } }
+      );
+    });
+    
+
     // Send the updated games back as the response
     res.json(updatedGames);
   } catch (error) {
@@ -311,13 +319,6 @@ app.get('/api/game-status', async (req, res) => {
   }
 });
 
-
-updatedGames.forEach(async (game) => {
-  await schedules.updateOne(
-    { _id: game._id },
-    { $set: { status: game.status } }
-  );
-});
 
 
 // Start the server
