@@ -6,22 +6,21 @@
   <title>Select Your Team</title>
   <link rel="stylesheet" href="navbar.css">
   <style>
-.flashing {
-  animation: flash 1s infinite;
-}
-@keyframes flash {
-  0% { background-color: yellow; }
-  50% { background-color: red; }
-  100% { background-color: yellow; }
-}
-.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-.upcoming {
-  background-color: green;
-}
-
+    .flashing {
+      animation: flash 1s infinite;
+    }
+    @keyframes flash {
+      0% { background-color: yellow; }
+      50% { background-color: red; }
+      100% { background-color: yellow; }
+    }
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .upcoming {
+      background-color: green;
+    }
 
     body {
       font-family: Arial, sans-serif;
@@ -70,26 +69,6 @@
       background-color: #ccc;
       cursor: not-allowed;
     }
-    /* Flashing effect for ongoing games */
-    .team.flashing {
-      animation: flashing 1s infinite alternate;
-    }
-
-    /* Greyed-out effect for completed games */
-    .team.disabled {
-      opacity: 0.5;
-      pointer-events: none; /* Prevent clicking */
-    }
-
-    /* Keyframes for the flashing effect */
-    @keyframes flashing {
-      from {
-        background-color: orange;
-      }
-      to {
-        background-color: yellow;
-      }
-    }
   </style>
 </head>
 <body>
@@ -119,7 +98,7 @@
     const usernameField = document.getElementById('username');
 
     // Fetch the logged-in username
-    fetch('/get-logged-in-user') // Fetch username dynamically from the server
+    fetch('/get-logged-in-user')
       .then(response => response.json())
       .then(data => {
         usernameField.value = data.username;
@@ -186,43 +165,18 @@
     });
 
     // Load and refresh game statuses
-    function loadGameStatuses() {
-      fetch('/api/game-status') 
-        .then(response => response.json())
-        .then(data => {
-          // Update the team boxes based on the status
-          document.querySelectorAll('.team').forEach(teamDiv => {
-            const teamName = teamDiv.textContent;
-            const game = data.find(g => g.teamA === teamName || g.teamB === teamName);
-
-            if (game) {
-              teamDiv.classList.remove('flashing', 'disabled');
-              if (game.status === 'flashing') {
-                teamDiv.classList.add('flashing');
-              } else if (game.status === 'disabled') {
-                teamDiv.classList.add('disabled');
-              }
-            }
-          });
-        })
-        .catch(err => console.error('Error loading game statuses:', err));
-    }
-
     async function loadGameStatuses() {
-  const response = await fetch('/api/game-status');
-  const games = await response.json();
+      const response = await fetch('/api/game-status');
+      const games = await response.json();
 
-  games.forEach(game => {
-    const teamButton = document.querySelector(`#${game.homeTeam}`);
-    if (teamButton) {
-      teamButton.classList.remove('flashing', 'disabled', 'upcoming');
-      teamButton.classList.add(game.status);
+      games.forEach(game => {
+        const teamButton = document.querySelector(`#${game.homeTeam}`);
+        if (teamButton) {
+          teamButton.classList.remove('flashing', 'disabled', 'upcoming');
+          teamButton.classList.add(game.status);
+        }
+      });
     }
-  });
-}
-
-setInterval(loadGameStatuses, 30000); // Refresh every 30 seconds
-
 
     // Initial load and periodic refresh every 30 seconds
     loadGameStatuses();

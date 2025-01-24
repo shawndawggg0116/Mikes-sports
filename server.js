@@ -319,6 +319,67 @@ app.get('/api/game-status', async (req, res) => {
   }
 });
 
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+
+const scheduleSchema = new mongoose.Schema({
+  homeTeam: { type: String, required: true },
+  awayTeam: { type: String, required: true },
+  startTime: { type: Date, required: true },
+  endTime: { type: Date, required: true },
+  status: { type: String, default: 'upcoming' }
+});
+
+const Schedules = mongoose.model('Schedule', scheduleSchema);
+
+app.get('/api/game-status', async (req, res) => {
+  try {
+    const games = await Schedules.find({});
+    const now = new Date();
+
+    // Calculate statuses for each game
+    const updatedGames = games.map((game) => {
+      const startTime = new Date(game.startTime);
+      const endTime = new Date(game.endTime);
+
+      if (now >= startTime && now <= endTime) {
+        game.status = 'flashing'; // Game is currently ongoing
+      } else if (now > endTime) {
+        game.status = 'disabled'; // Game has ended
+      } else {
+        game.status = 'upcoming'; // Game has not started yet
+      }
+
+      return game;
+    });
+
+    // Update statuses in the database
+    updatedGames.forEach(async (game) => {
+      await Schedules.updateOne(
+        { _id: game._id },
+        { $set: { status: game.status } }
+      );
+    });
+
+    res.json(updatedGames);
+  } catch (error) {
+    console.error('Error fetching game status:', error);
+    res.status(500).send({ success: false, message: 'Error fetching game status.' });
+  }
+});
+
+// Connect to MongoDB
+mongoose
+  .connect('mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(3000, () => console.log('Server running on port 3000'));
+  })
+  .catch((err) => console.error('Error connecting to MongoDB:', err));
 
 
 // Start the server
