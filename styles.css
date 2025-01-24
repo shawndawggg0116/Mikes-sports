@@ -1,0 +1,28 @@
+
+.team {
+  padding: 10px;
+  margin: 5px;
+  text-align: center;
+}
+
+.flashing {
+  animation: flash 1s infinite;
+}
+
+@keyframes flash {
+  0%, 100% {
+    background-color: yellow;
+  }
+  50% {
+    background-color: red;
+  }
+}
+
+.disabled {
+  background-color: grey;
+  pointer-events: none;
+}
+
+.upcoming {
+  background-color: green;
+}
