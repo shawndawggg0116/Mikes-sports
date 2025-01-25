@@ -3,23 +3,39 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const http = require('http');
-const socketio = require('socket.io');
+const socketIO = require('socket.io'); // Include Socket.IO for real-time updates
 
 const app = express();
-const server = http.createServer(app);
-const io = socketio(server);
-
 const PORT = process.env.PORT || 5000;
 
-// MongoDB connection 
-// ... (your existing MongoDB connection code)
+// MongoDB connection
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
-// ... (your existing middleware)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(
+  session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
-// User schema 
-// ... (your existing userSchema)
+// User schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  pickedTeams: [{ team: String, week: Number }],
+  points: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+});
 
 const User = mongoose.model('User', userSchema);
 
@@ -35,65 +51,28 @@ const gameSchema = new mongoose.Schema({
 const Game = mongoose.model('Game', gameSchema);
 
 // Routes
+
 // ... (Your existing user routes: Register, Login, etc.)
 
 // Fetch user's picked teams with week information
-// ... (Your existing get-picked-teams route)
+// ... (Your existing logic to fetch picked teams)
 
 // Fetch available teams for the current week
 app.get('/get-available-teams', async (req, res) => {
   try {
-    const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-    res.send({ success: true, games: allGames }); 
+    const currentWeek = getWeek(new Date()); // Get the current week
+    const today = new Date();
+
+    const availableGames = await Game.find({
+      startTime: { $gte: today },
+    });
+
+    const availableTeams = availableGames.map(game => [
+      game.homeTeam,
+      game.awayTeam,
+    ]).flat();
+
+    res.send({ success: true, teams: availableTeams });
   } catch (error) {
     console.error('Error fetching available teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-  }
-});
-
-// Handle team selection (with week check)
-// ... (Your existing select-team route)
-
-// Helper function to determine game status
-function determineGameStatus(startTime, endTime) {
-  const now = new Date();
-
-  if (now < startTime) {
-    return 'upcoming';
-  } else if (now >= startTime && (!endTime || now <= endTime)) {
-    return 'in_progress';
-  } else {
-    return 'finished';
-  }
-}
-
-// Socket.IO event listeners
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  // Emit initial game status updates to the connected client
-  emitGameStatusUpdates(socket);
-
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
-});
-
-// Function to emit game status updates to a specific socket
-const emitGameStatusUpdates = async (socket) => {
-  try {
-    const games = await Game.find();
-    games.forEach(game => {
-      const status = determineGameStatus(game.startTime, game.endTime);
-      socket.emit('gameStatusUpdate', { gameId: game._id, status: status });
-    });
-  } catch (error) {
-    console.error('Error emitting game status updates:', error);
-  }
-};
-
-// Start the server
-server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-
-// (Optional: Schedule periodic game status updates)
-// ... (Use a library like `node-cron` to schedule the `updateGameStatuses` function)
+    res.status
