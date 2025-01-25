@@ -14,7 +14,7 @@
     }
 
     .team.upcoming {
-      background-color: green; 
+      background-color: green;
     }
 
     .team.in-progress {
@@ -46,62 +46,23 @@
   <button id="submitButton" disabled>Submit</button>
 
   <script>
+    const socket = io(); 
+
     const teamList = document.querySelector('.team-list');
     const submitButton = document.getElementById('submitButton');
     const usernameField = document.getElementById('username');
 
-    // Fetch the logged-in username
-    fetch('/get-logged-in-user')
-      .then(response => response.json())
-      .then(data => {
-        usernameField.value = data.username;
+    // ... (rest of your existing code)
 
-        // Fetch the user's picked teams and last pick date from the server
-        fetch(`/get-picked-teams?username=${data.username}`)
-          .then(response => response.json())
-          .then(data => {
-            const pickedTeams = data.pickedTeams || []; // Array of teams already picked
-            const lastPickDate = data.lastPickDate ? new Date(data.lastPickDate) : null;
+    // Handle game status updates from the server
+    socket.on('gameStatusUpdate', (data) => {
+      const teamDiv = document.querySelector(`[data-game-id="${data.gameId}"]`); 
+      if (teamDiv) {
+        teamDiv.classList.remove('upcoming', 'in-progress', 'finished');
+        teamDiv.classList.add(data.status);
+      }
+    });
 
-            // Fetch available teams for the current week
-            fetch('/get-available-teams') 
-              .then(response => response.json())
-              .then(gameData => {
-                const games = gameData.games; 
-
-                // Render teams with game status
-                games.forEach(game => {
-                  const teamDiv = document.createElement('div');
-                  teamDiv.textContent = `${game.homeTeam} vs. ${game.awayTeam}`;
-                  teamDiv.classList.add('team', game.status); // Add class based on status
-
-                  // Disable team if already picked for the current week
-                  if (pickedTeams.some(pick => pick.team === game.homeTeam || pick.team === game.awayTeam) || 
-                      (lastPickDate && isThisWeek(lastPickDate))) { 
-                    teamDiv.classList.add('disabled');
-                  }
-
-                  // ... (rest of the click event handling)
-
-                  teamList.appendChild(teamDiv);
-                });
-              })
-              .catch(err => {
-                console.error('Error fetching available teams:', err);
-                alert('Error: Unable to fetch available teams.');
-              });
-          })
-          .catch(err => {
-            console.error('Error fetching user data:', err);
-            alert('Error: Unable to fetch user data.');
-          });
-      })
-      .catch(err => {
-        console.error('Error fetching username:', err);
-        alert('Error: Unable to fetch logged-in user.');
-      });
-
-    // ... (rest of the script)
   </script>
 </body>
 </html>
