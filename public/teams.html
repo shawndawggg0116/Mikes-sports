@@ -6,9 +6,40 @@
   <title>Select Your Team</title>
   <style>
     /* Your CSS styles here */
+    .team {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .team.upcoming {
+      background-color: green; 
+    }
+
+    .team.in-progress {
+      background-color: orange;
+      animation: flash 1s infinite;
+    }
+
+    .team.finished {
+      background-color: gray;
+    }
+
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+  <div class="navbar">
+    <a href="/teams" class="active">Team Selection</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/rules">Rules</a>
+  </div>
+
   <h1>Select Your Team</h1>
   <div class="team-list"></div>
   <input type="hidden" id="username" value="">
@@ -32,29 +63,25 @@
             const pickedTeams = data.pickedTeams || []; // Array of teams already picked
             const lastPickDate = data.lastPickDate ? new Date(data.lastPickDate) : null;
 
-            // Fetch available teams for the current week (replace with your actual API endpoint)
+            // Fetch available teams for the current week
             fetch('/get-available-teams') 
               .then(response => response.json())
-              .then(availableTeams => {
-                // Render teams
-                availableTeams.forEach(team => {
+              .then(gameData => {
+                const games = gameData.games; 
+
+                // Render teams with game status
+                games.forEach(game => {
                   const teamDiv = document.createElement('div');
-                  teamDiv.textContent = team;
-                  teamDiv.classList.add('team');
+                  teamDiv.textContent = `${game.homeTeam} vs. ${game.awayTeam}`;
+                  teamDiv.classList.add('team', game.status); // Add class based on status
 
                   // Disable team if already picked for the current week
-                  if (pickedTeams.some(pick => pick.team === team)) { 
-                    teamDiv.classList.add('disabled'); 
+                  if (pickedTeams.some(pick => pick.team === game.homeTeam || pick.team === game.awayTeam) || 
+                      (lastPickDate && isThisWeek(lastPickDate))) { 
+                    teamDiv.classList.add('disabled');
                   }
 
-                  teamDiv.addEventListener('click', () => {
-                    if (!teamDiv.classList.contains('disabled')) {
-                      document.querySelectorAll('.team').forEach(t => t.classList.remove('selected'));
-                      teamDiv.classList.add('selected');
-                      selectedTeam = team;
-                      submitButton.disabled = false;
-                    }
-                  });
+                  // ... (rest of the click event handling)
 
                   teamList.appendChild(teamDiv);
                 });
@@ -74,33 +101,7 @@
         alert('Error: Unable to fetch logged-in user.');
       });
 
-    // Submit the selected team
-    submitButton.addEventListener('click', () => {
-      const username = usernameField.value;
-      if (selectedTeam && username) {
-        fetch('/select-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, team: selectedTeam })
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              alert(`You picked ${selectedTeam}`);
-              // Update UI to reflect the new selection (e.g., disable the selected team)
-              const selectedDiv = Array.from(document.querySelectorAll('.team')).find(t => t.textContent === selectedTeam);
-              if (selectedDiv) {
-                selectedDiv.classList.add('disabled');
-                selectedDiv.classList.remove('selected');
-              }
-              selectedTeam = null;
-              submitButton.disabled = true;
-            } else {
-              alert(data.message);
-            }
-          });
-      }
-    });
+    // ... (rest of the script)
   </script>
 </body>
 </html>
