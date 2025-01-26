@@ -8,13 +8,42 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
         .login-container { margin-top: 100px; }
-        .team-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; }
-        .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .login-form { display: inline-block; text-align: left; }
+        .login-form input { display: block; margin: 10px 0; padding: 10px; width: 100%; }
+        .login-form button { padding: 10px; background: #007BFF; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="app"></div>
+    <div class="login-container">
+        <h1>Login to NFL Team Pick App</h1>
+        <form class="login-form" id="login-form">
+            <input type="text" id="username" placeholder="Username" required />
+            <input type="password" id="password" placeholder="Password" required />
+            <button type="submit">Sign In</button>
+        </form>
+        <p id="error-message" style="color: red; display: none;">Invalid login. Please try again.</p>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/main.js"></script>
+    <script>
+        const form = document.getElementById('login-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = '/teams';
+            } else {
+                document.getElementById('error-message').style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
