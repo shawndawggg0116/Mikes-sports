@@ -139,6 +139,8 @@ app.get('/teams', isLoggedIn, async (req, res) => {
 
 // ... (Other routes: leaderboard, rules, etc.)
 
+app.set('views', path.join(__dirname, 'views'));
+
 // Socket.IO
 io.on('connection', (socket) => {
   console.log('A user connected');
