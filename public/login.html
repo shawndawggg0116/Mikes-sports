@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikes Sports Login</title>
+    <title>Mikes Sports</title>
     <style>
         body {
             font-family: sans-serif;
@@ -12,56 +12,35 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f0f0;
+            background-color: #f0f0f0; /* Light gray background */
         }
 
-        .login-form {
-            background-color: #fff;
-            padding: 30px;
+        .link-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Spacing between boxes */
+            text-align: center;
+        }
+
+        .link-box {
+            background-color: #fff; /* White background for boxes */
+            padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            font-size: 18px;
+            cursor: pointer; /* Style as clickable links */
+            font-size: 20px; /* Large font size */
         }
 
-        .login-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 16px;
-        }
-
-        .login-button {
-            background-color: #4CAF50; /* Green */
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 15px;
-        }
-
-        .login-button:hover {
-            background-color: #45a049;
+        .link-box:hover {
+            background-color: #e0e0e0; /* Slightly darker hover effect */
         }
     </style>
 </head>
 <body>
-    <div class="login-form">
-        <h1>Mikes Sports Login</h1>
-        <form action="/login" method="post">
-            <label for="username">Username:</label>
-            <input type="text" name="username" id="username" class="login-input" required>
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" class="login-input" required>
-            <button type="submit" class="login-button">Login</button>
-        </form>
+    <div class="link-container">
+        <a href="/teams" class="link-box">Select Team</a>
+        <a href="/leaderboard" class="link-box">Leaderboard</a>
+        <a href="/rules" class="link-box">Rules</a>
     </div>
 </body>
 </html>
