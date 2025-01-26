@@ -179,16 +179,22 @@ app.get('/teams', isLoggedIn, async (req, res) => {
       });
   
       // Create a list of all teams with status information
+   // In server.js (inside the `/teams` route)
+
+app.get('/teams', isLoggedIn, async (req, res) => {
+    try {
+      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
+  
       const allTeams = [
         'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 
         'Bengals', 'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 
         'Texans', 'Colts', 'Jaguars', 'Titans', 'Jets', 'Dolphins', 
         'Patriots', 'Saints', 'Giants', 'Eagles', 'Vikings', 'Seahawks', 
         '49ers', 'Rams', 'Raiders', 'Chargers', 'Chiefs', 'Steelers'
-      ].map(team => ({ 
-        name: team, 
-        status: teamStatuses[team] || 'upcoming' 
-      }));
+      ].map(team => {
+        const game = allGames.find(g => g.homeTeam === team || g.awayTeam === team);
+        return { name: team, status: game ? game.status : 'upcoming' }; 
+      });
   
       res.render('teams', { teams: allTeams }); 
     } catch (error) {

@@ -1,9 +1,7 @@
-
 h2 Select Your Team
 
 .team-grid
-  each team in ['Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 'Bengals', 'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 'Texans', 'Colts', 'Jaguars', 'Titans', 'Jaguars', 'Titans', 'Jets', 'Dolphins', 'Patriots', 'Saints', 'Giants', 'Eagles', 'Vikings', 'Seahawks', '49ers', 'Rams', 'Raiders', 'Chargers', 'Chiefs', 'Steelers'] 
-    .team-container(class=(game.status === 'in_progress' ? 'in-progress' : '')) 
-      img(src=`images/helmets/${team}.png` alt=`${team}`) 
-      p= team
-      
+  each team in teams
+    .team-container(class=(team.status === 'in_progress' ? 'in-progress' : '')) 
+      img(src=`images/helmets/${team.name}.png` alt=`${team.name}`) 
+      p= team.name
