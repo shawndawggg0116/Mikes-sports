@@ -1,7 +1,0 @@
-h2 Select Your Team
-
-.team-grid
-  each team in teams
-    .team-container(class=(team.status === 'in_progress' ? 'in-progress' : '')) 
-      img(src=`images/helmets/${team.name}.png` alt=`${team.name}`) 
-      p= team.name
