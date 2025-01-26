@@ -11,11 +11,11 @@ const server = http.createServer(app);
 const io = socketio(server);
 const PORT = process.env.PORT || 5000;
 
+// Replace with your actual MongoDB URI and credentials (avoid storing them in plain code)
+const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority";
+
 // MongoDB connection
-mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-)
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
-    secret: 'your-secret-key', 
+    secret: 'your-strong-secret-key', // Replace with a long, random secret key
     resave: false,
     saveUninitialized: true,
   })
@@ -47,7 +47,7 @@ const gameSchema = new mongoose.Schema({
   homeTeam: { type: String, required: true },
   awayTeam: { type: String, required: true },
   startTime: { type: Date, required: true },
-  endTime: { type: Date }, 
+  endTime: { type: Date },
   status: { type: String, enum: ['upcoming', 'in_progress', 'finished'], default: 'upcoming' }
 });
 
@@ -62,70 +62,32 @@ app.post('/register', async (req, res) => {
 
 // Login
 app.post('/login', async (req, res) => {
-  // ... (Your existing login logic)
+  const { username, password } = req.body;
+
+  // ... (Your existing logic to validate username and password)
+
+  if (isValidLogin(username, password)) { // Replace with your validation logic
+    req.session.user = user; // Store user object in session
+    res.redirect('/teams'); // Redirect to /teams after successful login
+  } else {
+    // Handle login failure (e.g., display error message)
+    res.status(401).send({ error: 'Invalid username or password' });
+  }
 });
 
 // Logout
-app.get('/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/');
-});
+// ... (Your existing logout logic)
 
 // Check if user is logged in
-function isLoggedIn(req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    res.redirect('/login');
-  }
-}
+// ... (Your existing isLoggedIn function)
 
 // Get logged-in user
-app.get('/get-logged-in-user', (req, res) => {
-  if (req.session.user) {
-    res.json({ username: req.session.user.username });
-  } else {
-    res.status(401).send({ error: 'User not logged in' });
-  }
-});
+// ... (Your existing get-logged-in-user route)
 
-// Get picked teams
-app.get('/get-picked-teams', async (req, res) => {
-  // ... (Your existing logic to fetch picked teams)
-});
-
-// Get available teams
-app.get('/get-available-teams', async (req, res) => {
-  try {
-    const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-    res.send({ success: true, games: allGames }); 
-  } catch (error) {
-    console.error('Error fetching available teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-  }
-});
-
-// Handle team selection
-app.post('/select-team', async (req, res) => {
-  // ... (Your existing logic to handle team selection)
-});
-
-// ... (Other routes: leaderboard, rules, etc.)
+// ... (Other routes)
 
 // Socket.IO
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  emitGameStatusUpdates(socket);
-
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
-});
-
-const emitGameStatusUpdates = async (socket) => {
-  // ... (Your existing game status update logic)
-};
+// ... (Your existing Socket.IO logic)
 
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
