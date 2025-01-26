@@ -42,7 +42,7 @@ const Schedule = mongoose.model('Schedule', ScheduleSchema);
 
 // Routes
 // Login endpoint
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
