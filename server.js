@@ -12,7 +12,7 @@ const io = socketio(server);
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority"; 
+const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority";
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -54,11 +54,11 @@ const Game = mongoose.model('Game', gameSchema);
 // Routes
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html')); 
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); 
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.post('/register', async (req, res) => {
@@ -79,8 +79,8 @@ app.post('/register', async (req, res) => {
 
     await newUser.save();
 
-    req.session.user = newUser; 
-    res.redirect('/teams'); 
+    req.session.user = newUser;
+    res.redirect('/teams');
 
   } catch (error) {
     console.error('Registration error:', error);
@@ -105,7 +105,7 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.user = user;
-    res.redirect('/teams'); 
+    res.redirect('/teams');
 
   } catch (error) {
     console.error('Login error:', error);
@@ -142,7 +142,7 @@ app.get('/teams', isLoggedIn, async (req, res) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  emitGameStatusUpdates(socket);
+  emitGameStatusUpdates(socket); 
 
   socket.on('disconnect', () => {
     console.log('A user disconnected');
@@ -150,27 +150,17 @@ io.on('connection', (socket) => {
 });
 
 const emitGameStatusUpdates = async (socket) => {
-  // ... (Your existing game status update logic)
+  try {
+    // Update game statuses (your logic here)
+    // ... (Implement logic to update game statuses in the database)
+
+    const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status');
+    socket.emit('gameStatusUpdate', allGames);
+
+  } catch (error) {
+    console.error('Error emitting game status updates:', error);
+  }
 };
-
-// In server.js (around app.get('/teams', ...))
-app.get('/teams', async (req, res) => {
-    try {
-      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); // Adjust selection as needed
-      res.render('teams', { games: allGames });
-    } catch (error) {
-      console.error('Error fetching available teams:', error);
-      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-    }
-  });
-
-// In server.js
-
-
-
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
 
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
