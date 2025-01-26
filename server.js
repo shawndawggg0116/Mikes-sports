@@ -153,5 +153,13 @@ const emitGameStatusUpdates = async (socket) => {
   // ... (Your existing game status update logic)
 };
 
+// In server.js
+const mongoose = require('mongoose');
+const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new"; // Your MongoDB connection string
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

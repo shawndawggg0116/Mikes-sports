@@ -10,6 +10,18 @@ collection = db["games"]  # Replace with your chosen collection name
 with open("mock_game_data.json", "r") as f:
     mock_data = json.load(f)
 
+# In import_mock_data.py
+import pymongo
+
+# Connect to MongoDB
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+db = client["nfl_games"]  # Replace with your database name
+
+# Access the Game collection
+games_collection = db["Game"]
+
+# ... (Your logic to import mock schedules into the collection)
+
 for week_data in mock_data:
     week_number = week_data["week"]["$numberInt"] 
     for game in week_data["games"]:
