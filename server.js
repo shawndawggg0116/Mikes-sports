@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Game schema
-const gameSchema = new mongoose.Schema({
+const gameSchema = new mongooseSchema({ // Typo fixed here
   homeTeam: { type: String, required: true },
   awayTeam: { type: String, required: true },
   startTime: { type: Date, required: true },
@@ -56,10 +56,10 @@ const Game = mongoose.model('Game', gameSchema);
 // Check if user is logged in
 function isLoggedIn(req, res, next) {
   if (req.session.user) {
-    next(); 
+    next();
   } else {
     // Redirect to login page if not logged in
-    res.redirect('/login'); 
+    res.redirect('/login');
   }
 }
 
