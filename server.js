@@ -153,9 +153,20 @@ const emitGameStatusUpdates = async (socket) => {
   // ... (Your existing game status update logic)
 };
 
+// In server.js (around app.get('/teams', ...))
+app.get('/teams', async (req, res) => {
+    try {
+      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); // Adjust selection as needed
+      res.render('teams', { games: allGames });
+    } catch (error) {
+      console.error('Error fetching available teams:', error);
+      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
+    }
+  });
+
 // In server.js
-const mongoose = require('mongoose');
-const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new"; // Your MongoDB connection string
+
+
 
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
