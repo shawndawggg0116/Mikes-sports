@@ -42,15 +42,31 @@ const Schedule = mongoose.model('Schedule', ScheduleSchema);
 
 // Routes
 // Login endpoint
+const bcrypt = require('bcrypt');
+
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username, password });
-  if (user) {
+  try {
+    // Find the user by username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Compare the hashed password with the provided password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Successful login
     res.status(200).send({ success: true });
-  } else {
-    res.status(401).send({ success: false, message: 'Invalid credentials' });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).send({ success: false, message: 'Server error' });
   }
 });
+
 
 // Fetch teams endpoint
 app.get('/api/teams', async (req, res) => {
