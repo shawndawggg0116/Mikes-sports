@@ -162,5 +162,26 @@ const emitGameStatusUpdates = async (socket) => {
   }
 };
 
+const express = require('express');
+const path = require('path');
+
+app.get('/teams', isLoggedIn, async (req, res) => {
+    try {
+      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status');
+      res.render('teams', { games: allGames }); // Assuming your template file is named teams.pug
+    } catch (error) {
+      console.error('Error fetching available teams:', error);
+      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
+    }
+  });
+
+// ... other code
+
+// Set Pug as the template engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views')); // Specify your views directory
+
+// ... other routes
+
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
