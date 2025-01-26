@@ -11,10 +11,8 @@ const server = http.createServer(app);
 const io = socketio(server);
 const PORT = process.env.PORT || 5000;
 
-// Replace with your actual MongoDB URI and credentials (avoid storing them in plain code)
-const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority";
-
 // MongoDB connection
+const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority";
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -55,36 +53,22 @@ const Game = mongoose.model('Game', gameSchema);
 
 // Routes
 
-// Register
-app.post('/register', async (req, res) => {
-  // ... (Your existing registration logic)
-});
-
-// Login
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  // ... (Your existing logic to validate username and password)
-
-  if (isValidLogin(username, password)) { // Replace with your validation logic
-    req.session.user = user; // Store user object in session
-    res.redirect('/teams'); // Redirect to /teams after successful login
-  } else {
-    // Handle login failure (e.g., display error message)
-    res.status(401).send({ error: 'Invalid username or password' });
-  }
-});
-
-// Logout
-// ... (Your existing logout logic)
-
 // Check if user is logged in
-// ... (Your existing isLoggedIn function)
+function isLoggedIn(req, res, next) {
+  if (req.session.user) {
+    next(); 
+  } else {
+    // Redirect to login page if not logged in
+    res.redirect('/login'); 
+  }
+}
 
-// Get logged-in user
-// ... (Your existing get-logged-in-user route)
+// Protected route for /teams (requires login)
+app.get('/teams', isLoggedIn, async (req, res) => {
+  // ... (Your logic to fetch and render teams)
+});
 
-// ... (Other routes)
+// ... (Other routes: register, logout, etc.)
 
 // Socket.IO
 // ... (Your existing Socket.IO logic)
