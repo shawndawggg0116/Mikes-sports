@@ -1,12 +1,3 @@
-app.get('/teams', isLoggedIn, async (req, res) => {
-  try {
-    const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-    res.render('teams', { games: allGames }); 
-  } catch (error) {
-    console.error('Error fetching available teams:', error);
-    res.status(500).send({ success: false, message: 'Error fetching available teams.' }); // Send a more informative error message
-  }
-});
 
 h2 Select Your Team
 

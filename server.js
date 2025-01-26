@@ -214,7 +214,19 @@ app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views')); // Specify your views directory
 
 
-
+app.get('/teams', isLoggedIn, async (req, res) => { 
+    try {
+      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
+      const allTeams = [ 
+        // ... (your array of all 32 teams) 
+      ]; 
+  
+      res.render('teams', { teams: allTeams }); 
+    } catch (error) {
+      console.error('Error fetching available teams:', error);
+      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
+    }
+  });
 
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
