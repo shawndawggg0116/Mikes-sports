@@ -101,6 +101,42 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const bcrypt = require('bcrypt');
+
+// Register endpoint
+app.post('/api/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        // Check if the username is already taken
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).send({ success: false, message: 'Username already exists' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create and save the new user
+        const newUser = new User({
+            username,
+            password: hashedPassword,
+            pickedTeams: [],
+            lastPickDate: null,
+        });
+        await newUser.save();
+
+        res.status(201).send({ success: true });
+    } catch (err) {
+        console.error('Registration error:', err);
+        res.status(500).send({ success: false, message: 'Server error' });
+    }
+});
+
+// Serve register.html
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
 // Server listening
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
