@@ -13,7 +13,7 @@ const io = socketio(server);
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority";
+const mongoURI = "mongodb+srv://<your_username>:<your_password>@<your_cluster_name>.<region>.mongodb.net/<your_database_name>?retryWrites=true&w=majority"; 
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -24,11 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
-    secret: 'your-strong-secret-key', // Replace with a long, random secret key
+    secret: 'your_strong_secret_key', // Replace with a long, random secret key
     resave: false,
     saveUninitialized: true,
   })
 );
+
+// Set Pug as the template engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 
 // User schema
 const userSchema = new mongoose.Schema({
@@ -130,7 +134,19 @@ function isLoggedIn(req, res, next) {
 app.get('/teams', isLoggedIn, async (req, res) => {
   try {
     const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-    res.render('teams', { games: allGames }); 
+
+    const allTeams = [
+      'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 
+      'Bengals', 'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 
+      'Texans', 'Colts', 'Jaguars', 'Titans', 'Jets', 'Dolphins', 
+      'Patriots', 'Saints', 'Giants', 'Eagles', 'Vikings', 'Seahawks', 
+      '49ers', 'Rams', 'Raiders', 'Chargers', 'Chiefs', 'Steelers'
+    ].map(team => {
+      const game = allGames.find(g => g.homeTeam === team || g.awayTeam === team);
+      return { name: team, status: game ? game.status : 'upcoming' }; 
+    });
+
+    res.render('teams', { teams: allTeams }); 
   } catch (error) {
     console.error('Error fetching available teams:', error);
     res.status(500).send({ success: false, message: 'Error fetching available teams.' });
@@ -138,8 +154,6 @@ app.get('/teams', isLoggedIn, async (req, res) => {
 });
 
 // ... (Other routes: leaderboard, rules, etc.)
-
-app.set('views', path.join(__dirname, 'views'));
 
 // Socket.IO
 io.on('connection', (socket) => {
@@ -164,75 +178,6 @@ const emitGameStatusUpdates = async (socket) => {
     console.error('Error emitting game status updates:', error);
   }
 };
-
-
-app.get('/teams', isLoggedIn, async (req, res) => {
-    try {
-      // Fetch all games from the database
-      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status');
-  
-      // Create a map of teams with their status
-      const teamStatuses = {};
-      allGames.forEach(game => {
-        teamStatuses[game.homeTeam] = game.status;
-        teamStatuses[game.awayTeam] = game.status;
-      });
-  
-      // Create a list of all teams with status information
-   // In server.js (inside the `/teams` route)
-
-app.get('/teams', isLoggedIn, async (req, res) => {
-    try {
-      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-  
-      const allTeams = [
-        'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 
-        'Bengals', 'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 
-        'Texans', 'Colts', 'Jaguars', 'Titans', 'Jets', 'Dolphins', 
-        'Patriots', 'Saints', 'Giants', 'Eagles', 'Vikings', 'Seahawks', 
-        '49ers', 'Rams', 'Raiders', 'Chargers', 'Chiefs', 'Steelers'
-      ].map(team => {
-        const game = allGames.find(g => g.homeTeam === team || g.awayTeam === team);
-        return { name: team, status: game ? game.status : 'upcoming' }; 
-      });
-  
-      res.render('teams', { teams: allTeams }); 
-    } catch (error) {
-      console.error('Error fetching available teams:', error);
-      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-    }
-  });
-
-app.get('/teams', isLoggedIn, async (req, res) => {
-    try {
-      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status');
-      res.render('teams', { games: allGames }); // Assuming your template file is named teams.pug
-    } catch (error) {
-      console.error('Error fetching available teams:', error);
-      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-    }
-  });
-
-// ... other code
-
-// Set Pug as the template engine
-app.set('view engine', 'pug');
-app.set('views', path.join(__dirname, 'views')); // Specify your views directory
-
-
-app.get('/teams', isLoggedIn, async (req, res) => { 
-    try {
-      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status'); 
-      const allTeams = [ 
-        // ... (your array of all 32 teams) 
-      ]; 
-  
-      res.render('teams', { teams: allTeams }); 
-    } catch (error) {
-      console.error('Error fetching available teams:', error);
-      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
-    }
-  });
 
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
