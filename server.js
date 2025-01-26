@@ -42,31 +42,39 @@ const Schedule = mongoose.model('Schedule', ScheduleSchema);
 
 // Routes
 // Login endpoint
-const bcrypt = require('bcrypt');
-
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required.');
+  }
+
   try {
-    // Find the user by username
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+      return res.status(404).send('User not found.');
     }
 
-    // Compare the hashed password with the provided password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid credentials.');
     }
 
-    // Successful login
-    res.status(200).send({ success: true });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).send({ success: false, message: 'Server error' });
+    req.session.username = username; // Set username in session
+    res.redirect('/teams'); // Redirect to the team selection page
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
   }
 });
 
+// Fetch logged-in username
+app.get('/get-logged-in-user', (req, res) => {
+  if (!req.session || !req.session.username) {
+    return res.status(401).send({ error: 'User not logged in' });
+  }
+  res.send({ username: req.session.username });
+});
 
 // Fetch teams endpoint
 app.get('/api/teams', async (req, res) => {
