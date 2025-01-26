@@ -5,6 +5,7 @@ const path = require('path');
 const session = require('express-session');
 const http = require('http');
 const socketio = require('socket.io');
+const pug = require('pug');
 
 const app = express();
 const server = http.createServer(app);
@@ -181,7 +182,8 @@ app.get('/teams', isLoggedIn, async (req, res) => {
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views')); // Specify your views directory
 
-// ... other routes
+
+
 
 // Start the server
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
