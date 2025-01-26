@@ -13,7 +13,7 @@ const io = socketio(server);
 const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-const mongoURI = "mongodb+srv://<your_username>:<your_password>@<your_cluster_name>.<region>.mongodb.net/<your_database_name>?retryWrites=true&w=majority"; 
+const mongoURI = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new"; 
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
