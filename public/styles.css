@@ -48,3 +48,18 @@ body {
   .team.finished {
     background-color: lightgray;
   }
+
+  .team-container {
+    /* Base styles for team containers */
+  }
+  
+  .team-container.in-progress {
+    background-color: #ffcc00; /* Example: Yellow background for in-progress games */
+    animation: pulse 1s infinite; 
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }

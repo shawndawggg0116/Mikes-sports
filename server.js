@@ -166,7 +166,36 @@ const emitGameStatusUpdates = async (socket) => {
 };
 
 
-
+app.get('/teams', isLoggedIn, async (req, res) => {
+    try {
+      // Fetch all games from the database
+      const allGames = await Game.find().select('homeTeam awayTeam startTime endTime status');
+  
+      // Create a map of teams with their status
+      const teamStatuses = {};
+      allGames.forEach(game => {
+        teamStatuses[game.homeTeam] = game.status;
+        teamStatuses[game.awayTeam] = game.status;
+      });
+  
+      // Create a list of all teams with status information
+      const allTeams = [
+        'Cardinals', 'Falcons', 'Ravens', 'Bills', 'Panthers', 'Bears', 
+        'Bengals', 'Browns', 'Cowboys', 'Broncos', 'Lions', 'Packers', 
+        'Texans', 'Colts', 'Jaguars', 'Titans', 'Jets', 'Dolphins', 
+        'Patriots', 'Saints', 'Giants', 'Eagles', 'Vikings', 'Seahawks', 
+        '49ers', 'Rams', 'Raiders', 'Chargers', 'Chiefs', 'Steelers'
+      ].map(team => ({ 
+        name: team, 
+        status: teamStatuses[team] || 'upcoming' 
+      }));
+  
+      res.render('teams', { teams: allTeams }); 
+    } catch (error) {
+      console.error('Error fetching available teams:', error);
+      res.status(500).send({ success: false, message: 'Error fetching available teams.' });
+    }
+  });
 
 app.get('/teams', isLoggedIn, async (req, res) => {
     try {
