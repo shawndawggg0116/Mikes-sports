@@ -162,7 +162,7 @@ const emitGameStatusUpdates = async (socket) => {
   }
 };
 
-const express = require('express');
+
 const path = require('path');
 
 app.get('/teams', isLoggedIn, async (req, res) => {
