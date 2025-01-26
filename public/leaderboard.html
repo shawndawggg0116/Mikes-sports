@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaderboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Leaderboard</h1>
+    <table id="leaderboard">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Fetch leaderboard data and populate the table
+    fetch('/get-leaderboard')
+      .then(response => response.json())
+      .then(data => {
+        const leaderboardTable = document.getElementById('leaderboard').getElementsByTagName('tbody')[0];
+
+        data.forEach((user, index) => {
+          const row = leaderboardTable.insertRow();
+          const rankCell = row.insertCell(0);
+          const usernameCell = row.insertCell(1);
+          const pointsCell = row.insertCell(2);
+
+          rankCell.textContent = index + 1;
+          usernameCell.textContent = user.username;
+          pointsCell.textContent = user.points;
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching leaderboard data:', error);
+        alert('Error loading leaderboard.');
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* Basic styling for the entire application */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+  }
+  
+  .container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Team Selection page styling */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr); 
+    grid-gap: 10px;
+  }
+  
+  .team-container {
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .team-container img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  /* Add more CSS styles for headers, navigation, etc. */
+  
+  /* Styling for game status colors (you can adjust these as needed) */
+  .team.upcoming {
+    background-color: lightgreen;
+  }
+  
+  .team.in-progress {
+    background-color: lightblue;
+  }
+  
+  .team.finished {
+    background-color: lightgray;
+  }
