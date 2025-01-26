@@ -163,7 +163,7 @@ const emitGameStatusUpdates = async (socket) => {
 };
 
 
-const path = require('path');
+
 
 app.get('/teams', isLoggedIn, async (req, res) => {
     try {
