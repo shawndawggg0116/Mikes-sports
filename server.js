@@ -27,22 +27,29 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema, 'users');
 
 // Routes
+// Serve index.html for the landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve teams.html for the /teams route
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
 // Fetch all teams with their statuses
 app.get('/api/teams', async (req, res) => {
   try {
-    // Fetch all teams from the 'teams' collection
     const allTeams = await mongoose.connection
       .collection('teams')
       .find()
       .toArray();
 
-    // Fetch all games from the 'games' collection
     const currentGames = await mongoose.connection
       .collection('games')
       .find()
       .toArray();
 
-    // Merge teams with their status
     const allTeamsWithStatus = allTeams.map((team) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
@@ -72,7 +79,7 @@ app.get('/api/teams', async (req, res) => {
         }
       }
 
-      return { ...team, status: 'Available' }; // Team not in any game
+      return { ...team, status: 'Available' };
     });
 
     res.json(allTeamsWithStatus);

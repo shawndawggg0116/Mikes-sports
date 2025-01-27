@@ -5,48 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Teams</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    .team-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
-    .team-box {
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      text-transform: capitalize;
-      cursor: pointer;
-    }
-    .team-box.green {
-      background-color: green;
-      color: white;
-    }
-    .team-box.red {
-      background-color: red;
-      color: white;
-    }
-    .team-box.orange {
-      background-color: orange;
-      color: white;
-      animation: flash 1s infinite alternate;
-    }
-    .team-box.grey {
-      background-color: grey;
-      color: white;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
+    .team-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; text-transform: capitalize; cursor: pointer; }
+    .team-box.green { background-color: green; color: white; }
+    .team-box.red { background-color: red; color: white; }
+    .team-box.orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
+    .team-box.grey { background-color: grey; color: white; }
     @keyframes flash {
-      0% {
-        opacity: 0.5;
-      }
-      100% {
-        opacity: 1;
-      }
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -56,36 +24,21 @@
   <script>
     async function fetchTeams() {
       try {
-        const teamResponse = await fetch('/api/teams');
-        const teams = await teamResponse.json();
+        const response = await fetch('/api/teams');
+        const teams = await response.json();
 
-        const userResponse = await fetch('/api/user-teams');
-        const userData = await userResponse.json();
-
-        const now = new Date();
         const container = document.getElementById('teams');
         container.innerHTML = '';
 
-        teams.forEach(team => {
+        teams.forEach((team) => {
           const box = document.createElement('div');
-          box.className = 'team-box green';
-          box.textContent = `${team.homeTeam} vs ${team.awayTeam}`;
-
-          const startTime = new Date(team.startTime);
-          const endTime = new Date(team.endTime);
-
-          if (userData.pickedTeams.includes(team.homeTeam)) {
-            box.className = 'team-box red';
-          } else if (now >= startTime && now <= endTime) {
-            box.className = 'team-box orange';
-          } else if (now > endTime) {
-            box.className = 'team-box grey';
+          box.className = `team-box ${team.status.toLowerCase()}`;
+          box.textContent = `${team.name} ${
+            team.opponent ? `vs ${team.opponent}` : ''
+          } (${team.status})`;
+          if (team.status === 'Available') {
+            box.addEventListener('click', () => pickTeam(team.name));
           }
-
-          if (box.className === 'team-box green') {
-            box.addEventListener('click', () => pickTeam(team.homeTeam));
-          }
-
           container.appendChild(box);
         });
       } catch (error) {
@@ -93,12 +46,12 @@
       }
     }
 
-    async function pickTeam(team) {
+    async function pickTeam(teamName) {
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team }),
+          body: JSON.stringify({ team: teamName }),
         });
         const result = await response.json();
         if (result.success) {
@@ -113,7 +66,7 @@
     }
 
     fetchTeams();
-    setInterval(fetchTeams, 60000);
+    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
