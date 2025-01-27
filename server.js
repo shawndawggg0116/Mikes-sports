@@ -24,6 +24,13 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema, 'users');
 
+// Utility function to convert UTC to EST
+function convertUTCToEST(date) {
+  const utcDate = new Date(date);
+  const estOffset = -5 * 60; // Eastern Time is UTC-5
+  return new Date(utcDate.getTime() + estOffset * 60000);
+}
+
 // Routes
 // Serve index.html for the landing page
 app.get('/', (req, res) => {
@@ -54,37 +61,23 @@ app.get('/api/teams', async (req, res) => {
 
       if (game) {
         const now = new Date();
-        const startTime = new Date(game.startTime);
-        const endTime = new Date(game.endTime);
+        const startTime = convertUTCToEST(game.startTime);
+        const endTime = convertUTCToEST(game.endTime);
 
-        // Added console.log for debugging
-        console.log({
-          now: now.toISOString(),
-          startTime: startTime.toISOString(),
+        const gameStatus =
+          now >= startTime && now <= endTime
+            ? "Playing"
+            : now > endTime
+            ? "Completed"
+            : "Scheduled";
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(), // Display EST time
           endTime: endTime.toISOString(),
-          gameStatus:
-            now >= startTime && now <= endTime
-              ? "Playing"
-              : now > endTime
-              ? "Completed"
-              : "Scheduled",
-        });
-
-        if (now >= startTime && now <= endTime) {
-          return {
-            ...team,
-            status: 'Playing',
-            opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          };
-        } else if (now > endTime) {
-          return { ...team, status: 'Completed' };
-        } else {
-          return {
-            ...team,
-            status: 'Scheduled',
-            opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          };
-        }
+        };
       }
 
       return { ...team, status: 'Available' };
