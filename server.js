@@ -27,11 +27,55 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema, 'users');
 
 // Routes
+// Fetch all teams with their statuses
 app.get('/api/teams', async (req, res) => {
   try {
-    const Schedule = mongoose.connection.db.collection('games'); // Fetch from nfl_games.games
-    const teams = await Schedule.find().toArray();
-    res.json(teams);
+    // Fetch all teams from the 'teams' collection
+    const allTeams = await mongoose.connection
+      .collection('teams')
+      .find()
+      .toArray();
+
+    // Fetch all games from the 'games' collection
+    const currentGames = await mongoose.connection
+      .collection('games')
+      .find()
+      .toArray();
+
+    // Merge teams with their status
+    const allTeamsWithStatus = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      if (game) {
+        const now = new Date();
+        const startTime = new Date(game.startTime);
+        const endTime = new Date(game.endTime);
+
+        if (now >= startTime && now <= endTime) {
+          return {
+            ...team,
+            status: 'Playing',
+            opponent:
+              game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          };
+        } else if (now > endTime) {
+          return { ...team, status: 'Completed' };
+        } else {
+          return {
+            ...team,
+            status: 'Scheduled',
+            opponent:
+              game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          };
+        }
+      }
+
+      return { ...team, status: 'Available' }; // Team not in any game
+    });
+
+    res.json(allTeamsWithStatus);
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
