@@ -2,7 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const socketIo = require('socket.io');
+const session = require('express-session');
 const http = require('http');
 const path = require('path');
 const bcrypt = require('bcrypt');
@@ -10,11 +10,18 @@ const bcrypt = require('bcrypt');
 // Initialize Express app and server
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Initialize session middleware
+app.use(session({
+    secret: 'your-secret-key', // Replace with a secure secret key
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false } // Set to true if using HTTPS
+}));
 
 // MongoDB connection
 const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new";
@@ -46,19 +53,15 @@ const Schedule = mongoose.model('Schedule', ScheduleSchema);
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    // Find the user by username
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(401).send({ success: false, message: 'Invalid credentials' });
     }
-
-    // Compare the hashed password with the provided password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).send({ success: false, message: 'Invalid credentials' });
     }
-
-    // Successful login
+    req.session.username = username;
     res.status(200).send({ success: true });
   } catch (err) {
     console.error('Login error:', err);
@@ -66,23 +69,23 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Fetch teams endpoint
+// Fetch user teams endpoint
 app.get('/api/user-teams', async (req, res) => {
-  const username = req.session.username; // Assuming session stores username
+  const username = req.session.username;
   if (!username) {
-      return res.status(401).send({ success: false, message: 'User not logged in' });
+    return res.status(401).send({ success: false, message: 'User not logged in' });
   }
   const user = await User.findOne({ username });
   if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
+    return res.status(404).send({ success: false, message: 'User not found' });
   }
   res.send({ pickedTeams: user.pickedTeams });
 });
 
-
 // Save picked team endpoint
 app.post('/api/pick-team', async (req, res) => {
-  const { username, team } = req.body;
+  const username = req.session.username;
+  const { team } = req.body;
   const user = await User.findOne({ username });
 
   if (!user || user.pickedTeams.includes(team)) {
@@ -95,54 +98,12 @@ app.post('/api/pick-team', async (req, res) => {
   res.send({ success: true });
 });
 
-// Socket.IO connection
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
+// Serve teams.html
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-
-
-
-// Register endpoint
-app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        // Check if the username is already taken
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return res.status(400).send({ success: false, message: 'Username already exists' });
-        }
-
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create and save the new user
-        const newUser = new User({
-            username,
-            password: hashedPassword,
-            pickedTeams: [],
-            lastPickDate: null,
-        });
-        await newUser.save();
-
-        res.status(201).send({ success: true });
-    } catch (err) {
-        console.error('Registration error:', err);
-        res.status(500).send({ success: false, message: 'Server error' });
-    }
-});
-
-// Serve register.html
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-
-// Serve frontend
+// Wildcard route to serve index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
