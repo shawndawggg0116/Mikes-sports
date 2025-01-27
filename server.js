@@ -10,10 +10,8 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-const mongoUri =
-  'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
-mongoose
-  .connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -40,23 +38,20 @@ app.get('/teams', (req, res) => {
 // Fetch all teams with their statuses
 app.get('/api/teams', async (req, res) => {
   try {
-    const allTeams = await mongoose.connection
-      .collection('teams')
-      .find()
-      .toArray();
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
 
-    const currentGames = await mongoose.connection
-      .collection('games')
-      .find()
-      .toArray();
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
 
-    const allTeamsWithStatus = allTeams.map((team) => {
+    const mergedTeams = allTeams.map((team) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
 
+      const now = new Date();
+
       if (game) {
-        const now = new Date();
         const startTime = new Date(game.startTime);
         const endTime = new Date(game.endTime);
 
@@ -64,8 +59,7 @@ app.get('/api/teams', async (req, res) => {
           return {
             ...team,
             status: 'Playing',
-            opponent:
-              game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+            opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
           };
         } else if (now > endTime) {
           return { ...team, status: 'Completed' };
@@ -73,8 +67,7 @@ app.get('/api/teams', async (req, res) => {
           return {
             ...team,
             status: 'Scheduled',
-            opponent:
-              game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+            opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
           };
         }
       }
@@ -82,7 +75,7 @@ app.get('/api/teams', async (req, res) => {
       return { ...team, status: 'Available' };
     });
 
-    res.json(allTeamsWithStatus);
+    res.json(mergedTeams);
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
