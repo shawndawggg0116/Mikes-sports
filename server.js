@@ -44,16 +44,31 @@ app.get('/api/teams', async (req, res) => {
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
+    console.log("All Teams: ", allTeams);
+    console.log("Current Games: ", currentGames);
+
     const mergedTeams = allTeams.map((team) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
 
-      const now = new Date();
-
       if (game) {
+        const now = new Date();
         const startTime = new Date(game.startTime);
         const endTime = new Date(game.endTime);
+
+        console.log({
+          team: team.name,
+          now,
+          startTime,
+          endTime,
+          gameStatus:
+            now >= startTime && now <= endTime
+              ? "Playing"
+              : now > endTime
+              ? "Completed"
+              : "Scheduled",
+        });
 
         if (now >= startTime && now <= endTime) {
           return {
