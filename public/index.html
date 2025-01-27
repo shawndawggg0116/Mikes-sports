@@ -9,25 +9,29 @@
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
-      padding: 50px;
+      padding: 0;
+    }
+    .welcome-container {
+      margin-top: 100px;
     }
     button {
       padding: 10px 20px;
-      font-size: 18px;
-      background-color: #007BFF;
+      font-size: 16px;
+      background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to NFL Team Pick App</h1>
-  <button onclick="redirectToTeams()">Go</button>
-
+  <div class="welcome-container">
+    <h1>Welcome to NFL Team Pick App</h1>
+    <button onclick="goToTeams()">Go</button>
+  </div>
   <script>
-    function redirectToTeams() {
+    function goToTeams() {
       window.location.href = '/teams';
     }
   </script>
