@@ -1,3 +1,4 @@
+// Required Node.js modules
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -16,9 +17,9 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new";
+const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl_games?retryWrites=true&w=majority";
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
+  .then(() => console.log('MongoDB connected to nfl_games database'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // MongoDB Schemas and Models
@@ -26,7 +27,7 @@ const UserSchema = new mongoose.Schema({
   username: String,
   password: String,
   pickedTeams: [String],
-  lastPickDate: Date,
+  lastPickDate: Date
 });
 
 const ScheduleSchema = new mongoose.Schema({
@@ -34,11 +35,25 @@ const ScheduleSchema = new mongoose.Schema({
   awayTeam: String,
   startTime: Date,
   endTime: Date,
-  status: String,
+  status: String
 });
 
 const User = mongoose.model('User', UserSchema, 'users');
 const Schedule = mongoose.model('Schedule', ScheduleSchema, 'games');
+
+// Helper: Check if today is Tuesday
+function isTuesday() {
+  const today = new Date();
+  return today.getDay() === 2;
+}
+
+// Middleware for Socket.IO updates
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
 
 // Routes
 // Login endpoint
@@ -46,30 +61,47 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
-    if (!user) return res.status(401).send({ success: false, message: 'Invalid credentials' });
-
+    if (!user) {
+      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).send({ success: false, message: 'Invalid credentials' });
-
-    res.status(200).send({ success: true, username });
+    if (!isMatch) {
+      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    }
+    res.status(200).send({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).send({ success: false, message: 'Server error' });
   }
 });
 
-// Fetch teams endpoint
+// Fetch all teams and statuses
 app.get('/api/teams', async (req, res) => {
   try {
-    const teams = await Schedule.find();
-    res.send(teams);
-  } catch (err) {
-    console.error(err);
+    const schedules = await Schedule.find();
+    res.send(schedules);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
     res.status(500).send({ success: false, message: 'Failed to fetch teams' });
   }
 });
 
-// Save picked team endpoint
+// Fetch user's picked teams
+app.get('/api/user-teams', async (req, res) => {
+  const { username } = req.query;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found' });
+    }
+    res.send({ pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching user teams:', error);
+    res.status(500).send({ success: false, message: 'Failed to fetch user teams' });
+  }
+});
+
+// Save picked team
 app.post('/api/pick-team', async (req, res) => {
   const { username, team } = req.body;
   try {
@@ -77,29 +109,38 @@ app.post('/api/pick-team', async (req, res) => {
     if (!user || user.pickedTeams.includes(team)) {
       return res.status(400).send({ success: false, message: 'Team already picked or user not found' });
     }
-
     user.pickedTeams.push(team);
     user.lastPickDate = new Date();
     await user.save();
-    io.emit('team-updated', { team, username });
+    io.emit('team-picked', { username, team });
     res.send({ success: true });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error('Error picking team:', error);
     res.status(500).send({ success: false, message: 'Failed to pick team' });
   }
 });
 
-// Real-Time Team Updates with Socket.IO
-io.on('connection', (socket) => {
-  console.log('A user connected');
-  socket.on('disconnect', () => console.log('A user disconnected'));
+// Reset teams every Tuesday
+app.post('/api/reset-teams', async (req, res) => {
+  try {
+    if (isTuesday()) {
+      await User.updateMany({}, { $set: { pickedTeams: [] } });
+      io.emit('teams-reset');
+      res.send({ success: true });
+    } else {
+      res.status(400).send({ success: false, message: 'Can only reset on Tuesdays' });
+    }
+  } catch (error) {
+    console.error('Error resetting teams:', error);
+    res.status(500).send({ success: false, message: 'Failed to reset teams' });
+  }
 });
 
-// Serve Frontend
+// Serve frontend
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Server Listening
+// Server listening
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
