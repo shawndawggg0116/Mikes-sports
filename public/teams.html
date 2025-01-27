@@ -1,84 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFL Teams</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .team-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
-        .team-box.green { background-color: green; color: white; }
-        .team-box.red { background-color: red; color: white; }
-        .team-box.orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
-        .team-box.grey { background-color: grey; color: white; }
-        @keyframes flash {
-            0% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teams</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .team-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 20px;
+    }
+    .team-box {
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .team-box.green {
+      background-color: green;
+      color: white;
+    }
+    .team-box.orange {
+      background-color: orange;
+      color: white;
+      animation: flash 1s infinite alternate;
+    }
+    .team-box.grey {
+      background-color: grey;
+      color: white;
+    }
+    .team-box.red {
+      background-color: red;
+      color: white;
+    }
+    @keyframes flash {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
-    <h1>Pick Your NFL Team</h1>
-    <div class="team-container" id="teams"></div>
-    <script>
-        async function fetchTeams() {
-            try {
-                const response = await fetch('/api/teams');
-                if (!response.ok) throw new Error('Failed to fetch teams');
-                const teams = await response.json();
+  <h1>Pick Your NFL Team</h1>
+  <div class="team-container" id="teams"></div>
 
-                const container = document.getElementById('teams');
-                container.innerHTML = '';
+  <script>
+    async function fetchTeams() {
+      try {
+        const response = await fetch('/api/teams');
+        if (!response.ok) throw new Error('Failed to fetch teams');
+        const teams = await response.json();
 
-                const now = new Date();
-                teams.forEach(team => {
-                    const box = document.createElement('div');
-                    box.className = 'team-box';
-                    box.textContent = `${team.homeTeam} vs ${team.awayTeam}`;
+        const container = document.getElementById('teams');
+        container.innerHTML = ''; // Clear container
 
-                    const startTime = new Date(team.startTime);
-                    const endTime = new Date(team.endTime);
+        teams.forEach(team => {
+          const box = document.createElement('div');
+          box.className = 'team-box green'; // Default to green for pickable teams
+          box.textContent = `${team.homeTeam} vs ${team.awayTeam}`;
 
-                    if (team.status === 'Completed' || now > endTime) {
-                        box.classList.add('grey');
-                    } else if (startTime <= now && now <= endTime) {
-                        box.classList.add('orange');
-                    } else {
-                        box.classList.add('green');
-                        box.addEventListener('click', () => pickTeam(team.homeTeam));
-                    }
+          const now = new Date();
+          const startTime = new Date(team.startTime);
+          const endTime = new Date(team.endTime);
 
-                    container.appendChild(box);
-                });
-            } catch (error) {
-                console.error(error);
-                alert('Unable to load teams. Please try again later.');
-            }
-        }
+          if (now >= startTime && now <= endTime) {
+            box.classList.remove('green');
+            box.classList.add('orange'); // Flashing for ongoing games
+          } else if (now > endTime) {
+            box.classList.remove('green');
+            box.classList.add('grey'); // Grey for completed games
+          }
 
-        async function pickTeam(team) {
-            try {
-                const response = await fetch('/api/pick-team', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ team }),
-                });
-                const result = await response.json();
-                if (result.success) {
-                    alert('Team picked successfully!');
-                    fetchTeams();
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Failed to pick the team. Please try again.');
-            }
-        }
+          container.appendChild(box);
+        });
+      } catch (error) {
+        console.error('Error loading teams:', error);
+      }
+    }
 
-        fetchTeams();
-        setInterval(fetchTeams, 60000);
-    </script>
+    fetchTeams();
+    setInterval(fetchTeams, 60000); // Refresh every minute
+  </script>
 </body>
 </html>

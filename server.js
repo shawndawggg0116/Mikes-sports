@@ -1,59 +1,44 @@
+// Required Node.js modules
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
 
+// Initialize Express app
 const app = express();
 
+// Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/?retryWrites=true&w=majority&appName=mikes-sports0new";
+// MongoDB connection
+const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new";
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
+  .then(() => console.log('MongoDB connected to nfl-picks-app database'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-const ScheduleSchema = new mongoose.Schema({
-  homeTeam: String,
-  awayTeam: String,
-  startTime: Date,
-  endTime: Date,
-  status: String,
+// Serve index.html for the home page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-const Schedule = mongoose.model('Schedule', ScheduleSchema, 'nfl_games.games');
 
+// Serve teams.html for the /teams route
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// API route to fetch teams (connects to MongoDB)
 app.get('/api/teams', async (req, res) => {
-    try {
-        const teams = await Schedule.find();
-        res.send(teams);
-    } catch (err) {
-        console.error('Error fetching teams:', err);
-        res.status(500).send({ success: false, message: 'Server error' });
-    }
+  try {
+    const Schedule = mongoose.connection.db.collection('games'); // Fetching from nfl_games.games
+    const teams = await Schedule.find().toArray();
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
 });
 
-app.post('/api/pick-team', async (req, res) => {
-    const { team } = req.body;
-    try {
-        const pickedTeam = await Schedule.findOneAndUpdate(
-            { homeTeam: team },
-            { status: 'Picked' },
-            { new: true }
-        );
-        if (pickedTeam) {
-            res.send({ success: true });
-        } else {
-            res.status(400).send({ success: false, message: 'Team not found or already picked' });
-        }
-    } catch (err) {
-        console.error('Error picking team:', err);
-        res.status(500).send({ success: false, message: 'Server error' });
-    }
-});
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
+// Server listening
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

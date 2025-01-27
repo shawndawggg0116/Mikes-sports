@@ -1,39 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFL Team Pick App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        .go-container {
-            margin-top: 200px;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <div class="go-container">
-        <h1>Welcome to NFL Team Pick App</h1>
-        <button onclick="goToTeams()">Go</button>
-    </div>
-    <script>
-        function goToTeams() {
-            window.location.href = '/teams';
-        }
-    </script>
+  <h1>Welcome to NFL Team Pick App</h1>
+  <button onclick="redirectToTeams()">Go</button>
+
+  <script>
+    function redirectToTeams() {
+      window.location.href = '/teams';
+    }
+  </script>
 </body>
 </html>
