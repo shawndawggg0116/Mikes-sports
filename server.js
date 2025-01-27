@@ -67,10 +67,18 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Fetch teams endpoint
-app.get('/api/teams', async (req, res) => {
-  const schedules = await Schedule.find();
-  res.send(schedules);
+app.get('/api/user-teams', async (req, res) => {
+  const username = req.session.username; // Assuming session stores username
+  if (!username) {
+      return res.status(401).send({ success: false, message: 'User not logged in' });
+  }
+  const user = await User.findOne({ username });
+  if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found' });
+  }
+  res.send({ pickedTeams: user.pickedTeams });
 });
+
 
 // Save picked team endpoint
 app.post('/api/pick-team', async (req, res) => {

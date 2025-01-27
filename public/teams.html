@@ -7,7 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
         .team-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
+        .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
         .team-box.green { background-color: green; color: white; }
         .team-box.red { background-color: red; color: white; }
         .team-box.orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
@@ -23,49 +23,76 @@
     <div class="team-container" id="teams"></div>
     <script>
         async function fetchTeams() {
-            const response = await fetch('/api/teams');
-            const teams = await response.json();
-            const userResponse = await fetch('/api/user-teams'); // Fetch user's picked teams
-            const userData = await userResponse.json();
-            
-            const container = document.getElementById('teams');
-            teams.forEach(team => {
-                const box = document.createElement('div');
-                box.className = 'team-box';
-                box.textContent = `${team.homeTeam} vs ${team.awayTeam}`;
-                
-                // Apply styles based on status
-                if (userData.pickedTeams.includes(team.homeTeam)) {
-                    box.classList.add('red'); // Already picked
-                } else if (team.status === 'Completed') {
-                    box.classList.add('grey'); // Game finished
-                } else if (new Date(team.startTime) <= new Date() && new Date() <= new Date(team.endTime)) {
-                    box.classList.add('orange'); // Game playing
-                } else {
-                    box.classList.add('green'); // Available
-                    box.addEventListener('click', () => pickTeam(team.homeTeam));
-                }
+            try {
+                // Fetch all teams
+                const response = await fetch('/api/teams');
+                if (!response.ok) throw new Error('Failed to fetch teams');
+                const teams = await response.json();
 
-                container.appendChild(box);
-            });
-        }
+                // Fetch user's picked teams
+                const userResponse = await fetch('/api/user-teams', { credentials: 'include' });
+                if (!userResponse.ok) throw new Error('Failed to fetch user data');
+                const userData = await userResponse.json();
 
-        async function pickTeam(team) {
-            const response = await fetch('/api/pick-team', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: 'shawn1', team }) // Replace with dynamic username
-            });
-            const result = await response.json();
-            if (result.success) {
-                alert('Team picked successfully!');
-                location.reload();
-            } else {
-                alert(result.message);
+                // Clear existing team boxes
+                const container = document.getElementById('teams');
+                container.innerHTML = '';
+
+                // Render teams
+                teams.forEach(team => {
+                    const box = document.createElement('div');
+                    box.className = 'team-box';
+                    box.textContent = `${team.homeTeam} vs ${team.awayTeam}`;
+
+                    // Validate dates
+                    const now = new Date();
+                    const startTime = new Date(team.startTime);
+                    const endTime = new Date(team.endTime);
+
+                    // Apply styles based on status
+                    if (userData.pickedTeams.includes(team.homeTeam)) {
+                        box.classList.add('red'); // Already picked
+                    } else if (team.status === 'Completed' || now > endTime) {
+                        box.classList.add('grey'); // Game finished
+                    } else if (startTime <= now && now <= endTime) {
+                        box.classList.add('orange'); // Game playing
+                    } else {
+                        box.classList.add('green'); // Available
+                        box.addEventListener('click', () => pickTeam(team.homeTeam));
+                    }
+
+                    container.appendChild(box);
+                });
+            } catch (error) {
+                console.error(error);
+                alert('Unable to load teams. Please try again later.');
             }
         }
 
+        async function pickTeam(team) {
+            try {
+                const response = await fetch('/api/pick-team', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ team }),
+                    credentials: 'include'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Team picked successfully!');
+                    fetchTeams(); // Refresh the team list
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Failed to pick the team. Please try again.');
+            }
+        }
+
+        // Fetch teams every 60 seconds
         fetchTeams();
+        setInterval(fetchTeams, 60000);
     </script>
 </body>
 </html>
