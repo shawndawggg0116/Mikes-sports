@@ -6,28 +6,34 @@ const session = require('express-session');
 const http = require('http');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const { Server } = require('socket.io'); // Import socket.io
 
 // Initialize Express app and server
 const app = express();
 const server = http.createServer(app);
+const io = new Server(server); // Initialize socket.io
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize session middleware
-app.use(session({
+app.use(
+  session({
     secret: 'your-secret-key', // Replace with a secure secret key
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false } // Set to true if using HTTPS
-}));
+  })
+);
 
 // MongoDB connection
-const mongoUri = "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new";
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+const mongoUri =
+  'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
+mongoose
+  .connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected to nfl-picks-app database'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
@@ -47,6 +53,44 @@ const ScheduleSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema, 'users');
 const Schedule = mongoose.model('Schedule', ScheduleSchema);
+
+// Socket.io functionality
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Emit current teams data when a user connects
+  socket.emit('teams', async () => {
+    const teams = await Schedule.find();
+    return teams;
+  });
+
+  // Listen for team pick event
+  socket.on('pick-team', async (data) => {
+    const { username, team } = data;
+    try {
+      const user = await User.findOne({ username });
+
+      if (!user || user.pickedTeams.includes(team)) {
+        socket.emit('error', 'Team already picked or user not found.');
+        return;
+      }
+
+      user.pickedTeams.push(team);
+      user.lastPickDate = new Date();
+      await user.save();
+
+      // Notify all clients about the update
+      io.emit('team-updated', { team, username });
+    } catch (error) {
+      console.error(error);
+      socket.emit('error', 'Failed to pick the team. Please try again.');
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
 
 // Routes
 // Login endpoint
@@ -107,45 +151,6 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// Add this inside your `io.on('connection')` block to listen for and handle socket events
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  // Emit current teams data when a user connects
-  socket.emit('teams', async () => {
-      const teams = await Schedule.find();
-      return teams;
-  });
-
-  // Listen for team pick event
-  socket.on('pick-team', async (data) => {
-      const { username, team } = data;
-      try {
-          const user = await User.findOne({ username });
-
-          if (!user || user.pickedTeams.includes(team)) {
-              socket.emit('error', 'Team already picked or user not found.');
-              return;
-          }
-
-          user.pickedTeams.push(team);
-          user.lastPickDate = new Date();
-          await user.save();
-
-          // Notify all clients about the update
-          io.emit('team-updated', { team, username });
-      } catch (error) {
-          console.error(error);
-          socket.emit('error', 'Failed to pick the team. Please try again.');
-      }
-  });
-
-  socket.on('disconnect', () => {
-      console.log('A user disconnected');
-  });
-});
-
 
 // Server listening
 const PORT = process.env.PORT || 5000;
