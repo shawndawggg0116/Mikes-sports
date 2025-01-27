@@ -1,48 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
-    .login-container { margin-top: 100px; }
-    .login-form { display: inline-block; text-align: left; }
-    .login-form input { display: block; margin: 10px 0; padding: 10px; width: 100%; }
-    .login-form button { padding: 10px; background: #007BFF; color: white; border: none; cursor: pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Team Pick App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .go-container {
+            margin-top: 200px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div class="login-container">
-    <h1>Login to NFL Team Pick App</h1>
-    <form class="login-form" id="login-form">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Sign In</button>
-    </form>
-    <p id="error-message" style="color: red; display: none;">Invalid login. Please try again.</p>
-  </div>
-  <script>
-    const form = document.getElementById('login-form');
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const result = await response.json();
-
-      if (result.success) {
-        localStorage.setItem('username', username);
-        window.location.href = '/teams';
-      } else {
-        document.getElementById('error-message').style.display = 'block';
-      }
-    });
-  </script>
+    <div class="go-container">
+        <h1>Welcome to NFL Team Pick App</h1>
+        <button onclick="goToTeams()">Go</button>
+    </div>
+    <script>
+        function goToTeams() {
+            window.location.href = '/teams';
+        }
+    </script>
 </body>
 </html>
