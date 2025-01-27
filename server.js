@@ -96,10 +96,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 const bcrypt = require('bcrypt');
 
@@ -135,6 +131,12 @@ app.post('/api/register', async (req, res) => {
 // Serve register.html
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+
+// Serve frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Server listening
