@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
 });
 
 
-const bcrypt = require('bcrypt');
+
 
 // Register endpoint
 app.post('/api/register', async (req, res) => {
