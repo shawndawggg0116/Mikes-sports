@@ -57,11 +57,11 @@ app.get('/api/teams', async (req, res) => {
         const startTime = new Date(game.startTime);
         const endTime = new Date(game.endTime);
 
+        // Added console.log for debugging
         console.log({
-          team: team.name,
-          now,
-          startTime,
-          endTime,
+          now: now.toISOString(),
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
           gameStatus:
             now >= startTime && now <= endTime
               ? "Playing"
