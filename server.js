@@ -108,6 +108,45 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Add this inside your `io.on('connection')` block to listen for and handle socket events
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Emit current teams data when a user connects
+  socket.emit('teams', async () => {
+      const teams = await Schedule.find();
+      return teams;
+  });
+
+  // Listen for team pick event
+  socket.on('pick-team', async (data) => {
+      const { username, team } = data;
+      try {
+          const user = await User.findOne({ username });
+
+          if (!user || user.pickedTeams.includes(team)) {
+              socket.emit('error', 'Team already picked or user not found.');
+              return;
+          }
+
+          user.pickedTeams.push(team);
+          user.lastPickDate = new Date();
+          await user.save();
+
+          // Notify all clients about the update
+          io.emit('team-updated', { team, username });
+      } catch (error) {
+          console.error(error);
+          socket.emit('error', 'Failed to pick the team. Please try again.');
+      }
+  });
+
+  socket.on('disconnect', () => {
+      console.log('A user disconnected');
+  });
+});
+
+
 // Server listening
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
