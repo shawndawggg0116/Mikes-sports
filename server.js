@@ -22,7 +22,13 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: Date,
 });
 
+const TeamSchema = new mongoose.Schema({
+  name: String, // Adjust fields based on your collection
+  otherFields: String, // Add all relevant fields if needed
+});
+
 const User = mongoose.model('User', UserSchema, 'users');
+const Team = mongoose.model('Team', TeamSchema, 'teams'); // 'teams' is your collection name
 
 // Utility function to convert UTC to EST
 function convertUTCToEST(date) {
@@ -42,8 +48,19 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Fetch all teams with their statuses
+// Fetch all teams
 app.get('/api/teams', async (req, res) => {
+  try {
+    const allTeams = await Team.find(); // Fetch all teams using the model
+    res.json(allTeams); // Send the data as JSON
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
+// Fetch all teams with their statuses
+app.get('/api/teams-status', async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
