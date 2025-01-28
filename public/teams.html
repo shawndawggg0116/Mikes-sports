@@ -44,30 +44,34 @@
 </head>
 <body>
   <h1>Pick Your NFL Team</h1>
-  <div class="team-container" id="teams"></div>
+  <div class="team-container" id="teams-container"></div>
   <script>
-    async function fetchTeams() {
-      try {
-        const response = await fetch('/api/teams');
-        const teams = await response.json();
-
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
+    fetch('/api/teams')
+      .then((response) => response.json())
+      .then((teams) => {
+        const container = document.getElementById('teams-container');
+        container.innerHTML = ''; // Clear existing content
 
         teams.forEach((team) => {
-          const box = document.createElement('div');
-          box.className = `team-box ${team.status.toLowerCase()}`;
-          box.textContent = `${team.homeTeam} vs ${team.awayTeam} (${team.status})`;
+          const button = document.createElement('button');
 
-          if (team.status === 'Available') {
-            box.addEventListener('click', () => pickTeam(team.homeTeam));
+          // Construct the button label with team names and status
+          button.textContent = `${team.homeTeam} Vs ${team.awayTeam} (${team.status})`;
+
+          // Dynamically assign classes based on status
+          if (team.status === 'Playing') {
+            button.classList.add('playing');
+          } else if (team.status === 'Completed') {
+            button.classList.add('completed');
+          } else if (team.status === 'Available') {
+            button.classList.add('available');
+            button.addEventListener('click', () => pickTeam(team.homeTeam));
           }
-          container.appendChild(box);
+
+          container.appendChild(button);
         });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
-    }
+      })
+      .catch((error) => console.error('Error fetching teams:', error));
 
     async function pickTeam(teamName) {
       try {
@@ -79,7 +83,7 @@
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
-          fetchTeams();
+          location.reload();
         } else {
           alert(result.message);
         }
@@ -87,9 +91,6 @@
         console.error('Error picking team:', error);
       }
     }
-
-    fetchTeams();
-    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
