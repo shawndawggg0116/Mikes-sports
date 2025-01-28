@@ -51,40 +51,34 @@ app.get('/api/teams', async (req, res) => {
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+    const individualTeams = allTeams.map((team) => {
+      const relatedGame = currentGames.find(
+        (game) => game.homeTeam === team.name || game.awayTeam === team.name
       );
 
-      if (game) {
-        const now = new Date();
-        const startTime = new Date(game.startTime);
-        const endTime = new Date(game.endTime);
+      let status = 'Available';
 
-        const gameStatus =
+      // Determine status if the team is part of a game
+      if (relatedGame) {
+        const now = new Date();
+        const startTime = new Date(relatedGame.startTime);
+        const endTime = new Date(relatedGame.endTime);
+
+        status =
           now >= startTime && now <= endTime
             ? 'Playing'
             : now > endTime
             ? 'Completed'
             : 'Scheduled';
-
-        return {
-          name: team.name,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
       }
 
-      // If the team is not part of a game
       return {
         name: team.name,
-        status: 'Available',
+        status: status,
       };
     });
 
-    res.json(mergedTeams);
+    res.json(individualTeams);
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
