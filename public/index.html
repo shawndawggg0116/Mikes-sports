@@ -3,19 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
+  <title>Login</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-    button { padding: 10px 20px; font-size: 18px; background: #007BFF; color: white; border: none; cursor: pointer; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    form { display: inline-block; margin-top: 50px; }
+    input { display: block; margin: 10px auto; padding: 10px; width: 80%; }
+    button { padding: 10px 20px; background-color: blue; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: darkblue; }
   </style>
 </head>
 <body>
-  <h1>Welcome to NFL Team Pick App</h1>
-  <button onclick="goToTeams()">Go</button>
+  <h1>NFL Team Picker</h1>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
   <script>
-    function goToTeams() {
-      window.location.href = '/teams';
-    }
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        localStorage.setItem('token', result.token); // Save token to localStorage
+        window.location.href = '/teams'; // Redirect to teams page
+      } else {
+        alert(result.message);
+      }
+    });
   </script>
 </body>
 </html>

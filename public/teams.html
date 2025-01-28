@@ -22,9 +22,16 @@
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
   <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/'; // Redirect to login if not logged in
+    }
+
     async function fetchTeams() {
       try {
-        const response = await fetch('/api/teams');
+        const response = await fetch('/api/teams', {
+          headers: { Authorization: token },
+        });
         const teams = await response.json();
 
         const container = document.getElementById('teams');
@@ -36,8 +43,8 @@
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          // Add click listener for "Available" teams
-          if (team.status === 'Available') {
+          // Add click listener for "Available" or "Scheduled" teams
+          if (team.status === 'Available' || team.status === 'Scheduled') {
             box.addEventListener('click', () => pickTeam(team.name));
           }
 
@@ -66,7 +73,10 @@
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: token
+          },
           body: JSON.stringify({ team: teamName }),
         });
         const result = await response.json();

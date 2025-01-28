@@ -2,8 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 const app = express();
+
+// JWT Secret
+const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
 app.use(bodyParser.json());
@@ -18,6 +22,7 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 // MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
   username: String,
+  password: String, // Store hashed passwords in production
   pickedTeams: [String],
   lastPickDate: Date,
 });
@@ -31,7 +36,46 @@ function convertUTCToEST(date) {
   return new Date(utcDate.getTime() + estOffset * 60000);
 }
 
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).send({ message: 'No token provided' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).send({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
 // Routes
+// Login Route
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user || user.password !== password) { // Add password hashing later
+      return res.status(401).send({ success: false, message: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.send({ success: true, token });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).send({ success: false, message: 'Server error' });
+  }
+});
+
+// Fetch user-picked teams
+app.get('/api/user-teams', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({ pickedTeams: user.pickedTeams });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).send('Error fetching user data');
+  }
+});
+
 // Serve index.html for the landing page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -43,7 +87,7 @@ app.get('/teams', (req, res) => {
 });
 
 // Fetch all teams with their statuses
-app.get('/api/teams', async (req, res) => {
+app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
@@ -75,7 +119,7 @@ app.get('/api/teams', async (req, res) => {
           ...team,
           status: gameStatus,
           opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(), // Display EST time
+          startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
         };
       }
@@ -90,25 +134,11 @@ app.get('/api/teams', async (req, res) => {
   }
 });
 
-// Mock `/api/user-teams` endpoint
-app.get('/api/user-teams', async (req, res) => {
-  try {
-    const user = await User.findOne({ username: 'shawn1' }); // Replace with dynamic username
-    if (!user) {
-      return res.status(404).send({ pickedTeams: [] });
-    }
-    res.json({ pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).send('Error fetching user data');
-  }
-});
-
 // Save picked team endpoint
-app.post('/api/pick-team', async (req, res) => {
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
   const { team } = req.body;
   try {
-    const user = await User.findOne({ username: 'shawn1' }); // Replace with dynamic username
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).send({ success: false, message: 'User not found' });
     }
