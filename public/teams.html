@@ -4,43 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Teams</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      margin: 0; 
-      padding: 20px; 
-    }
-    .team-container { 
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 10px; 
-    }
-    .team-box { 
-      padding: 20px; 
-      border: 1px solid #0b0101; 
-      border-radius: 5px; 
-      text-transform: capitalize; 
-      cursor: pointer; 
-    }
-    .team-box.playing { 
-      background-color: orange; 
-      color: white; 
-      animation: flash 1s infinite alternate; 
-    }
-    .team-box.completed { 
-      background-color: grey; 
-      color: white; 
-    }
-    .team-box.available { 
-      background-color: green; 
-      color: white; 
-    }
-    @keyframes flash {
-      0% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Pick Your NFL Team</h1>
