@@ -4,7 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Teams</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 0; 
+      padding: 20px; 
+    }
+    .team-container { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 10px; 
+    }
+    .team-box { 
+      padding: 20px; 
+      border: 1px solid #0b0101; 
+      border-radius: 5px; 
+      text-transform: capitalize; 
+      cursor: pointer; 
+    }
+    .team-box.playing { 
+      background-color: orange; 
+      color: white; 
+      animation: flash 1s infinite alternate; 
+    }
+    .team-box.completed { 
+      background-color: grey; 
+      color: white; 
+    }
+    .team-box.available { 
+      background-color: green; 
+      color: white; 
+    }
+    @keyframes flash {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
   <h1>Pick Your NFL Team</h1>
@@ -13,30 +49,23 @@
     async function fetchTeams() {
       try {
         const response = await fetch('/api/teams');
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
         const teams = await response.json();
+
         const container = document.getElementById('teams');
         container.innerHTML = '';
 
         teams.forEach((team) => {
           const box = document.createElement('div');
-          const status = team.status.toLowerCase();
-          box.className = `team-box ${status}`;
+          box.className = `team-box ${team.status.toLowerCase()}`;
           box.textContent = `${team.homeTeam} vs ${team.awayTeam} (${team.status})`;
 
-          if (status === 'available') {
+          if (team.status === 'Available') {
             box.addEventListener('click', () => pickTeam(team.homeTeam));
-            box.title = 'Click to pick this team';
           }
-
           container.appendChild(box);
         });
       } catch (error) {
         console.error('Error fetching teams:', error);
-        alert('Failed to load teams. Please try again later.');
       }
     }
 
@@ -48,30 +77,19 @@
           body: JSON.stringify({ team: teamName }),
         });
         const result = await response.json();
-
-        if (response.ok && result.success) {
+        if (result.success) {
           alert('Team picked successfully!');
           fetchTeams();
         } else {
-          alert(result.message || 'Failed to pick the team.');
+          alert(result.message);
         }
       } catch (error) {
         console.error('Error picking team:', error);
-        alert('An error occurred. Please try again.');
       }
     }
 
     fetchTeams();
-
-    // Ensure only one fetch at a time
-    let isFetching = false;
-    setInterval(async () => {
-      if (!isFetching) {
-        isFetching = true;
-        await fetchTeams();
-        isFetching = false;
-      }
-    }, 60000);
+    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
