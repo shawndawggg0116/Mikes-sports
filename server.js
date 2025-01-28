@@ -51,31 +51,39 @@ app.get('/api/teams', async (req, res) => {
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
-    const mergedTeams = currentGames.map((game) => {
-      const homeTeam = allTeams.find((team) => team.name === game.homeTeam);
-      const awayTeam = allTeams.find((team) => team.name === game.awayTeam);
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
 
-      const now = new Date();
-      const startTime = new Date(game.startTime);
-      const endTime = new Date(game.endTime);
+      if (game) {
+        const now = new Date();
+        const startTime = new Date(game.startTime);
+        const endTime = new Date(game.endTime);
 
-      const gameStatus =
-        now >= startTime && now <= endTime
-          ? 'Playing'
-          : now > endTime
-          ? 'Completed'
-          : 'Scheduled';
+        const gameStatus =
+          now >= startTime && now <= endTime
+            ? 'Playing'
+            : now > endTime
+            ? 'Completed'
+            : 'Scheduled';
 
+        return {
+          name: team.name,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+
+      // If the team is not part of a game
       return {
-        homeTeam: homeTeam ? homeTeam.name : 'Unknown',
-        awayTeam: awayTeam ? awayTeam.name : 'Unknown',
-        status: gameStatus,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+        name: team.name,
+        status: 'Available',
       };
     });
 
-    console.log("Merged Teams:", mergedTeams); // Debugging
     res.json(mergedTeams);
   } catch (error) {
     console.error('Error fetching teams:', error);
@@ -83,7 +91,7 @@ app.get('/api/teams', async (req, res) => {
   }
 });
 
-// Mock `/api/user-teams` endpoint
+// Mock /api/user-teams endpoint
 app.get('/api/user-teams', async (req, res) => {
   try {
     const user = await User.findOne({ username: 'shawn1' }); // Replace with dynamic username
