@@ -51,38 +51,31 @@ app.get('/api/teams', async (req, res) => {
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
-    console.log("All Teams: ", allTeams);
-    console.log("Current Games: ", currentGames);
+    const mergedTeams = currentGames.map((game) => {
+      const homeTeam = allTeams.find((team) => team.name === game.homeTeam);
+      const awayTeam = allTeams.find((team) => team.name === game.awayTeam);
 
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
+      const now = new Date();
+      const startTime = new Date(game.startTime);
+      const endTime = new Date(game.endTime);
 
-      if (game) {
-        const now = new Date();
-        const startTime = convertUTCToEST(game.startTime);
-        const endTime = convertUTCToEST(game.endTime);
+      const gameStatus =
+        now >= startTime && now <= endTime
+          ? 'Playing'
+          : now > endTime
+          ? 'Completed'
+          : 'Scheduled';
 
-        const gameStatus =
-          now >= startTime && now <= endTime
-            ? "Playing"
-            : now > endTime
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(), // Display EST time
-          endTime: endTime.toISOString(),
-        };
-      }
-
-      return { ...team, status: 'Available' };
+      return {
+        homeTeam: homeTeam ? homeTeam.name : 'Unknown',
+        awayTeam: awayTeam ? awayTeam.name : 'Unknown',
+        status: gameStatus,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+      };
     });
 
+    console.log("Merged Teams:", mergedTeams); // Debugging
     res.json(mergedTeams);
   } catch (error) {
     console.error('Error fetching teams:', error);
