@@ -3,14 +3,16 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 const app = express();
-
-// JWT Secret
+const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
 app.use(bodyParser.json());
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
@@ -19,114 +21,90 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// MongoDB Schemas and Models
+// User Schema
 const UserSchema = new mongoose.Schema({
-  username: String,
-  password: String, // Store hashed passwords in production
-  pickedTeams: [String],
-  lastPickDate: Date,
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  pickedTeams: { type: [String], default: [] },
+  lastPickDate: { type: Date, default: null }
 });
-
 const User = mongoose.model('User', UserSchema, 'users');
 
 // Utility function to convert UTC to EST
 function convertUTCToEST(date) {
   const utcDate = new Date(date);
-  const estOffset = -5 * 60; // Eastern Time is UTC-5
+  const estOffset = -5 * 60;
   return new Date(utcDate.getTime() + estOffset * 60000);
 }
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization'];
-  if (!token) return res.status(403).send({ message: 'No token provided' });
+  if (!token) return res.status(403).json({ message: 'No token provided' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(401).send({ message: 'Invalid token' });
+    if (err) return res.status(401).json({ message: 'Invalid token' });
     req.user = user;
     next();
   });
 };
 
-// Routes
-// Login Route
-app.post('/login', async (req, res) => {
+// User Registration
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required.');
-  }
+  if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).send('User not found.');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).send('Invalid credentials.');
-    }
-
-    req.session.username = username; // Set username in session
-    res.redirect('/teams'); // Redirect to the team selection page
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.status(400).json({ message: 'Username already exists' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Error logging in.');
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Error registering user' });
   }
 });
 
-// Fetch logged-in username
-app.get('/get-logged-in-user', (req, res) => {
-  if (!req.session || !req.session.username) {
-    return res.status(401).send({ error: 'User not logged in' });
+// User Login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token, username: user.username });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-  res.send({ username: req.session.username });
 });
 
-// Serve the team selection page
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Serve index.html for the landing page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Serve teams.html for the /teams route
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Fetch all teams with their statuses
+// Fetch all teams
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
-
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
-
-    console.log("All Teams: ", allTeams);
-    console.log("Current Games: ", currentGames);
 
     const mergedTeams = allTeams.map((team) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
-
       if (game) {
         const now = new Date();
         const startTime = convertUTCToEST(game.startTime);
         const endTime = convertUTCToEST(game.endTime);
-
         const gameStatus =
           now >= startTime && now <= endTime
-            ? "Playing"
+            ? 'Playing'
             : now > endTime
-            ? "Completed"
-            : "Scheduled";
+            ? 'Completed'
+            : 'Scheduled';
 
         return {
           ...team,
@@ -136,7 +114,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
           endTime: endTime.toISOString(),
         };
       }
-
       return { ...team, status: 'Available' };
     });
 
@@ -147,19 +124,13 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Save picked team endpoint
+// Save picked team
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   const { team } = req.body;
   try {
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
-    }
-    if (user.pickedTeams.includes(team)) {
-      return res
-        .status(400)
-        .send({ success: false, message: 'Team already picked' });
-    }
+    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+    if (user.pickedTeams.includes(team)) return res.status(400).send({ success: false, message: 'Team already picked' });
     user.pickedTeams.push(team);
     user.lastPickDate = new Date();
     await user.save();
@@ -175,6 +146,5 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Server
-const PORT = process.env.PORT || 5000;
+// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
