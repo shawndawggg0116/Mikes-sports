@@ -5,12 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Picks - Login</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-    .container { width: 300px; margin: auto; padding: 20px; border: 1px solid #f3efef; border-radius: 5px; }
-    input, button { width: 100%; padding: 10px; margin-top: 10px; }
-    button { background-color: green; color: rgb(12, 7, 7); border: none; cursor: pointer; }
-    button:hover { background-color: darkgreen; }
-    .error { color: red; margin-top: 10px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 0; 
+      padding: 20px; 
+      background-color: brown; /* Set background to brown */
+      color: white; /* Ensure text is visible against the background */
+    }
+    .container { 
+      width: 300px; 
+      margin: auto; 
+      padding: 20px; 
+      border: 1px solid #f3efef; 
+      border-radius: 5px; 
+      background-color: #fff; /* Keep container background white */
+      color: black; /* Ensure text in the container is readable */
+    }
+    input, button { 
+      width: 100%; 
+      padding: 10px; 
+      margin-top: 10px; 
+    }
+    button { 
+      background-color: green; 
+      color: white; 
+      border: none; 
+      cursor: pointer; 
+    }
+    button:hover { 
+      background-color: darkgreen; 
+    }
+    .error { 
+      color: red; 
+      margin-top: 10px; 
+    }
   </style>
 </head>
 <body>
@@ -30,18 +59,23 @@
 
       errorMessage.textContent = ""; // Clear previous errors
 
-      const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
 
-      const result = await response.text();
+        const result = await response.text();
 
-      if (response.ok) {
-        window.location.href = "/teams"; // Redirect to /teams after login
-      } else {
-        errorMessage.textContent = result; // Show error message
+        if (response.ok) {
+          window.location.href = "/teams"; // Redirect to /teams after login
+        } else {
+          errorMessage.textContent = result; // Show error message
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'An unexpected error occurred.';
       }
     }
   </script>
