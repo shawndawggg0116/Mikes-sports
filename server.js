@@ -5,6 +5,10 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+
+
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -145,6 +149,9 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+
+
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
