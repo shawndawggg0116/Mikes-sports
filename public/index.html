@@ -3,70 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>NFL Picks - Login</title>
   <style>
-    /* Add styles here */
-    body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background-color: #dfffe0; /* Light green background */
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 0; 
+      padding: 20px; 
+      background-color: brown; /* Set background to brown */
+      color: white; /* Ensure text is visible against the background */
     }
-    .login-container {
-      background-color: #ffffff; /* White card background */
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      width: 100%;
-      max-width: 400px; /* Limit the width */
+    .container { 
+      width: 300px; 
+      margin: auto; 
+      padding: 20px; 
+      border: 1px solid #f3efef; 
+      border-radius: 5px; 
+      background-color: #fff; /* Keep container background white */
+      color: black; /* Ensure text in the container is readable */
     }
-    h1 {
-      text-align: center;
-      color: #2e7d32; /* Dark green for title */
+    input, button { 
+      width: 100%; 
+      padding: 10px; 
+      margin-top: 10px; 
     }
-    label {
-      font-size: 16px;
-      color: #4caf50; /* Green label text */
-      display: block;
-      margin-bottom: 5px;
+    button { 
+      background-color: green; 
+      color: white; 
+      border: none; 
+      cursor: pointer; 
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
+    button:hover { 
+      background-color: darkgreen; 
     }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4caf50; /* Green button */
-      border: none;
-      color: white;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049; /* Slightly darker green on hover */
+    .error { 
+      color: red; 
+      margin-top: 10px; 
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <h1>Login</h1>
-    <form action="/login" method="POST">
-      <label for="username">Username:</label>
-      <input type="text" id="username" name="username" required>
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required>
-      <button type="submit">Login</button>
-    </form>
+  <h1>NFL Picks - Login</h1>
+  <div class="container">
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
+    <button onclick="login()">Login</button>
+    <p class="error" id="error-message"></p>
   </div>
+
+  <script>
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('error-message');
+
+      errorMessage.textContent = ""; // Clear previous errors
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.text();
+
+        if (response.ok) {
+          window.location.href = "/teams"; // Redirect to /teams after login
+        } else {
+          errorMessage.textContent = result; // Show error message
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'An unexpected error occurred.';
+      }
+    }
+  </script>
 </body>
 </html>
