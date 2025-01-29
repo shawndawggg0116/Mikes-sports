@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const session = require('express-session');
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 const app = express();
 
@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
-    secret: 'your_secret_key', // Replace with your own secret
+    secret: 'your_secret_key', // Replace with a secure key
     resave: false,
     saveUninitialized: true,
   })
@@ -97,11 +97,6 @@ app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Serve index.html for the landing page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
@@ -144,27 +139,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
-  }
-});
-
-// Save picked team endpoint
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  const { team } = req.body;
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
-    }
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'Team already picked' });
-    }
-    user.pickedTeams.push(team);
-    user.lastPickDate = new Date();
-    await user.save();
-    res.send({ success: true });
-  } catch (error) {
-    console.error('Error saving picked team:', error);
-    res.status(500).send({ success: false, message: 'Error saving picked team' });
   }
 });
 
