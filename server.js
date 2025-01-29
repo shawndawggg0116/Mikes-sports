@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
-    secret: 'your_secret_key',
+    secret: 'your_secret_key', // Replace with your own secret
     resave: false,
     saveUninitialized: true,
   })
@@ -41,9 +41,21 @@ const User = mongoose.model('User', UserSchema, 'users');
 // Utility function to convert UTC to EST
 function convertUTCToEST(date) {
   const utcDate = new Date(date);
-  const estOffset = -5 * 60;
+  const estOffset = -5 * 60; // Eastern Time is UTC-5
   return new Date(utcDate.getTime() + estOffset * 60000);
 }
+
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).send({ message: 'No token provided' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).send({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
 
 // Login Route
 app.post('/login', async (req, res) => {
@@ -64,8 +76,8 @@ app.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials.');
     }
 
-    req.session.username = username;
-    res.send('Login successful');
+    req.session.username = username; // Set username in session
+    res.redirect('/teams'); // Redirect to the team selection page
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Error logging in.');
@@ -78,6 +90,82 @@ app.get('/get-logged-in-user', (req, res) => {
     return res.status(401).send({ error: 'User not logged in' });
   }
   res.send({ username: req.session.username });
+});
+
+// Serve the team selection page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Serve index.html for the landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Fetch all teams with their statuses
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      if (game) {
+        const now = new Date();
+        const startTime = convertUTCToEST(game.startTime);
+        const endTime = convertUTCToEST(game.endTime);
+
+        const gameStatus =
+          now >= startTime && now <= endTime
+            ? 'Playing'
+            : now > endTime
+            ? 'Completed'
+            : 'Scheduled';
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+
+      return { ...team, status: 'Available' };
+    });
+
+    res.json(mergedTeams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
+// Save picked team endpoint
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  const { team } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found' });
+    }
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).send({ success: false, message: 'Team already picked' });
+    }
+    user.pickedTeams.push(team);
+    user.lastPickDate = new Date();
+    await user.save();
+    res.send({ success: true });
+  } catch (error) {
+    console.error('Error saving picked team:', error);
+    res.status(500).send({ success: false, message: 'Error saving picked team' });
+  }
 });
 
 // Serve frontend
