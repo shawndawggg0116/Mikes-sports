@@ -5,6 +5,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const moment = require('moment-timezone'); // Include moment-timezone
 
 const app = express();
 
@@ -30,13 +31,6 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
-
-// Utility function to convert UTC to EST
-function convertUTCToEST(date) {
-  const utcDate = new Date(date);
-  const estOffset = -5 * 60; // Eastern Time is UTC-5
-  return new Date(utcDate.getTime() + estOffset * 60000);
-}
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -99,54 +93,9 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
       );
 
       if (game) {
-        const now = new Date();
-        const startTime = convertUTCToEST(game.startTime);
-        const endTime = convertUTCToEST(game.endTime);
-
-        const gameStatus =
-          now >= startTime && now <= endTime
-            ? "Playing"
-            : now > endTime
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
-      }
-      return { ...team, status: 'Available' };
-    });
-
-    res.json(mergedTeams);
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
-  }
-});
-
-const moment = require('moment-timezone');
-
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = moment().tz('America/New_York');
-        const startTime = moment.tz(game.startTime, 'America/New_York');
-        const endTime = moment.tz(game.endTime, 'America/New_York');
+        const now = moment().tz('America/New_York'); // Current time in EST
+        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
+        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
 
         const gameStatus =
           now.isBetween(startTime, endTime)
@@ -172,7 +121,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     res.status(500).send('Error fetching teams');
   }
 });
-
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {
