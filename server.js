@@ -5,14 +5,9 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
-
-
-
-
+const moment = require('moment-timezone'); // Include moment-timezone
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
 app.use(bodyParser.json());
@@ -25,7 +20,10 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// User Schema
+// JWT Secret
+const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
+
+// MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -33,13 +31,6 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
-
-// Utility function to convert UTC to EST
-function convertUTCToEST(date) {
-  const utcDate = new Date(date);
-  const estOffset = -5 * 60;
-  return new Date(utcDate.getTime() + estOffset * 60000);
-}
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -87,11 +78,12 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Fetch all teams
+// Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
+
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
@@ -99,16 +91,18 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
+
       if (game) {
-        const now = new Date();
-        const startTime = convertUTCToEST(game.startTime);
-        const endTime = convertUTCToEST(game.endTime);
+        const now = moment().tz('America/New_York'); // Current time in EST
+        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
+        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
+
         const gameStatus =
-          now >= startTime && now <= endTime
-            ? 'Playing'
-            : now > endTime
-            ? 'Completed'
-            : 'Scheduled';
+          now.isBetween(startTime, endTime)
+            ? "Playing"
+            : now.isAfter(endTime)
+            ? "Completed"
+            : "Scheduled";
 
         return {
           ...team,
@@ -128,30 +122,21 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Save picked team
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  const { team } = req.body;
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
-    if (user.pickedTeams.includes(team)) return res.status(400).send({ success: false, message: 'Team already picked' });
-    user.pickedTeams.push(team);
-    user.lastPickDate = new Date();
-    await user.save();
-    res.send({ success: true });
-  } catch (error) {
-    console.error('Error saving picked team:', error);
-    res.status(500).send({ success: false, message: 'Error saving picked team' });
-  }
-});
-
-// Serve frontend
-app.get('*', (req, res) => {
+// Serve the main page for the root route
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Serve the teams page for the /teams route
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
 
+// Catch-all route to handle unmatched routes
+app.get('*', (req, res) => {
+  res.status(404).send('Page not found');
+});
 
-
-// Start the server
+// Server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
