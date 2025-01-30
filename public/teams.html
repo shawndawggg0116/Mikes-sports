@@ -98,6 +98,24 @@ displayUserPicks();
       }
     }
 
+    function getStatusClass(status) {
+  switch (status) {
+    case 'Available':
+      return 'green';
+    case 'Scheduled':
+      return 'darkgreen';
+    case 'Playing':
+      return 'orange';
+    case 'Completed':
+      return 'grey';
+    case 'Picked':
+      return 'blue'; // Add a blue color for picked teams (you can customize this)
+    default:
+      return '';
+  }
+}
+
+
     async function pickTeam(teamName) {
       try {
         const response = await fetch('/api/pick-team', {

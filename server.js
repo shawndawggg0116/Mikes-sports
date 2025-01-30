@@ -151,6 +151,61 @@ app.get('/api/user-picks', authenticateToken, async (req, res) => {
   }
 });
 
+// Updated /api/teams endpoint in server.js
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+
+    const user = await User.findById(req.user.id); // Get the logged-in user
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      let gameStatus = 'Available'; // Default status
+
+      if (game) {
+        const now = moment().tz('America/New_York'); // Current time in EST
+        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
+        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
+
+        gameStatus =
+          now.isBetween(startTime, endTime)
+            ? 'Playing'
+            : now.isAfter(endTime)
+            ? 'Completed'
+            : 'Scheduled';
+      }
+
+      // Check if the team is in the user's pickedTeams
+      if (user.pickedTeams.includes(team.name)) {
+        gameStatus = 'Picked';
+      }
+
+      return {
+        ...team,
+        status: gameStatus,
+        opponent: game?.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+        startTime: game ? moment.tz(game.startTime, 'America/New_York').toISOString() : null,
+        endTime: game ? moment.tz(game.endTime, 'America/New_York').toISOString() : null,
+      };
+    });
+
+    res.json(mergedTeams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
 
 // Server
 const PORT = process.env.PORT || 5000;
