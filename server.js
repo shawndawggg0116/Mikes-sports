@@ -28,6 +28,7 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   pickedTeams: { type: [String], default: [] },
+  selectedTeam: { type: String, default: null },
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
@@ -78,47 +79,64 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Fetch all teams with their statuses
-app.get('/api/teams', authenticateToken, async (req, res) => {
+// Fetch user picks
+app.get('/api/user-picks', authenticateToken, async (req, res) => {
   try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = moment().tz('America/New_York'); // Current time in EST
-        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
-        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
-
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
-      }
-      return { ...team, status: 'Available' };
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      pickedTeams: user.pickedTeams,
+      selectedTeam: user.selectedTeam,
     });
-
-    res.json(mergedTeams);
   } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
+    console.error('Error fetching user picks:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Select a team
+app.post('/api/select-team', authenticateToken, async (req, res) => {
+  const { team } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (user.pickedTeams.includes(team)) {
+      return res.status(400).json({ message: 'Team already picked' });
+    }
+    user.selectedTeam = team;
+    await user.save();
+    res.json({ message: 'Team selected successfully!' });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Submit a pick
+app.post('/api/submit-pick', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (!user.selectedTeam) {
+      return res.status(400).json({ message: 'No team selected' });
+    }
+
+    user.pickedTeams.push(user.selectedTeam);
+    user.selectedTeam = null;
+    user.lastPickDate = new Date();
+    await user.save();
+
+    res.json({ message: 'Pick submitted successfully!' });
+  } catch (error) {
+    console.error('Error submitting pick:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

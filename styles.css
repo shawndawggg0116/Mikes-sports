@@ -1,37 +1,96 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+}
+
+#team-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 20px;
+}
+
+button {
+  margin: 10px;
+  padding: 15px 25px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button.available {
+  background-color: #4caf50;
+  color: white;
+}
+
+button.scheduled {
+  background-color: #006400; /* Dark Green */
+  color: white;
+}
+
+button.completed {
+  background-color: #808080;
+  color: white;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+button.selected {
+  border: 2px solid yellow;
+}
+
+#submit-btn {
+  margin-top: 20px;
+  padding: 15px 25px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#submit-btn:hover {
+  background-color: #0056b3;
+}
+
 /* Glowing orange for "Playing" */
 .playing {
-    background-color: orange;
-    color: white;
-    animation: glow 2s infinite;
+  background-color: orange;
+  color: white;
+  animation: glow 2s infinite;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px orange;
   }
-  
-  @keyframes glow {
-    0% {
-      box-shadow: 0 0 5px orange;
-    }
-    50% {
-      box-shadow: 0 0 15px orange;
-    }
-    100% {
-      box-shadow: 0 0 5px orange;
-    }
+  50% {
+    box-shadow: 0 0 15px orange;
   }
-  
-  /* Grey for "Completed" */
-  .completed {
-    background-color: grey;
-    color: white;
-    text-decoration: line-through;
+  100% {
+    box-shadow: 0 0 5px orange;
   }
-  
-  /* Green for "Available" */
-  .available {
-    background-color: green;
-    color: white;
-  }
-  
-  .scheduled {
-    background-color: darkgreen;
-    color: white; /* Optional: to ensure text is readable */
-  }
-  
+}
+
+/* Grey for "Completed" */
+.completed {
+  background-color: grey;
+  color: white;
+  text-decoration: line-through;
+}
+
+/* Green for "Available" */
+.available {
+  background-color: green;
+  color: white;
+}
+
+/* Dark Green for "Scheduled" */
+.scheduled {
+  background-color: darkgreen;
+  color: white;
+}
