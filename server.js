@@ -1,137 +1,107 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
 const path = require('path');
 
 const app = express();
-
-// Middleware
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+const PORT = process.env.PORT || 5000; // Use Render's PORT variable
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+mongoose.connect(
+  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new",
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// MongoDB Schemas and Models
-const UserSchema = new mongoose.Schema({
-  username: String,
-  pickedTeams: [String],
-  lastPickDate: Date,
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+
+// User schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  selectedTeam: { type: String, default: null },
+  points: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
 });
 
-const User = mongoose.model('User', UserSchema, 'users');
-
-// Utility function to convert UTC to EST
-function convertUTCToEST(date) {
-  const utcDate = new Date(date);
-  const estOffset = -5 * 60; // Eastern Time is UTC-5
-  return new Date(utcDate.getTime() + estOffset * 60000);
-}
+const User = mongoose.model('User', userSchema);
 
 // Routes
-// Serve index.html for the landing page
+
+// Root Route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve teams.html for the /teams route
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+// Serve the registration page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Fetch all teams with their statuses
-app.get('/api/teams', async (req, res) => {
+// Register a user
+app.post('/register', async (req, res) => {
+  console.log('Request body:', req.body); // Log incoming data
+
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
   try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      console.log('Username already exists:', username);
+      return res.status(400).send('Username already exists.');
+    }
 
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
 
-    console.log("All Teams: ", allTeams);
-    console.log("Current Games: ", currentGames);
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = new Date();
-        const startTime = convertUTCToEST(game.startTime);
-        const endTime = convertUTCToEST(game.endTime);
-
-        const gameStatus =
-          now >= startTime && now <= endTime
-            ? "Playing"
-            : now > endTime
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(), // Display EST time
-          endTime: endTime.toISOString(),
-        };
-      }
-
-      return { ...team, status: 'Available' };
-    });
-
-    res.json(mergedTeams);
+    console.log('New user registered:', newUser); // Log saved user
+    res.status(201).send('User registered successfully!');
   } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
   }
 });
 
-// Mock `/api/user-teams` endpoint
-app.get('/api/user-teams', async (req, res) => {
+// Login Route
+app.post('/login', async (req, res) => {
+  console.log('Login request body:', req.body); // Log incoming data
+
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
   try {
-    const user = await User.findOne({ username: 'shawn1' }); // Replace with dynamic username
+    const user = await User.findOne({ username });
     if (!user) {
-      return res.status(404).send({ pickedTeams: [] });
+      console.log('User not found:', username);
+      return res.status(404).send('User not found.');
     }
-    res.json({ pickedTeams: user.pickedTeams });
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
+      return res.status(401).send('Invalid credentials.');
+    }
+
+    console.log('User logged in successfully:', username);
+    res.status(200).send('Login successful');
   } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).send('Error fetching user data');
+    console.error('Error during login:', error);
+    res.status(500).send('Error logging in.');
   }
 });
 
-// Save picked team endpoint
-app.post('/api/pick-team', async (req, res) => {
-  const { team } = req.body;
-  try {
-    const user = await User.findOne({ username: 'shawn1' }); // Replace with dynamic username
-    if (!user) {
-      return res.status(404).send({ success: false, message: 'User not found' });
-    }
-    if (user.pickedTeams.includes(team)) {
-      return res
-        .status(400)
-        .send({ success: false, message: 'Team already picked' });
-    }
-    user.pickedTeams.push(team);
-    user.lastPickDate = new Date();
-    await user.save();
-    res.send({ success: true });
-  } catch (error) {
-    console.error('Error saving picked team:', error);
-    res.status(500).send({ success: false, message: 'Error saving picked team' });
-  }
-});
-
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Server
-const PORT = process.env.PORT || 5000;
+// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

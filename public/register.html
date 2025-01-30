@@ -1,48 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register User</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .register-container { margin-top: 50px; }
-        .register-form { display: inline-block; text-align: left; }
-        .register-form input { display: block; margin: 10px 0; padding: 10px; width: 100%; }
-        .register-form button { padding: 10px; background: #007BFF; color: white; border: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <h1>Register User</h1>
-        <form class="register-form" id="register-form">
-            <input type="text" id="username" placeholder="Username" required />
-            <input type="password" id="password" placeholder="Password" required />
-            <button type="submit">Register</button>
-        </form>
-        <p id="message" style="color: red; display: none;">Error: Registration failed!</p>
-    </div>
-    <script>
-        const form = document.getElementById('register-form');
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+app.post('/register', async (req, res) => {
+  // Log the incoming request body
+  console.log('Request body:', req.body);
 
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-            });
+  const { username, password } = req.body;
 
-            const result = await response.json();
-            if (result.success) {
-                alert('Registration successful! Redirecting to login...');
-                window.location.href = '/'; // Redirect to login
-            } else {
-                document.getElementById('message').style.display = 'block';
-            }
-        });
-    </script>
-</body>
-</html>
+  // Check if username and password are provided
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).send('Username and password are required.');
+  }
+
+  try {
+    // Check if the username already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      console.log('Username already exists:', username);
+      return res.status(400).send('Username already exists.');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+
+    // Save the new user to the database
+    await newUser.save();
+
+    // Log the saved user
+    console.log('New user registered:', newUser);
+
+    res.status(201).send('User registered successfully!');
+  } catch (error) {
+    // Log any errors during registration
+    console.error('Error registering user:', error);
+    res.status(500).send('Error registering user.');
+  }
+});
