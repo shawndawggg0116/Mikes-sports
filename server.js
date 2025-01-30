@@ -1,106 +1,154 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Use Render's PORT variable
-
-// MongoDB connection
-mongoose.connect(
-  "mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-).then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(bodyParser.json());
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// User schema
-const userSchema = new mongoose.Schema({
+// MongoDB connection
+const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// User Schema
+const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  selectedTeam: { type: String, default: null },
-  points: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  pickedTeams: { type: [String], default: [] },
+  lastPickDate: { type: Date, default: null }
 });
+const User = mongoose.model('User', UserSchema, 'users');
 
-const User = mongoose.model('User', userSchema);
+// Utility function to convert UTC to EST
+function convertUTCToEST(date) {
+  const utcDate = new Date(date);
+  const estOffset = -5 * 60;
+  return new Date(utcDate.getTime() + estOffset * 60000);
+}
 
-// Routes
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).json({ message: 'No token provided' });
 
-// Root Route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
 
-// Serve the registration page
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Register a user
-app.post('/register', async (req, res) => {
-  console.log('Request body:', req.body); // Log incoming data
-
+// User Registration
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    console.log('Missing username or password');
-    return res.status(400).send('Username and password are required.');
-  }
+  if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
 
   try {
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      console.log('Username already exists:', username);
-      return res.status(400).send('Username already exists.');
-    }
-
+    if (existingUser) return res.status(400).json({ message: 'Username already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
-
-    console.log('New user registered:', newUser); // Log saved user
-    res.status(201).send('User registered successfully!');
+    res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
     console.error('Error registering user:', error);
-    res.status(500).send('Error registering user.');
+    res.status(500).json({ message: 'Error registering user' });
   }
 });
 
-// Login Route
-app.post('/login', async (req, res) => {
-  console.log('Login request body:', req.body); // Log incoming data
-
+// User Login
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    console.log('Missing username or password');
-    return res.status(400).send('Username and password are required.');
-  }
-
   try {
     const user = await User.findOne({ username });
-    if (!user) {
-      console.log('User not found:', username);
-      return res.status(404).send('User not found.');
-    }
-
+    if (!user) return res.status(404).json({ message: 'User not found' });
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      console.log('Invalid password for user:', username);
-      return res.status(401).send('Invalid credentials.');
-    }
-
-    console.log('User logged in successfully:', username);
-    res.status(200).send('Login successful');
+    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token, username: user.username });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Error logging in.');
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
+});
+
+// Fetch all teams
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+      if (game) {
+        const now = new Date();
+        const startTime = convertUTCToEST(game.startTime);
+        const endTime = convertUTCToEST(game.endTime);
+        const gameStatus =
+          now >= startTime && now <= endTime
+            ? 'Playing'
+            : now > endTime
+            ? 'Completed'
+            : 'Scheduled';
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+      return { ...team, status: 'Available' };
+    });
+
+    res.json(mergedTeams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
+// Save picked team
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  const { team } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+    if (user.pickedTeams.includes(team)) return res.status(400).send({ success: false, message: 'Team already picked' });
+    user.pickedTeams.push(team);
+    user.lastPickDate = new Date();
+    await user.save();
+    res.send({ success: true });
+  } catch (error) {
+    console.error('Error saving picked team:', error);
+    res.status(500).send({ success: false, message: 'Error saving picked team' });
+  }
+});
+
+// Serve /teams page
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Wildcard route for other requests
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
