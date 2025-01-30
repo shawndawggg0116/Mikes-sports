@@ -7,8 +7,6 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
 app.use(bodyParser.json());
@@ -21,7 +19,10 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// User Schema
+// JWT Secret
+const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
+
+// MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -33,7 +34,7 @@ const User = mongoose.model('User', UserSchema, 'users');
 // Utility function to convert UTC to EST
 function convertUTCToEST(date) {
   const utcDate = new Date(date);
-  const estOffset = -5 * 60;
+  const estOffset = -5 * 60; // Eastern Time is UTC-5
   return new Date(utcDate.getTime() + estOffset * 60000);
 }
 
@@ -83,11 +84,12 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Fetch all teams
+// Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
+
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
@@ -95,16 +97,18 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
+
       if (game) {
         const now = new Date();
         const startTime = convertUTCToEST(game.startTime);
         const endTime = convertUTCToEST(game.endTime);
+
         const gameStatus =
           now >= startTime && now <= endTime
-            ? 'Playing'
+            ? "Playing"
             : now > endTime
-            ? 'Completed'
-            : 'Scheduled';
+            ? "Completed"
+            : "Scheduled";
 
         return {
           ...team,
@@ -124,32 +128,67 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Save picked team
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  const { team } = req.body;
+const moment = require('moment-timezone');
+
+app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
-    if (user.pickedTeams.includes(team)) return res.status(400).send({ success: false, message: 'Team already picked' });
-    user.pickedTeams.push(team);
-    user.lastPickDate = new Date();
-    await user.save();
-    res.send({ success: true });
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      if (game) {
+        const now = moment().tz('America/New_York');
+        const startTime = moment.tz(game.startTime, 'America/New_York');
+        const endTime = moment.tz(game.endTime, 'America/New_York');
+
+        const gameStatus =
+          now.isBetween(startTime, endTime)
+            ? "Playing"
+            : now.isAfter(endTime)
+            ? "Completed"
+            : "Scheduled";
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+      return { ...team, status: 'Available' };
+    });
+
+    res.json(mergedTeams);
   } catch (error) {
-    console.error('Error saving picked team:', error);
-    res.status(500).send({ success: false, message: 'Error saving picked team' });
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
   }
 });
 
-// Serve /teams page
+
+// Serve the main page for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve the teams page for the /teams route
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
 });
 
-// Wildcard route for other requests
+// Catch-all route to handle unmatched routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.status(404).send('Page not found');
 });
 
-// Start the server
+// Server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
