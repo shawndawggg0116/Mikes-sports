@@ -114,11 +114,10 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
           ...team,
           status: gameStatus,
           opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(), // Display EST time
+          startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
         };
       }
-
       return { ...team, status: 'Available' };
     });
 
@@ -129,28 +128,19 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Save picked team endpoint
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  const { team } = req.body;
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
-    if (user.pickedTeams.includes(team)) {
-      return res.status(400).send({ success: false, message: 'Team already picked' });
-    }
-    user.pickedTeams.push(team);
-    user.lastPickDate = new Date();
-    await user.save();
-    res.send({ success: true });
-  } catch (error) {
-    console.error('Error saving picked team:', error);
-    res.status(500).send({ success: false, message: 'Error saving picked team' });
-  }
+// Serve the main page for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve frontend
+// Serve the teams page for the /teams route
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Catch-all route to handle unmatched routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.status(404).send('Page not found');
 });
 
 // Server
