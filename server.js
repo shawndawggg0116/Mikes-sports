@@ -79,6 +79,52 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Fetch all teams with their statuses
+
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+    const user = await User.findById(req.user.id); // Fetch the logged-in user
+
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      let status = 'Available';
+      if (user.pickedTeams.includes(team.name)) {
+        status = 'Picked'; // Mark the team as picked
+      } else if (game) {
+        const now = moment().tz('America/New_York');
+        const startTime = moment.tz(game.startTime, 'America/New_York');
+        const endTime = moment.tz(game.endTime, 'America/New_York');
+
+        status =
+          now.isBetween(startTime, endTime)
+            ? 'Playing'
+            : now.isAfter(endTime)
+            ? 'Completed'
+            : 'Scheduled';
+      }
+
+      return {
+        ...team,
+        status,
+        opponent: game ? (game.homeTeam === team.name ? game.awayTeam : game.homeTeam) : null,
+      };
+    });
+
+    res.json(mergedTeams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
+
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
