@@ -30,3 +30,8 @@
     color: white;
   }
   
+  .scheduled {
+    background-color: darkgreen;
+    color: white; /* Optional: to ensure text is readable */
+  }
+  
