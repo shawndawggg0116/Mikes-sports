@@ -1,68 +1,32 @@
 /* Glowing orange for "Playing" */
 .playing {
-  background-color: orange;
-  color: white;
-  animation: glow 2s infinite;
-}
-
-@keyframes glow {
-  0% {
-    box-shadow: 0 0 5px orange;
+    background-color: orange;
+    color: white;
+    animation: glow 2s infinite;
   }
-  50% {
-    box-shadow: 0 0 15px orange;
+  
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px orange;
+    }
+    50% {
+      box-shadow: 0 0 15px orange;
+    }
+    100% {
+      box-shadow: 0 0 5px orange;
+    }
   }
-  100% {
-    box-shadow: 0 0 5px orange;
+  
+  /* Grey for "Completed" */
+  .completed {
+    background-color: grey;
+    color: white;
+    text-decoration: line-through;
   }
-}
-
-/* Grey for "Completed" */
-.completed {
-  background-color: grey;
-  color: white;
-  text-decoration: line-through;
-}
-
-/* Green for "Available" */
-.available {
-  background-color: green;
-  color: white;
-}
-
-.scheduled {
-  background-color: darkgreen;
-  color: white; /* Optional: to ensure text is readable */
-}
-
-#user-picks {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#user-picks h3 {
-  margin-bottom: 10px;
-  font-size: 18px;
-}
-
-#user-picks ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-#user-picks ul li {
-  font-size: 16px;
-  color: #333;
-}
-.picked {
-  background-color: blue;
-  color: white;
-  border: 2px solid yellow; /* Optional: Add a border for better visibility */
-}
+  
+  /* Green for "Available" */
+  .available {
+    background-color: green;
+    color: white;
+  }
   

@@ -5,9 +5,14 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
-const moment = require('moment-timezone'); // Include moment-timezone
+
+
+
+
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = 'your_secret_key'; // Replace with a secure key
 
 // Middleware
 app.use(bodyParser.json());
@@ -20,10 +25,7 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// JWT Secret
-const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
-
-// MongoDB Schemas and Models
+// User Schema
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -31,6 +33,13 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
+
+// Utility function to convert UTC to EST
+function convertUTCToEST(date) {
+  const utcDate = new Date(date);
+  const estOffset = -5 * 60;
+  return new Date(utcDate.getTime() + estOffset * 60000);
+}
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -78,14 +87,11 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Fetch all teams with their statuses
-
+// Fetch all teams
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
-    const user = await User.findById(req.user.id); // Fetch the logged-in user
-
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
@@ -93,62 +99,16 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
-
-      let status = 'Available';
-      if (user.pickedTeams.includes(team.name)) {
-        status = 'Picked'; // Mark the team as picked
-      } else if (game) {
-        const now = moment().tz('America/New_York');
-        const startTime = moment.tz(game.startTime, 'America/New_York');
-        const endTime = moment.tz(game.endTime, 'America/New_York');
-
-        status =
-          now.isBetween(startTime, endTime)
+      if (game) {
+        const now = new Date();
+        const startTime = convertUTCToEST(game.startTime);
+        const endTime = convertUTCToEST(game.endTime);
+        const gameStatus =
+          now >= startTime && now <= endTime
             ? 'Playing'
-            : now.isAfter(endTime)
+            : now > endTime
             ? 'Completed'
             : 'Scheduled';
-      }
-
-      return {
-        ...team,
-        status,
-        opponent: game ? (game.homeTeam === team.name ? game.awayTeam : game.homeTeam) : null,
-      };
-    });
-
-    res.json(mergedTeams);
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
-  }
-});
-
-
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = moment().tz('America/New_York'); // Current time in EST
-        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
-        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
-
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
 
         return {
           ...team,
@@ -168,91 +128,30 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Serve the main page for the root route
-app.get('/', (req, res) => {
+// Save picked team
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  const { team } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).send({ success: false, message: 'User not found' });
+    if (user.pickedTeams.includes(team)) return res.status(400).send({ success: false, message: 'Team already picked' });
+    user.pickedTeams.push(team);
+    user.lastPickDate = new Date();
+    await user.save();
+    res.send({ success: true });
+  } catch (error) {
+    console.error('Error saving picked team:', error);
+    res.status(500).send({ success: false, message: 'Error saving picked team' });
+  }
+});
+
+// Serve frontend
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve the teams page for the /teams route
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Catch-all route to handle unmatched routes
-app.get('*', (req, res) => {
-  res.status(404).send('Page not found');
-});
-
-// SERVER.JS SNIPPET
-app.get('/api/user-picks', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ pickedTeams: user.pickedTeams });
-  } catch (error) {
-    console.error('Error fetching user picks:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Updated /api/teams endpoint in server.js
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const user = await User.findById(req.user.id); // Get the logged-in user
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      let gameStatus = 'Available'; // Default status
-
-      if (game) {
-        const now = moment().tz('America/New_York'); // Current time in EST
-        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
-        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
-
-        gameStatus =
-          now.isBetween(startTime, endTime)
-            ? 'Playing'
-            : now.isAfter(endTime)
-            ? 'Completed'
-            : 'Scheduled';
-      }
-
-      // Check if the team is in the user's pickedTeams
-      if (user.pickedTeams.includes(team.name)) {
-        gameStatus = 'Picked';
-      }
-
-      return {
-        ...team,
-        status: gameStatus,
-        opponent: game?.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-        startTime: game ? moment.tz(game.startTime, 'America/New_York').toISOString() : null,
-        endTime: game ? moment.tz(game.endTime, 'America/New_York').toISOString() : null,
-      };
-    });
-
-    res.json(mergedTeams);
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
-  }
-});
 
 
-// Server
-const PORT = process.env.PORT || 5000;
+
+// Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
