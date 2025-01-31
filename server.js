@@ -131,13 +131,13 @@ app.post('/api/login', async (req, res) => {
 
       const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
 
-      // ✅ Return the correct response
       res.json({ success: true, token, role: user.role });
   } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 app.get('/admin', (req, res) => {

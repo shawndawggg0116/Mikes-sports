@@ -24,18 +24,33 @@
 
   <script>
  async function login() {
+    console.log("Login button clicked"); // ✅ Debugging
+
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+    
+    console.log("Username:", username); // ✅ Debugging
+    console.log("Password:", password); // ✅ Debugging
 
-    const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-    const result = await response.json();
+        console.log("Response received:", response); // ✅ Debugging
 
-    if (response.ok) {
+        if (!response.ok) {
+            const errorResult = await response.json();
+            console.error("Login failed:", errorResult.message);
+            alert("Login failed: " + errorResult.message);
+            return;
+        }
+
+        const result = await response.json();
+        console.log("Login successful:", result); // ✅ Debugging
+
         localStorage.setItem('token', result.token);
         localStorage.setItem('role', result.role.toLowerCase()); // Convert role to lowercase
 
@@ -44,10 +59,12 @@
         } else {
             window.location.href = '/teams'; // Redirect normal users to /teams
         }
-    } else {
-        alert(result.message);
+    } catch (error) {
+        console.error("Error during login:", error);
+        alert("An error occurred during login.");
     }
 }
+
 
 </script>
 
