@@ -119,17 +119,24 @@ app.get('/teams', (req, res) => {
 });
 
 // Catch-all route to handle unmatched routes
-
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log("Login attempt for username:", username); // Log username
   try {
       const user = await User.findOne({ username });
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user) {
+          console.log("User not found");
+          return res.status(404).json({ message: 'User not found' });
+      }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+      if (!isPasswordValid) {
+          console.log("Invalid password for user:", username);
+          return res.status(401).json({ message: 'Invalid credentials' });
+      }
 
       const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+      console.log("Login successful for user:", username, "Role:", user.role);
 
       res.json({ success: true, token, role: user.role });
   } catch (error) {
