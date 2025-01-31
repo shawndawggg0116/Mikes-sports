@@ -3,149 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NFL Picks - Login and Registration</title>
+  <title>NFL Picks - Login</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-      background-color: #2c3e50;
-      color: white;
-    }
-    .container {
-      width: 300px;
-      margin: auto;
-      padding: 20px;
-      border: 1px solid #f3efef;
-      border-radius: 5px;
-      background-color: #34495e;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-    }
-    button {
-      background-color: green;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: darkgreen;
-    }
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
-    .tabs {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .tab {
-      padding: 10px;
-      cursor: pointer;
-      background-color: #2c3e50;
-      color: white;
-      border: 1px solid #f3efef;
-      border-radius: 5px 5px 0 0;
-      margin: 0 5px;
-    }
-    .tab.active {
-      background-color: #34495e;
-      border-bottom: none;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; background-color: #2c3e50; color: white; }
+    .container { width: 300px; margin: auto; padding: 20px; border: 1px solid #f3efef; border-radius: 5px; background-color: #34495e; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; }
+    button { background-color: green; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: darkgreen; }
+    .error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>NFL Picks</h1>
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('login')">Login</div>
-    <div class="tab" onclick="showTab('register')">Register</div>
-  </div>
+  <h1>NFL Picks - Login</h1>
   <div class="container">
-    <!-- Login Form -->
-    <div id="login" class="tab-content active">
-      <input type="text" id="login-username" placeholder="Enter Username">
-      <input type="password" id="login-password" placeholder="Enter Password">
-      <button onclick="login()">Login</button>
-      <p class="error" id="login-error-message"></p>
-    </div>
-    <!-- Registration Form -->
-    <div id="register" class="tab-content">
-      <input type="text" id="register-username" placeholder="Enter Username">
-      <input type="password" id="register-password" placeholder="Enter Password">
-      <button onclick="register()">Register</button>
-      <p class="error" id="register-error-message"></p>
-    </div>
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
+    <button onclick="login()">Login</button>
+    <p class="error" id="error-message"></p>
   </div>
 
   <script>
-    function showTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
-    }
-
     async function login() {
-      const username = document.getElementById('login-username').value;
-      const password = document.getElementById('login-password').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('error-message');
 
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+      errorMessage.textContent = ""; // Clear previous errors
 
-        const result = await response.json();
-        if (response.ok) {
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('role', result.role.toLowerCase());
-          if (result.role.toLowerCase() === 'admin') {
-            window.location.href = '/admin';
-          } else {
-            window.location.href = '/teams';
-          }
-        } else {
-          document.getElementById('login-error-message').textContent = result.message;
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        document.getElementById('login-error-message').textContent = 'An error occurred during login.';
-      }
-    }
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    async function register() {
-      const username = document.getElementById('register-username').value;
-      const password = document.getElementById('register-password').value;
+      const result = await response.json();
 
-      try {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          alert('Registration successful! You can now log in.');
-          showTab('login');
-        } else {
-          document.getElementById('register-error-message').textContent = result.message;
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-        document.getElementById('register-error-message').textContent = 'An error occurred during registration.';
+      if (response.ok) {
+        localStorage.setItem('token', result.token); // Store token
+        localStorage.setItem('username', result.username);
+        window.location.href = "/teams"; // Redirect to /teams after login
+      } else {
+        errorMessage.textContent = result.message; // Show error message
       }
     }
   </script>

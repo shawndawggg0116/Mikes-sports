@@ -47,30 +47,36 @@ const authenticateToken = (req, res, next) => {
 // User Registration
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password are required' });
-  }
+  if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
 
   try {
-    // Add 'const' to properly define the variable
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Username already exists' });
-    }
-
+    if (existingUser) return res.status(400).json({ message: 'Username already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword, role: 'user' });
+    const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
     res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
-    console.error('Error registering user:', error.message);
-    res.status(500).json({ message: 'Error registering user', error: error.message });
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Error registering user' });
   }
 });
 
-
-
+// User Login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token, username: user.username });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
@@ -127,43 +133,9 @@ app.get('/teams', (req, res) => {
 });
 
 // Catch-all route to handle unmatched routes
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-      const user = await User.findOne({ username });
-      if (!user) return res.status(404).json({ message: 'User not found' });
-
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-
-      // Check for the role and ensure it's sent correctly
-      const token = jwt.sign(
-        {
-          id: user._id,
-          username: user.username,
-          role: user.role, // Include the role in the token
-        },
-        JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-      
-      
-      console.log("Login successful:", { username: user.username, role: user.role }); // Debugging log
-
-      res.json({ success: true, token, role: user.role });
-  } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ message: 'Server error' });
-  }
+app.get('*', (req, res) => {
+  res.status(404).send('Page not found');
 });
-
-
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-
 
 // Server
 const PORT = process.env.PORT || 5000;
