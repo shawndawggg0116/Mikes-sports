@@ -137,6 +137,34 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+      const user = await User.findOne({ username });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+
+      const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+
+      res.json({ success: true, token, username: user.username, role: user.role });
+  } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.get('/admin', authenticateToken, async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user || user.role !== 'admin') {
+      return res.status(403).send('Access Denied');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
