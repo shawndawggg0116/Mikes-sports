@@ -24,13 +24,8 @@
 
   <script>
  async function login() {
-    console.log("Login button clicked"); // ✅ Debugging
-
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    
-    console.log("Username:", username); // ✅ Debugging
-    console.log("Password:", password); // ✅ Debugging
 
     try {
         const response = await fetch('/api/login', {
@@ -39,29 +34,24 @@
             body: JSON.stringify({ username, password })
         });
 
-        console.log("Response received:", response); // ✅ Debugging
-
-        if (!response.ok) {
-            const errorResult = await response.json();
-            console.error("Login failed:", errorResult.message);
-            alert("Login failed: " + errorResult.message);
-            return;
-        }
-
         const result = await response.json();
-        console.log("Login successful:", result); // ✅ Debugging
+        console.log("Login Response:", result); // Add this line to log the server response
 
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('role', result.role.toLowerCase()); // Convert role to lowercase
+        if (response.ok) {
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('role', result.role.toLowerCase()); // Ensure role is stored as lowercase
 
-        if (result.role.toLowerCase() === 'admin') {
-            window.location.href = '/admin'; // Redirect admin users to /admin
+            if (result.role.toLowerCase() === 'admin') {
+                window.location.href = '/admin';
+            } else {
+                window.location.href = '/teams';
+            }
         } else {
-            window.location.href = '/teams'; // Redirect normal users to /teams
+            alert(result.message);
         }
     } catch (error) {
-        console.error("Error during login:", error);
-        alert("An error occurred during login.");
+        console.error("Login Error:", error);
+        alert('An error occurred during login.');
     }
 }
 
