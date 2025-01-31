@@ -62,7 +62,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// User Login
+
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
@@ -140,6 +140,18 @@ app.post('/api/login', async (req, res) => {
       res.status(500).json({ message: 'Server error' });
   }
 });
+
+if (response.ok) {
+  localStorage.setItem('token', result.token);
+  localStorage.setItem('role', result.role.toLowerCase()); // Convert to lowercase for consistency
+
+  if (result.role.toLowerCase() === 'admin') {
+      window.location.href = '/admin'; // Redirect admin users to /admin
+  } else {
+      window.location.href = '/teams'; // Redirect normal users to /teams
+  }
+}
+
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
