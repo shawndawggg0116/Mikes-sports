@@ -35,20 +35,20 @@
         });
 
         const result = await response.json();
-        console.log("Login Response:", result); // Debugging log
+console.log('Login Response:', result); // Debugging log
 
-        if (response.ok) {
-            localStorage.setItem('token', result.token);
-            localStorage.setItem('role', result.role.toLowerCase()); // Ensure role is stored as lowercase
+if (response.ok) {
+  localStorage.setItem('token', result.token);
+  localStorage.setItem('role', result.role.toLowerCase()); // Ensure role is lowercase
+  if (result.role.toLowerCase() === 'admin') {
+    window.location.href = '/admin';
+  } else {
+    window.location.href = '/teams';
+  }
+} else {
+  alert(result.message);
+}
 
-            if (result.role.toLowerCase() === 'admin') {
-                window.location.href = '/admin';
-            } else {
-                window.location.href = '/teams';
-            }
-        } else {
-            alert(result.message);
-        }
     } catch (error) {
         console.error("Login Error:", error);
         alert('An error occurred during login.');

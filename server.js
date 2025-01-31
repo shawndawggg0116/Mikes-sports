@@ -50,7 +50,7 @@ app.post('/api/register', async (req, res) => {
   if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
 
   try {
-    const existingUser = await User.findOne({ username });
+    const user = await User.findOne({ username }, 'username password role'); // Explicitly project the 'role'
     if (existingUser) return res.status(400).json({ message: 'Username already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ username, password: hashedPassword });
@@ -130,10 +130,15 @@ app.post('/api/login', async (req, res) => {
 
       // Check for the role and ensure it's sent correctly
       const token = jwt.sign(
-          { id: user._id, username: user.username, role: user.role }, 
-          JWT_SECRET, 
-          { expiresIn: '1h' }
+        {
+          id: user._id,
+          username: user.username,
+          role: user.role, // Include the role in the token
+        },
+        JWT_SECRET,
+        { expiresIn: '1h' }
       );
+      
       
       console.log("Login successful:", { username: user.username, role: user.role }); // Debugging log
 
