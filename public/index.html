@@ -24,58 +24,36 @@
 
   <script>
     async function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const errorMessage = document.getElementById('error-message');
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('error-message');
 
-      errorMessage.textContent = ""; // Clear previous errors
+        errorMessage.textContent = ""; // Clear previous errors
 
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      async function login() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const errorMessage = document.getElementById('error-message');
+        if (response.ok) {
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('role', result.role); // Store role
 
-    errorMessage.textContent = ""; // Clear previous errors
-
-    const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('role', result.role); // Store role to verify access later
-
-        if (result.role === 'admin') {
-            window.location.href = '/admin'; // Redirect to admin panel
+            if (result.role === 'admin') {
+                window.location.href = '/admin'; // Redirect admin to admin panel
+            } else {
+                window.location.href = '/teams'; // Redirect normal users to teams page
+            }
         } else {
-            window.location.href = '/teams'; // Redirect normal users to teams
+            errorMessage.textContent = result.message; // Show error message
         }
-    } else {
-        errorMessage.textContent = result.message; // Show error message
     }
-}
+</script>
 
-      
-      if (response.ok) {
-        localStorage.setItem('token', result.token); // Store token
-        localStorage.setItem('username', result.username);
-        window.location.href = "/teams"; // Redirect to /teams after login
-      } else {
-        errorMessage.textContent = result.message; // Show error message
-      }
-    }
+    
   </script>
 </body>
 </html>
