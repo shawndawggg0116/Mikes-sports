@@ -44,6 +44,32 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+app.post('/api/pick-team', async (req, res) => {
+  const { userId, teamId, gameId, week } = req.body;
+
+  try {
+    const userObjectId = new ObjectId(userId);
+
+    // Ensure teamId exists
+    const team = await db.collection('teams').findOne({ _id: teamId });
+    if (!team) {
+      return res.status(400).json({ success: false, message: 'Invalid team selection.' });
+    }
+
+    // Update user's pickedTeams array
+    await db.collection('users').updateOne(
+      { _id: userObjectId },
+      { $push: { pickedTeams: { week, teamId, gameId } } }
+    );
+
+    res.json({ success: true, message: 'Team picked successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to pick team.' });
+  }
+});
+
+
 // User Registration
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
