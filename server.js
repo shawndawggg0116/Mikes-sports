@@ -119,32 +119,25 @@ app.get('/teams', (req, res) => {
 });
 
 // Catch-all route to handle unmatched routes
-async function login() {
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
 
-  const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-  });
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+      const user = await User.findOne({ username });
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const result = await response.json();
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
 
-  if (response.ok) {
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('role', result.role.toLowerCase()); // Convert role to lowercase
+      const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
 
-      if (result.role.toLowerCase() === 'admin') {
-          window.location.href = '/admin'; // Redirect admin users to /admin
-      } else {
-          window.location.href = '/teams'; // Redirect normal users to /teams
-      }
-  } else {
-      alert(result.message);
+      // ✅ Return the correct response
+      res.json({ success: true, token, role: user.role });
+  } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Server error' });
   }
-}
-
+});
 
 
 app.get('/admin', (req, res) => {

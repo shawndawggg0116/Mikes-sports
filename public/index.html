@@ -23,34 +23,32 @@
   </div>
 
   <script>
-    async function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorMessage = document.getElementById('error-message');
+ async function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-        errorMessage.textContent = ""; // Clear previous errors
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
 
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
+    const result = await response.json();
 
-        const result = await response.json();
+    if (response.ok) {
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('role', result.role.toLowerCase()); // Convert role to lowercase
 
-        if (response.ok) {
-            localStorage.setItem('token', result.token);
-            localStorage.setItem('role', result.role); // Store role
-
-            if (result.role === 'admin') {
-                window.location.href = '/admin'; // Redirect admin to admin panel
-            } else {
-                window.location.href = '/teams'; // Redirect normal users to teams page
-            }
+        if (result.role.toLowerCase() === 'admin') {
+            window.location.href = '/admin'; // Redirect admin users to /admin
         } else {
-            errorMessage.textContent = result.message; // Show error message
+            window.location.href = '/teams'; // Redirect normal users to /teams
         }
+    } else {
+        alert(result.message);
     }
+}
+
 </script>
 
     
