@@ -123,19 +123,19 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
       const user = await User.findOne({ username });
-      if (!user) {
-          console.log("Login failed: User not found");
-          return res.status(404).json({ message: 'User not found' });
-      }
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-          console.log("Login failed: Invalid password");
-          return res.status(401).json({ message: 'Invalid credentials' });
-      }
+      if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
 
-      const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-      console.log("Login successful:", { username, role: user.role }); // Add this line
+      // Check for the role and ensure it's sent correctly
+      const token = jwt.sign(
+          { id: user._id, username: user.username, role: user.role }, 
+          JWT_SECRET, 
+          { expiresIn: '1h' }
+      );
+      
+      console.log("Login successful:", { username: user.username, role: user.role }); // Debugging log
 
       res.json({ success: true, token, role: user.role });
   } catch (error) {

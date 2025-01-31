@@ -35,7 +35,7 @@
         });
 
         const result = await response.json();
-        console.log("Login Response:", result); // Add this line to log the server response
+        console.log("Login Response:", result); // Debugging log
 
         if (response.ok) {
             localStorage.setItem('token', result.token);
