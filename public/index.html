@@ -3,62 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NFL Picks - Login</title>
+  <title>NFL Picks - Login and Registration</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; background-color: #2c3e50; color: white; }
-    .container { width: 300px; margin: auto; padding: 20px; border: 1px solid #f3efef; border-radius: 5px; background-color: #34495e; }
-    input, button { width: 100%; padding: 10px; margin-top: 10px; }
-    button { background-color: green; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: darkgreen; }
-    .error { color: red; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background-color: #2c3e50;
+      color: white;
+    }
+    .container {
+      width: 300px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #f3efef;
+      border-radius: 5px;
+      background-color: #34495e;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    button {
+      background-color: green;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkgreen;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px;
+      cursor: pointer;
+      background-color: #2c3e50;
+      color: white;
+      border: 1px solid #f3efef;
+      border-radius: 5px 5px 0 0;
+      margin: 0 5px;
+    }
+    .tab.active {
+      background-color: #34495e;
+      border-bottom: none;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <h1>NFL Picks - Login</h1>
+  <h1>NFL Picks</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('login')">Login</div>
+    <div class="tab" onclick="showTab('register')">Register</div>
+  </div>
   <div class="container">
-    <input type="text" id="username" placeholder="Enter Username">
-    <input type="password" id="password" placeholder="Enter Password">
-    <button onclick="login()">Login</button>
-    <p class="error" id="error-message"></p>
+    <!-- Login Form -->
+    <div id="login" class="tab-content active">
+      <input type="text" id="login-username" placeholder="Enter Username">
+      <input type="password" id="login-password" placeholder="Enter Password">
+      <button onclick="login()">Login</button>
+      <p class="error" id="login-error-message"></p>
+    </div>
+    <!-- Registration Form -->
+    <div id="register" class="tab-content">
+      <input type="text" id="register-username" placeholder="Enter Username">
+      <input type="password" id="register-password" placeholder="Enter Password">
+      <button onclick="register()">Register</button>
+      <p class="error" id="register-error-message"></p>
+    </div>
   </div>
 
   <script>
- async function login() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
+    }
 
-    try {
+    async function login() {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+
+      try {
         const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         });
 
         const result = await response.json();
-console.log('Login Response:', result); // Debugging log
-
-if (response.ok) {
-  localStorage.setItem('token', result.token);
-  localStorage.setItem('role', result.role.toLowerCase()); // Ensure role is lowercase
-  if (result.role.toLowerCase() === 'admin') {
-    window.location.href = '/admin';
-  } else {
-    window.location.href = '/teams';
-  }
-} else {
-  alert(result.message);
-}
-
-    } catch (error) {
-        console.error("Login Error:", error);
-        alert('An error occurred during login.');
+        if (response.ok) {
+          localStorage.setItem('token', result.token);
+          localStorage.setItem('role', result.role.toLowerCase());
+          if (result.role.toLowerCase() === 'admin') {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/teams';
+          }
+        } else {
+          document.getElementById('login-error-message').textContent = result.message;
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        document.getElementById('login-error-message').textContent = 'An error occurred during login.';
+      }
     }
-}
 
+    async function register() {
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
 
-</script>
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
 
-    
+        const result = await response.json();
+        if (response.ok) {
+          alert('Registration successful! You can now log in.');
+          showTab('login');
+        } else {
+          document.getElementById('register-error-message').textContent = result.message;
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        document.getElementById('register-error-message').textContent = 'An error occurred during registration.';
+      }
+    }
   </script>
 </body>
 </html>
