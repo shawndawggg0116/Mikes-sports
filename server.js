@@ -1,168 +1,89 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const path = require('path');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const cors = require('cors');
-const moment = require('moment-timezone'); // Include moment-timezone
+// Updated server.js
+define(['express', 'mongoose', 'body-parser', 'jsonwebtoken', 'dotenv'], (express, mongoose, bodyParser, jwt, dotenv) => {
+  dotenv.config();
+  const app = express();
+  app.use(bodyParser.json());
 
-const app = express();
-
-// Middleware
-app.use(bodyParser.json());
-app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-// JWT Secret
-const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
-
-// MongoDB Schemas and Models
-const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null }
-});
-const User = mongoose.model('User', UserSchema, 'users');
-
-// JWT Authentication Middleware
-const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(403).json({ message: 'No token provided' });
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(401).json({ message: 'Invalid token' });
-    req.user = user;
-    next();
-  });
-};
-
-app.post('/api/pick-team', async (req, res) => {
-  const { userId, teamId, gameId, week } = req.body;
-
-  try {
-    const userObjectId = new ObjectId(userId);
-
-    // Ensure teamId exists
-    const team = await db.collection('teams').findOne({ _id: teamId });
-    if (!team) {
-      return res.status(400).json({ success: false, message: 'Invalid team selection.' });
-    }
-
-    // Update user's pickedTeams array
-    await db.collection('users').updateOne(
-      { _id: userObjectId },
-      { $push: { pickedTeams: { week, teamId, gameId } } }
-    );
-
-    res.json({ success: true, message: 'Team picked successfully!' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to pick team.' });
-  }
-});
-
-
-// User Registration
-app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) return res.status(400).json({ message: 'Username already exists' });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully!' });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ message: 'Error registering user' });
-  }
-});
-
-// User Login
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token, username: user.username });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Fetch all teams with their statuses
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = moment().tz('America/New_York'); // Current time in EST
-        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
-        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
-
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
+  const User = mongoose.model('User', new mongoose.Schema({
+    username: String,
+    password: String,
+    favoriteTeams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
+    gamePicks: [
+      {
+        gameId: { type: mongoose.Schema.Types.ObjectId, ref: 'Game' },
+        pickedTeamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
       }
-      return { ...team, status: 'Available' };
-    });
+    ]
+  }));
 
-    res.json(mergedTeams);
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
-  }
+  const Team = mongoose.model('Team', new mongoose.Schema({
+    name: String,
+    status: String
+  }));
+
+  const Game = mongoose.model('Game', new mongoose.Schema({
+    homeTeamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    awayTeamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    startTime: Date,
+    endTime: Date
+  }));
+
+  // Middleware for authentication
+  const authenticate = (req, res, next) => {
+    const token = req.headers.authorization;
+    if (!token) return res.status(401).send('Access Denied');
+
+    try {
+      const verified = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = verified;
+      next();
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  };
+
+  // Fetch teams for the logged-in user
+  app.get('/api/teams', authenticate, async (req, res) => {
+    try {
+      const teams = await Team.find();
+      res.json(teams);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching teams' });
+    }
+  });
+
+  // Pick a team for the user
+  app.post('/api/pick-team', authenticate, async (req, res) => {
+    try {
+      const { team } = req.body;
+      const teamData = await Team.findOne({ name: team });
+      if (!teamData) return res.status(404).json({ message: 'Team not found' });
+
+      const user = await User.findById(req.user._id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      user.favoriteTeams.push(teamData._id);
+      await user.save();
+
+      res.json({ success: true, message: 'Team picked successfully!' });
+    } catch (err) {
+      res.status(500).json({ message: 'Error picking team' });
+    }
+  });
+
+  // Fetch game picks for the logged-in user
+  app.get('/api/user-picks', authenticate, async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id).populate('gamePicks.gameId').populate('gamePicks.pickedTeamId');
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      res.json(user.gamePicks);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching user picks' });
+    }
+  });
+
+  mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => app.listen(3000, () => console.log('Server running on port 3000')))
+    .catch(err => console.log('Database connection error:', err));
 });
-
-// Serve the main page for the root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Serve the teams page for the /teams route
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Catch-all route to handle unmatched routes
-app.get('*', (req, res) => {
-  res.status(404).send('Page not found');
-});
-
-// Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
