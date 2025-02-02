@@ -1,4 +1,3 @@
-// Updated teams.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,14 +77,10 @@
 
     function getStatusClass(status) {
       switch (status) {
-        case 'Available':
-          return 'green';
-        case 'Playing':
-          return 'orange';
-        case 'Completed':
-          return 'grey';
-        default:
-          return '';
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        default: return '';
       }
     }
 
@@ -93,7 +88,7 @@
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             Authorization: token
           },
