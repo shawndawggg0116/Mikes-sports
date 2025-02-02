@@ -12,6 +12,8 @@
     .red { background-color: red; color: white; }
     .orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
     .grey { background-color: grey; color: white; }
+    #submit-btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; background-color: blue; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    #submit-btn:disabled { background-color: grey; cursor: not-allowed; }
     @keyframes flash {
       0% { opacity: 0.5; }
       100% { opacity: 1; }
@@ -21,11 +23,16 @@
 <body>
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
+  <button id="submit-btn" disabled>Submit</button>
+  
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
+
+    let selectedTeam = null;
+    const submitBtn = document.getElementById("submit-btn");
 
     async function fetchTeams() {
       try {
@@ -39,13 +46,11 @@
 
         teams.forEach((team) => {
           const box = document.createElement('div');
-          // Apply the correct class based on the team status
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          // Add click listener for "Available" or "Scheduled" teams
           if (team.status === 'Available' || team.status === 'Scheduled') {
-            box.addEventListener('click', () => pickTeam(team.name));
+            box.addEventListener('click', () => pickTeam(team.name, box));
           }
 
           container.appendChild(box);
@@ -55,7 +60,6 @@
       }
     }
 
-    // Function to return the correct class for the status
     function getStatusClass(status) {
       switch (status) {
         case 'Available':
@@ -69,7 +73,16 @@
       }
     }
 
-    async function pickTeam(teamName) {
+    function pickTeam(teamName, element) {
+      document.querySelectorAll(".team-box").forEach(box => box.classList.remove("red"));
+      element.classList.add("red");
+      selectedTeam = teamName;
+      submitBtn.disabled = false;
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      if (!selectedTeam) return;
+
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
@@ -77,19 +90,21 @@
             'Content-Type': 'application/json',
             Authorization: token
           },
-          body: JSON.stringify({ team: teamName }),
+          body: JSON.stringify({ team: selectedTeam }),
         });
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
           fetchTeams();
+          selectedTeam = null;
+          submitBtn.disabled = true;
         } else {
           alert(result.message);
         }
       } catch (error) {
         console.error('Error picking team:', error);
       }
-    }
+    });
 
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute
