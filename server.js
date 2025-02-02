@@ -1,14 +1,3 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const path = require('path');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const cors = require('cors');
-const moment = require('moment-timezone'); // Include moment-timezone
-
-const app = express();
-
 app.get('/api/teams-with-picks', authenticate, async (req, res) => {
   try {
     // Find the logged-in user
@@ -30,6 +19,18 @@ app.get('/api/teams-with-picks', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error fetching teams and picks' });
   }
 });
+
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const cors = require('cors');
+const moment = require('moment-timezone'); // Include moment-timezone
+
+const app = express();
 
 
 // Middleware

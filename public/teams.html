@@ -27,6 +27,33 @@
       window.location.href = '/'; // Redirect to login if not logged in
     }
 
+    async function fetchTeamsAndPicks() {
+  try {
+    const response = await fetch('/api/teams-with-picks', {
+      headers: { Authorization: token },
+    });
+    const teams = await response.json();
+
+    const container = document.getElementById('teams');
+    container.innerHTML = '';
+
+    teams.forEach((team) => {
+      const box = document.createElement('div');
+      box.className = `team-box ${getStatusClass(team.status)} ${team.isPicked ? 'red' : ''}`;
+      box.textContent = `${team.name} (${team.status}) ${team.isPicked ? ' - Picked' : ''}`;
+
+      if (!team.isPicked && (team.status === 'Available' || team.status === 'Scheduled')) {
+        box.addEventListener('click', () => pickTeam(team.name));
+      }
+
+      container.appendChild(box);
+    });
+  } catch (error) {
+    console.error('Error fetching teams and picks:', error);
+  }
+}
+
+
     async function fetchTeams() {
       try {
         const response = await fetch('/api/teams', {
@@ -93,32 +120,7 @@
 
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute
-    async function fetchTeamsAndPicks() {
-  try {
-    const response = await fetch('/api/teams-with-picks', {
-      headers: { Authorization: token },
-    });
-    const teams = await response.json();
-
-    const container = document.getElementById('teams');
-    container.innerHTML = '';
-
-    teams.forEach((team) => {
-      const box = document.createElement('div');
-      box.className = `team-box ${getStatusClass(team.status)} ${team.isPicked ? 'red' : ''}`;
-      box.textContent = `${team.name} (${team.status}) ${team.isPicked ? ' - Picked' : ''}`;
-
-      if (!team.isPicked && (team.status === 'Available' || team.status === 'Scheduled')) {
-        box.addEventListener('click', () => pickTeam(team.name));
-      }
-
-      container.appendChild(box);
-    });
-  } catch (error) {
-    console.error('Error fetching teams and picks:', error);
-  }
-}
-
+   
 
   </script>
 </body>
