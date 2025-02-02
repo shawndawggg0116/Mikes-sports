@@ -27,7 +27,7 @@
       window.location.href = '/'; // Redirect to login if not logged in
     }
 
-    async function fetchTeamsAndPicks() {
+    async function fetchTeams() {
       try {
         const response = await fetch('/api/teams-with-picks', {
           headers: { Authorization: token },
@@ -39,34 +39,32 @@
 
         teams.forEach((team) => {
           const box = document.createElement('div');
+          // Apply the correct class based on the team status and selection
           box.className = `team-box ${getStatusClass(team.status)} ${team.isPicked ? 'red' : ''}`;
           box.textContent = `${team.name} (${team.status}) ${team.isPicked ? ' - Picked' : ''}`;
 
+          // Add click listener for "Available" or "Scheduled" teams
           if (!team.isPicked && (team.status === 'Available' || team.status === 'Scheduled')) {
-            box.addEventListener('click', () => pickTeam(team.name));
+            box.addEventListener('click', () => pickTeam(team._id)); // Use team._id here
           }
 
           container.appendChild(box);
         });
       } catch (error) {
-        console.error('Error fetching teams and picks:', error);
+        console.error('Error fetching teams:', error);
       }
     }
 
     function getStatusClass(status) {
       switch (status) {
-        case 'Available':
-          return 'green';
-        case 'Playing':
-          return 'orange';
-        case 'Completed':
-          return 'grey';
-        default:
-          return '';
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        default: return '';
       }
     }
 
-    async function pickTeam(teamName) {
+    async function pickTeam(teamId) {
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
@@ -74,12 +72,12 @@
             'Content-Type': 'application/json',
             Authorization: token
           },
-          body: JSON.stringify({ team: teamName }),
+          body: JSON.stringify({ teamId }), // Send teamId to the server
         });
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
-          fetchTeamsAndPicks();
+          fetchTeams();
         } else {
           alert(result.message);
         }
@@ -88,8 +86,8 @@
       }
     }
 
-    fetchTeamsAndPicks();
-    setInterval(fetchTeamsAndPicks, 60000); // Refresh every minute
+    fetchTeams();
+    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
