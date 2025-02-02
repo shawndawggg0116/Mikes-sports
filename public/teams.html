@@ -29,7 +29,7 @@
 
     async function fetchTeams() {
       try {
-        const response = await fetch('/api/teams-with-picks', {
+        const response = await fetch('/api/teams', {
           headers: { Authorization: token },
         });
         const teams = await response.json();
@@ -39,13 +39,13 @@
 
         teams.forEach((team) => {
           const box = document.createElement('div');
-          // Apply the correct class based on the team status and selection
-          box.className = `team-box ${getStatusClass(team.status)} ${team.isPicked ? 'red' : ''}`;
-          box.textContent = `${team.name} (${team.status}) ${team.isPicked ? ' - Picked' : ''}`;
+          // Apply the correct class based on the team status
+          box.className = `team-box ${getStatusClass(team.status)}`;
+          box.textContent = `${team.name} (${team.status})`;
 
           // Add click listener for "Available" or "Scheduled" teams
-          if (!team.isPicked && (team.status === 'Available' || team.status === 'Scheduled')) {
-            box.addEventListener('click', () => pickTeam(team._id)); // Use team._id here
+          if (team.status === 'Available' || team.status === 'Scheduled') {
+            box.addEventListener('click', () => pickTeam(team.name));
           }
 
           container.appendChild(box);
@@ -55,16 +55,21 @@
       }
     }
 
+    // Function to return the correct class for the status
     function getStatusClass(status) {
       switch (status) {
-        case 'Available': return 'green';
-        case 'Playing': return 'orange';
-        case 'Completed': return 'grey';
-        default: return '';
+        case 'Available':
+          return 'green';
+        case 'Playing':
+          return 'orange';
+        case 'Completed':
+          return 'grey';
+        default:
+          return '';
       }
     }
 
-    async function pickTeam(teamId) {
+    async function pickTeam(teamName) {
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
@@ -72,7 +77,7 @@
             'Content-Type': 'application/json',
             Authorization: token
           },
-          body: JSON.stringify({ teamId }), // Send teamId to the server
+          body: JSON.stringify({ team: teamName }),
         });
         const result = await response.json();
         if (result.success) {
