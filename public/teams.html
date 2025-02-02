@@ -82,15 +82,16 @@
 
     submitBtn.addEventListener("click", async () => {
       if (!selectedTeam) return;
-
+      
+      const userId = localStorage.getItem('userId'); // Ensure userId is stored in localStorage
       try {
-        const response = await fetch('/api/pick-team', {
+        const response = await fetch('/api/select-team', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
             Authorization: token
           },
-          body: JSON.stringify({ team: selectedTeam }),
+          body: JSON.stringify({ userId, team: selectedTeam, week: 1 }), // Include userId and week
         });
         const result = await response.json();
         if (result.success) {
