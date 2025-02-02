@@ -25,20 +25,20 @@
   <button id="submit-button" style="margin-top: 20px;" disabled>Submit Pick</button>
 
   <script>
+    let selectedTeam = null;
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
-
-    let selectedTeam = null;
 
     async function fetchTeams() {
       try {
         const response = await fetch('/api/teams', {
           headers: { Authorization: token },
         });
-        const teams = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch teams');
 
+        const teams = await response.json();
         const container = document.getElementById('teams');
         container.innerHTML = '';
 
@@ -58,6 +58,21 @@
       }
     }
 
+    function getStatusClass(status) {
+      switch (status) {
+        case 'Available':
+          return 'green';
+        case 'Picked':
+          return 'red';
+        case 'Playing':
+          return 'orange';
+        case 'Completed':
+          return 'grey';
+        default:
+          return '';
+      }
+    }
+
     function selectTeam(teamName, box) {
       selectedTeam = teamName;
       document.querySelectorAll('.team-box').forEach((el) => el.classList.remove('red'));
@@ -67,7 +82,6 @@
 
     async function submitPick() {
       if (!selectedTeam) return alert('No team selected!');
-
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
@@ -77,6 +91,7 @@
           },
           body: JSON.stringify({ team: selectedTeam }),
         });
+        if (!response.ok) throw new Error('Failed to submit pick');
 
         const result = await response.json();
         if (result.success) {
@@ -92,7 +107,6 @@
     }
 
     document.getElementById('submit-button').addEventListener('click', submitPick);
-
     fetchTeams();
     setInterval(fetchTeams, 60000);
   </script>
