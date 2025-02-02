@@ -9,29 +9,6 @@ const moment = require('moment-timezone'); // Include moment-timezone
 
 const app = express();
 
-app.get('/api/teams-with-picks', authenticate, async (req, res) => {
-  try {
-    // Find the logged-in user
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Fetch all teams and join with user's favoriteTeams
-    const teams = await Team.aggregate([
-      {
-        $addFields: {
-          isPicked: { $in: ['$_id', user.favoriteTeams] } // Check if the team is picked by the user
-        }
-      }
-    ]);
-
-    res.json(teams);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error fetching teams and picks' });
-  }
-});
-
-
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
@@ -54,6 +31,11 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
+
+const TeamSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true }
+});
+const Team = mongoose.model('Team', TeamSchema, 'teams');
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -145,6 +127,29 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
+// Fetch all teams and check if they are picked by the user
+app.get('/api/teams-with-picks', authenticateToken, async (req, res) => {
+  try {
+    // Find the logged-in user
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Fetch all teams and join with user's pickedTeams
+    const teams = await Team.aggregate([
+      {
+        $addFields: {
+          isPicked: { $in: ['$_id', user.pickedTeams] } // Check if the team is picked by the user
+        }
+      }
+    ]);
+
+    res.json(teams);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching teams and picks' });
+  }
+});
+
 // Serve the main page for the root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -159,8 +164,6 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
-
-
 
 // Server
 const PORT = process.env.PORT || 5000;
