@@ -137,6 +137,29 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+app.get('/api/teams-with-picks', authenticate, async (req, res) => {
+  try {
+    // Find the logged-in user
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Fetch all teams and join with user's favoriteTeams
+    const teams = await Team.aggregate([
+      {
+        $addFields: {
+          isPicked: { $in: ['$_id', user.favoriteTeams] } // Check if the team is picked by the user
+        }
+      }
+    ]);
+
+    res.json(teams);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching teams and picks' });
+  }
+});
+
+
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
