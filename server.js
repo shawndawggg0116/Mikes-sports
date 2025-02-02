@@ -140,3 +140,38 @@ app.get('*', (req, res) => {
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+// API to handle team selection and store it in MongoDB
+app.post('/api/select-team', async (req, res) => {
+    try {
+        const { userId, selectedTeam, week } = req.body;
+
+        if (!userId || !selectedTeam || !week) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Ensure the user has not already picked a team for this week
+        if (!user.pickedTeams) {
+            user.pickedTeams = {};
+        }
+
+        if (user.pickedTeams[week]) {
+            return res.status(400).json({ error: 'Team already picked for this week' });
+        }
+
+        user.pickedTeams[week] = selectedTeam;
+        await user.save();
+
+        res.status(200).json({ message: 'Team selected successfully', user });
+    } catch (error) {
+        console.error('Error selecting team:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
