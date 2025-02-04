@@ -35,6 +35,12 @@
 
     async function fetchTeams() {
       try {
+        const userResponse = await fetch('/api/get-user', {
+          headers: { Authorization: token },
+        });
+        const userData = await userResponse.json();
+        selectedTeam = userData.selectedTeam;
+
         const response = await fetch('/api/teams', {
           headers: { Authorization: token },
         });
@@ -48,7 +54,11 @@
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          if (team.status === 'Available' || team.status === 'Scheduled') {
+          if (team.name === selectedTeam) {
+            box.classList.add('red');
+          }
+
+          if (!selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
             box.addEventListener('click', () => selectTeam(team.name, box));
           }
           
