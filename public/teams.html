@@ -12,6 +12,8 @@
     .red { background-color: red; color: white; }
     .orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
     .grey { background-color: grey; color: white; }
+    #submit-btn { margin-top: 20px; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; background-color: grey; color: white; cursor: not-allowed; }
+    #submit-btn.active { background-color: blue; cursor: pointer; }
     @keyframes flash {
       0% { opacity: 0.5; }
       100% { opacity: 1; }
@@ -21,11 +23,15 @@
 <body>
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
+  <button id="submit-btn" disabled>Submit Pick</button>
+  
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
+
+    let selectedTeam = null;
 
     async function fetchTeams() {
       try {
@@ -39,15 +45,13 @@
 
         teams.forEach((team) => {
           const box = document.createElement('div');
-          // Apply the correct class based on the team status
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          // Add click listener for "Available" or "Scheduled" teams
           if (team.status === 'Available' || team.status === 'Scheduled') {
-            box.addEventListener('click', () => pickTeam(team.name));
+            box.addEventListener('click', () => selectTeam(team.name, box));
           }
-
+          
           container.appendChild(box);
         });
       } catch (error) {
@@ -55,41 +59,45 @@
       }
     }
 
-    // Function to return the correct class for the status
     function getStatusClass(status) {
       switch (status) {
-        case 'Available':
-          return 'green';
-        case 'Playing':
-          return 'orange';
-        case 'Completed':
-          return 'grey';
-        default:
-          return '';
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        default: return '';
       }
     }
 
-    async function pickTeam(teamName) {
+    function selectTeam(teamName, box) {
+      selectedTeam = teamName;
+      document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
+      box.classList.add('red');
+      document.getElementById('submit-btn').classList.add('active');
+      document.getElementById('submit-btn').disabled = false;
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', async () => {
+      if (!selectedTeam) return;
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: token
-          },
-          body: JSON.stringify({ team: teamName }),
+          headers: { 'Content-Type': 'application/json', Authorization: token },
+          body: JSON.stringify({ team: selectedTeam }),
         });
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
           fetchTeams();
+          selectedTeam = null;
+          document.getElementById('submit-btn').classList.remove('active');
+          document.getElementById('submit-btn').disabled = true;
         } else {
           alert(result.message);
         }
       } catch (error) {
         console.error('Error picking team:', error);
       }
-    }
+    });
 
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute
