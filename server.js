@@ -78,6 +78,27 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Route to handle team selection
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.pickedTeams.includes(req.body.team)) {
+      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
+    }
+
+    user.pickedTeams.push(req.body.team);
+    user.lastPickDate = new Date();
+    await user.save();
+
+    res.json({ success: true, message: 'Team selected successfully' });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
