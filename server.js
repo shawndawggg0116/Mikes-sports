@@ -78,6 +78,24 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Route to fetch user data
+app.get('/api/get-user', async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findOne({ _id: decoded.id });
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    res.json({ success: true, selectedTeam: user.selectedTeam });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Route to handle team selection
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   try {
