@@ -120,46 +120,60 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
+    // Fetch user details to determine if the team is picked by the user
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Fetch collections for teams and games
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
 
+    // Retrieve all teams and current games data
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
+    // Merge teams with their game statuses and user's picks
     const mergedTeams = allTeams.map((team) => {
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
 
+      let gameStatus = "Available"; // Default status if no game found
       if (game) {
         const now = moment().tz('America/New_York'); // Current time in EST
         const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
         const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
 
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
+        // Determine game status based on time
+        gameStatus = now.isBetween(startTime, endTime)
+          ? "Playing"
+          : now.isAfter(endTime)
+          ? "Completed"
+          : "Scheduled";
       }
-      return { ...team, status: 'Available' };
+
+      // Check if the team is picked by the user
+      if (user.pickedTeams.includes(team.name)) {
+        gameStatus = "Picked";
+      }
+
+      return {
+        ...team,
+        status: gameStatus,
+        opponent: game ? (game.homeTeam === team.name ? game.awayTeam : game.homeTeam) : null,
+        startTime: game ? startTime.toISOString() : null,
+        endTime: game ? endTime.toISOString() : null,
+      };
     });
 
+    // Send the merged list of teams with statuses
     res.json(mergedTeams);
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
   }
 });
+
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {
