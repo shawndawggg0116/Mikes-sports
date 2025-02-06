@@ -41,7 +41,7 @@
         const userData = await userResponse.json();
         selectedTeam = userData.selectedTeam;
 
-        const response = await fetch('/api/users-pickedteams', {
+        const response = await fetch('/api/pick-team', {
           headers: { Authorization: token },
         });
         const teams = await response.json();
