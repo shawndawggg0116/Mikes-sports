@@ -24,50 +24,41 @@
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
   <button id="submit-btn" disabled>Submit Pick</button>
-  
+
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/'; // Redirect to login if not logged in
+      window.location.href = '/login'; // Redirect to login if token not found
     }
 
-    let selectedTeam = null;
-
     async function fetchTeams() {
-  try {
-    const userResponse = await fetch('/api/get-user', {
-      headers: { Authorization: token },
-    });
-    const userData = await userResponse.json();
-    const pickedTeams = userData.pickedTeams || [];  // Ensure it's always an array
+      try {
+        const response = await fetch('/api/teams', {
+          headers: {
+            'Authorization': `Bearer ${token}` // Properly include the token in the request
+          }
+        });
 
-    const response = await fetch('/api/teams', {
-      headers: { Authorization: token },
-    });
-    const teams = await response.json();
+        if (!response.ok) {
+          throw new Error(`Failed to fetch teams: ${response.statusText}`);
+        }
 
-    const container = document.getElementById('teams');
-    container.innerHTML = '';
+        const teams = await response.json();
+        const container = document.getElementById('teams');
+        container.innerHTML = '';
 
-    teams.forEach((team) => {
-      const box = document.createElement('div');
-      box.className = `team-box ${getStatusClass(team.status)}`;
-      box.textContent = `${team.name} (${team.status})`;
-
-      if (pickedTeams.includes(team.name)) {
-        box.classList.add('red'); // Apply 'red' class if the team is in the pickedTeams array
+        teams.forEach((team) => {
+          const box = document.createElement('div');
+          box.className = `team-box ${getStatusClass(team.status)}`;
+          box.textContent = `${team.name} (${team.status})`;
+          container.appendChild(box);
+        });
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+        alert('Session expired or server error, please login again.');
+        window.location.href = '/login'; // Redirect for re-authentication
       }
-
-      if (pickedTeams.length === 0 && (team.status === 'Available' || team.status === 'Scheduled')) {
-        box.addEventListener('click', () => selectTeam(team.name, box));
-      }
-      
-      container.appendChild(box);
-    });
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-  }
-}         
+    }
 
     function getStatusClass(status) {
       switch (status) {
@@ -78,39 +69,7 @@
       }
     }
 
-    function selectTeam(teamName, box) {
-      selectedTeam = teamName;
-      document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
-      box.classList.add('red');
-      document.getElementById('submit-btn').classList.add('active');
-      document.getElementById('submit-btn').disabled = false;
-    }
-
-    document.getElementById('submit-btn').addEventListener('click', async () => {
-      if (!selectedTeam) return;
-      try {
-        const response = await fetch('/api/pick-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
-          body: JSON.stringify({ team: selectedTeam }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          alert('Team picked successfully!');
-          fetchTeams();
-          selectedTeam = null;
-          document.getElementById('submit-btn').classList.remove('active');
-          document.getElementById('submit-btn').disabled = true;
-        } else {
-          alert(result.message);
-        }
-      } catch (error) {
-        console.error('Error picking team:', error);
-      }
-    });
-
-    fetchTeams();
-    setInterval(fetchTeams, 60000); // Refresh every minute
+    document.addEventListener('DOMContentLoaded', fetchTeams);
   </script>
 </body>
 </html>
