@@ -26,48 +26,56 @@
   <button id="submit-btn" disabled>Submit Pick</button>
   
   <script>
+    // Simulate storing the token after a successful login
+    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4ODcxNTMyLCJleHAiOjE3Mzg4NzUxMzJ9.dWaR1fSkWDkgbyRKj5ml4R6A59GiNR-pxMCW3my9IMY');
+    
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
 
     let selectedTeam = null;
-
+    document.addEventListener('DOMContentLoaded', fetchTeams);
+  </script>
+  <script>
     async function fetchTeams() {
-  try {
-    const userResponse = await fetch('/api/get-user', {
-      headers: { Authorization: token },
-    });
-    const userData = await userResponse.json();
-    const pickedTeams = userData.pickedTeams || [];  // Ensure it's always an array
-
-    const response = await fetch('/api/teams', {
-      headers: { Authorization: token },
-    });
-    const teams = await response.json();
-
-    const container = document.getElementById('teams');
-    container.innerHTML = '';
-
-    teams.forEach((team) => {
-      const box = document.createElement('div');
-      box.className = `team-box ${getStatusClass(team.status)}`;
-      box.textContent = `${team.name} (${team.status})`;
-
-      if (pickedTeams.includes(team.name)) {
-        box.classList.add('red'); // Apply 'red' class if the team is in the pickedTeams array
+      const token = localStorage.getItem('token');  // Retrieve the token from localStorage
+      if (!token) {
+        window.location.href = '/login';  // Redirect to login if no token is available
+        return;  // Stop further execution
       }
 
-      if (pickedTeams.length === 0 && (team.status === 'Available' || team.status === 'Scheduled')) {
-        box.addEventListener('click', () => selectTeam(team.name, box));
+      try {
+        const response = await fetch('/api/teams', {
+          headers: {
+            'Authorization': `Bearer ${token}`  // Include the token in the Authorization header
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert('Session expired, please login again.');
+            localStorage.removeItem('token');  // Remove the expired or invalid token
+            window.location.href = '/login';  // Redirect to login
+            return;
+          }
+          throw new Error(`Failed to fetch teams: ${response.statusText}`);
+        }
+
+        const teams = await response.json();
+        const container = document.getElementById('teams');
+        container.innerHTML = '';
+
+        teams.forEach((team) => {
+          const box = document.createElement('div');
+          box.className = `team-box ${getStatusClass(team.status)}`;
+          box.textContent = `${team.name} (${team.status})`;
+          container.appendChild(box);
+        });
+      } catch (error) {
+        console.error('Error fetching teams:', error);
       }
-      
-      container.appendChild(box);
-    });
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-  }
-}         
+    }
 
     function getStatusClass(status) {
       switch (status) {
