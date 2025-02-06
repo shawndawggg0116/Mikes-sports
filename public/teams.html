@@ -34,40 +34,40 @@
     let selectedTeam = null;
 
     async function fetchTeams() {
-      try {
-        const userResponse = await fetch('/api/get-user', {
-          headers: { Authorization: token },
-        });
-        const userData = await userResponse.json();
-        selectedTeam = userData.selectedTeam;
+  try {
+    const userResponse = await fetch('/api/get-user', {
+      headers: { Authorization: token },
+    });
+    const userData = await userResponse.json();
+    const pickedTeams = userData.pickedTeams || [];  // Ensure it's always an array
 
-        const response = await fetch('/api/teams', {
-          headers: { Authorization: token },
-        });
-        const teams = await response.json();
+    const response = await fetch('/api/teams', {
+      headers: { Authorization: token },
+    });
+    const teams = await response.json();
 
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
+    const container = document.getElementById('teams');
+    container.innerHTML = '';
 
-        teams.forEach((team) => {
-          const box = document.createElement('div');
-          box.className = `team-box ${getStatusClass(team.status)}`;
-          box.textContent = `${team.name} (${team.status})`;
+    teams.forEach((team) => {
+      const box = document.createElement('div');
+      box.className = `team-box ${getStatusClass(team.status)}`;
+      box.textContent = `${team.name} (${team.status})`;
 
-          if (team.name === selectedTeam) {
-            box.classList.add('red');
-          }
-
-          if (!selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
-            box.addEventListener('click', () => selectTeam(team.name, box));
-          }
-          
-          container.appendChild(box);
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
+      if (pickedTeams.includes(team.name)) {
+        box.classList.add('red'); // Apply 'red' class if the team is in the pickedTeams array
       }
-    }
+
+      if (pickedTeams.length === 0 && (team.status === 'Available' || team.status === 'Scheduled')) {
+        box.addEventListener('click', () => selectTeam(team.name, box));
+      }
+      
+      container.appendChild(box);
+    });
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+  }
+}         
 
     function getStatusClass(status) {
       switch (status) {
