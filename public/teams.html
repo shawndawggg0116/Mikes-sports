@@ -26,39 +26,12 @@
   <button id="submit-btn" disabled>Submit Pick</button>
   
   <script>
-    // Simulate storing the token after a successful login
-    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InlvdXJfdXNlcl9pZCIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4ODg0NDE0LCJleHAiOjE3Mzg5NzA4MTR9.jymKy905toTZMFYTLA_gjKeFOrS3h0Fv-UhSEQgcYEc');
-    
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/'; // Redirect to login if not logged in
-    }
-
-    let selectedTeam = null;
     document.addEventListener('DOMContentLoaded', fetchTeams);
-  </script>
-  <script>
+
     async function fetchTeams() {
-      const token = localStorage.getItem('token');  // Retrieve the token from localStorage
-      if (!token) {
-        window.location.href = '/login';  // Redirect to login if no token is available
-        return;  // Stop further execution
-      }
-
       try {
-        const response = await fetch('/api/teams', {
-          headers: {
-            'Authorization': `Bearer ${token}`  // Include the token in the Authorization header
-          }
-        });
-
+        const response = await fetch('/api/teams');
         if (!response.ok) {
-          if (response.status === 401) {
-            alert('Session expired, please login again.');
-            localStorage.removeItem('token');  // Remove the expired or invalid token
-            window.location.href = '/login';  // Redirect to login
-            return;
-          }
           throw new Error(`Failed to fetch teams: ${response.statusText}`);
         }
 
@@ -87,7 +60,6 @@
     }
 
     function selectTeam(teamName, box) {
-      selectedTeam = teamName;
       document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
       box.classList.add('red');
       document.getElementById('submit-btn').classList.add('active');
@@ -95,26 +67,12 @@
     }
 
     document.getElementById('submit-btn').addEventListener('click', async () => {
-      if (!selectedTeam) return;
-      try {
-        const response = await fetch('/api/pick-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
-          body: JSON.stringify({ team: selectedTeam }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          alert('Team picked successfully!');
-          fetchTeams();
-          selectedTeam = null;
-          document.getElementById('submit-btn').classList.remove('active');
-          document.getElementById('submit-btn').disabled = true;
-        } else {
-          alert(result.message);
-        }
-      } catch (error) {
-        console.error('Error picking team:', error);
-      }
+      const selectedBox = document.querySelector('.team-box.red');
+      if (!selectedBox) return;
+      alert('Team picked successfully!');
+      selectedBox.classList.remove('red');
+      document.getElementById('submit-btn').classList.remove('active');
+      document.getElementById('submit-btn').disabled = true;
     });
 
     fetchTeams();
