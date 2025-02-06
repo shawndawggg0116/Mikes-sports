@@ -70,16 +70,13 @@
     }
 
     function getStatusClass(status) {
-  switch (status) {
-    case 'Available': return 'available';
-    case 'Playing': return 'playing';
-    case 'Completed': return 'completed';
-    case 'Scheduled': return 'scheduled';
-    case 'Picked': return 'picked';  // Ensure you have CSS for this if you're using it
-    default: return '';
-  }
-}
-
+      switch (status) {
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        default: return '';
+      }
+    }
 
     function selectTeam(teamName, box) {
       selectedTeam = teamName;
