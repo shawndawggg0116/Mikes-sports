@@ -70,21 +70,27 @@
     }
 
     function getStatusClass(status) {
-      switch (status) {
-        case 'Available': return 'green';
-        case 'Playing': return 'orange';
-        case 'Completed': return 'grey';
-        default: return '';
-      }
-    }
+  switch (status) {
+    case 'Available': return 'available';
+    case 'Playing': return 'playing';
+    case 'Completed': return 'completed';
+    case 'Scheduled': return 'scheduled';
+    case 'Picked': return 'picked';  // Ensure you have CSS for this if you're using it
+    default: return '';
+  }
+}
 
-    function selectTeam(teamName, box) {
-      selectedTeam = teamName;
-      document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
-      box.classList.add('red');
-      document.getElementById('submit-btn').classList.add('active');
-      document.getElementById('submit-btn').disabled = false;
-    }
+
+function selectTeam(teamName, box) {
+  if (!selectedTeam && ['available', 'scheduled'].includes(box.classList[1])) { // Only allow selection if team is available or scheduled
+    selectedTeam = teamName;
+    document.querySelectorAll('.team-box').forEach(b => b.classList.remove('picked')); // Remove 'picked' class from all
+    box.classList.add('picked'); // Add 'picked' class to selected box
+    document.getElementById('submit-btn').classList.add('active');
+    document.getElementById('submit-btn').disabled = false;
+  }
+}
+
 
     document.getElementById('submit-btn').addEventListener('click', async () => {
       if (!selectedTeam) return;
