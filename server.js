@@ -97,7 +97,7 @@ app.get('/api/get-user', async (req, res) => {
 });
 
 // Route to handle team selection
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
+app.post('/api/users-pickedteams', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
