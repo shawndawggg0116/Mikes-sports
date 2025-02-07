@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w.maiority&appName=mikes-sports0new';
+const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
@@ -122,17 +122,16 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Endpoint to retrieve the teams a user has picked
-app.get('/api/picked-teams', authenticateToken, (req, res) => {
-  const userId = req.user.id;  // Assuming you have user identification logic in place
-  User.findById(userId, (err, user) => {
-    if (err) {
-      res.status(500).send({ message: "Error retrieving user data" });
-    } else {
-      res.send({ pickedTeams: user.pickedTeams });
-    }
-  });
+document.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('jwtToken');
+  if (!token) {
+    window.location.href = '/index.html'; // Redirect to login if not logged in
+  } else {
+    fetchTeams(token); // Existing function to fetch teams
+    fetchPickedTeams(token); // New function to fetch picked teams
+  }
 });
+
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {
@@ -148,6 +147,24 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
+
+// Assuming you're using Express and have middleware to authenticate and identify users
+app.get('/api/picked-teams', (req, res) => {
+  if (!req.user) {
+    return res.status(403).json({ message: 'User not authenticated' });
+  }
+
+  User.findById(req.user.id, (err, user) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error accessing the database' });
+    }
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ pickedTeams: user.pickedTeams });
+  });
+});
+
 
 // Server
 const PORT = process.env.PORT || 5000;
