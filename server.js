@@ -80,21 +80,45 @@ app.post('/api/login', async (req, res) => {
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
-  const userId = req.user.id;
   try {
-    const user = await User.findById(userId);
-    const teams = await mongoose.connection.db.collection('teams').find().toArray(); // Fetch all teams
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
 
-    // Map over teams to include 'picked' status
-    const updatedTeams = teams.map(team => ({
-      ...team,
-      picked: user.pickedTeams.includes(team.name)
-    }));
+    const allTeams = await teamsCollection.find().toArray();
+    const currentGames = await gamesCollection.find().toArray();
 
-    res.json(updatedTeams);
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      if (game) {
+        const now = moment().tz('America/New_York'); // Current time in EST
+        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
+        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
+
+        const gameStatus =
+          now.isBetween(startTime, endTime)
+            ? "Playing"
+            : now.isAfter(endTime)
+            ? "Completed"
+            : "Scheduled";
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+      return { ...team, status: 'Available' };
+    });
+
+    res.json(mergedTeams);
   } catch (error) {
-    console.error('Failed to fetch teams:', error);
-    res.status(500).json({ message: 'Error fetching teams', error });
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
   }
 });
 
