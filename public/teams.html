@@ -12,6 +12,8 @@
     .red { background-color: red; color: white; }
     .orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
     .grey { background-color: grey; color: white; }
+    #submit-btn { margin-top: 20px; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; background-color: grey; color: white; cursor: not-allowed; }
+    #submit-btn.active { background-color: blue; cursor: pointer; }
     @keyframes flash {
       0% { opacity: 0.5; }
       100% { opacity: 1; }
@@ -21,85 +23,94 @@
 <body>
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
-  <div id="picked-teams"></div> <!-- Added container for displaying picked teams -->
+  <button id="submit-btn" disabled>Submit Pick</button>
+  
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
-    fetchTeams(token);
-  });
 
-  async function fetchTeams(token) {
-    try {
-      const response = await fetch('/api/teams', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const teams = await response.json();
+    let selectedTeam = null;
 
-      const container = document.getElementById('teams');
-      const pickedTeamsContainer = document.getElementById('picked-teams');
-      container.innerHTML = '';
-      let pickedTeamsText = 'Picked Teams: ';
+    async function fetchTeams() {
+      try {
+        const userResponse = await fetch('/api/get-user', {
+          headers: { Authorization: token },
+        });
+        const userData = await userResponse.json();
+        selectedTeam = userData.selectedTeam;
 
-      teams.forEach(team => {
-        const box = document.createElement('div');
-        box.className = `team-box ${getStatusClass(team.status)}`;
-        box.textContent = `${team.name} (${team.status})`;
-        container.appendChild(box);
+        const response = await fetch('/api/teams', {
+          headers: { Authorization: token },
+        });
+        const teams = await response.json();
 
-        // Add click listener for selectable teams
-        if (team.status === 'Available' || team.status === 'Scheduled') {
-          box.addEventListener('click', () => pickTeam(team.name, token));
-        }
+        const container = document.getElementById('teams');
+        container.innerHTML = '';
 
-        if (team.picked) {
-          pickedTeamsText += `${team.name}, `;
-        }
-      });
+        teams.forEach((team) => {
+          const box = document.createElement('div');
+          box.className = `team-box ${getStatusClass(team.status)}`;
+          box.textContent = `${team.name} (${team.status})`;
 
-      pickedTeamsContainer.textContent = pickedTeamsText.slice(0, -2);
-    } catch (error) {
-      console.error('Error fetching teams:', error);
-    }
-  }
+          if (team.name === selectedTeam) {
+            box.classList.add('red');
+          }
 
-  function getStatusClass(status) {
-    switch (status) {
-      case 'Available':
-        return 'green';
-      case 'Playing':
-        return 'orange';
-      case 'Completed':
-        return 'grey';
-      default:
-        return '';
-    }
-  }
-
-  async function pickTeam(teamName, token) {
-    try {
-      const response = await fetch('/api/pick-team', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ team: teamName })
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert('Team picked successfully!');
-        fetchTeams(token);
-      } else {
-        alert(result.message);
+          if (!selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
+            box.addEventListener('click', () => selectTeam(team.name, box));
+          }
+          
+          container.appendChild(box);
+        });
+      } catch (error) {
+        console.error('Error fetching teams:', error);
       }
-    } catch (error) {
-      console.error('Error picking team:', error);
     }
-  }
 
+    function getStatusClass(status) {
+      switch (status) {
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        default: return '';
+      }
+    }
+
+    function selectTeam(teamName, box) {
+      selectedTeam = teamName;
+      document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
+      box.classList.add('red');
+      document.getElementById('submit-btn').classList.add('active');
+      document.getElementById('submit-btn').disabled = false;
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', async () => {
+      if (!selectedTeam) return;
+      try {
+        const response = await fetch('/api/pick-team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token },
+          body: JSON.stringify({ team: selectedTeam }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Team picked successfully!');
+          fetchTeams();
+          selectedTeam = null;
+          document.getElementById('submit-btn').classList.remove('active');
+          document.getElementById('submit-btn').disabled = true;
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        console.error('Error picking team:', error);
+      }
+    });
+
+    fetchTeams();
+    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
