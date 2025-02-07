@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
+const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w.maiority&appName=mikes-sports0new';
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
@@ -78,45 +78,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Route to fetch user data
-app.get('/api/get-user', async (req, res) => {
-  try {
-    const token = req.headers.authorization;
-    if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.id });
-
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    res.json({ success: true, selectedTeam: user.selectedTeam });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// Route to handle team selection
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    if (user.pickedTeams.includes(req.body.team)) {
-      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
-    }
-
-    user.pickedTeams.push(req.body.team);
-    user.lastPickDate = new Date();
-    await user.save();
-
-    res.json({ success: true, message: 'Team selected successfully' });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
@@ -159,6 +120,18 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
   }
+});
+
+// Endpoint to retrieve the teams a user has picked
+app.get('/api/picked-teams', authenticateToken, (req, res) => {
+  const userId = req.user.id;  // Assuming you have user identification logic in place
+  User.findById(userId, (err, user) => {
+    if (err) {
+      res.status(500).send({ message: "Error retrieving user data" });
+    } else {
+      res.send({ pickedTeams: user.pickedTeams });
+    }
+  });
 });
 
 // Serve the main page for the root route
