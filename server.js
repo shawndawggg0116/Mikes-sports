@@ -122,15 +122,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-  const token = localStorage.getItem('jwtToken');
-  if (!token) {
-    window.location.href = '/index.html'; // Redirect to login if not logged in
-  } else {
-    fetchTeams(token); // Existing function to fetch teams
-    fetchPickedTeams(token); // New function to fetch picked teams
-  }
-});
 
 
 // Serve the main page for the root route
