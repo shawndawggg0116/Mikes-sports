@@ -16,14 +16,6 @@
       0% { opacity: 0.5; }
       100% { opacity: 1; }
     }
-  #picked-teams {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #f4f4f4;
-    border: 1px solid #ccc;
-  }
-</style>
-
   </style>
 </head>
 <body>
@@ -38,17 +30,6 @@
     }
     fetchTeams(token);
   });
-
-  document.addEventListener('DOMContentLoaded', function() {
-  const token = localStorage.getItem('jwtToken');
-  if (!token) {
-    window.location.href = '/index.html'; // Redirect to login if not logged in
-  } else {
-    fetchTeams(token); // Existing function to fetch teams
-    fetchPickedTeams(token); // New function to fetch picked teams
-  }
-});
-
 
   async function fetchTeams(token) {
     try {
@@ -118,25 +99,6 @@
       console.error('Error picking team:', error);
     }
   }
-
-  async function fetchPickedTeams(token) {
-  try {
-    const response = await fetch('/api/picked-teams', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-    displayPickedTeams(data.pickedTeams);
-  } catch (error) {
-    console.error('Error fetching picked teams:', error);
-  }
-}
-
-function displayPickedTeams(pickedTeams) {
-  const pickedTeamsContainer = document.getElementById('picked-teams');
-  pickedTeamsContainer.innerHTML = '<h3>Picked Teams:</h3>' + pickedTeams.join(', ');
-}
-
-
 
   </script>
 </body>

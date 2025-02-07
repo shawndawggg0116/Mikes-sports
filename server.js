@@ -122,8 +122,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-
-
 // Serve the main page for the root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -138,24 +136,6 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
-
-// Assuming you're using Express and have middleware to authenticate and identify users
-app.get('/api/picked-teams', (req, res) => {
-  if (!req.user) {
-    return res.status(403).json({ message: 'User not authenticated' });
-  }
-
-  User.findById(req.user.id, (err, user) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error accessing the database' });
-    }
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ pickedTeams: user.pickedTeams });
-  });
-});
-
 
 // Server
 const PORT = process.env.PORT || 5000;
