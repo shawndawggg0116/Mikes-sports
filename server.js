@@ -78,22 +78,17 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Route to fetch user data
-app.get('/api/get-user', async (req, res) => {
-  try {
-    const token = req.headers.authorization;
-    if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.id });
-
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    res.json({ success: true, selectedTeam: user.selectedTeam });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
+// Route to fetch user data using User.findById
+app.get('/api/get-user', authenticateToken, (req, res) => {
+    User.findById(req.user.id, (err, user) => {
+        if (err) {
+            res.status(500).send('Error on the server.');
+        } else if (!user) {
+            res.status(404).send('User not found.');
+        } else {
+            res.json({ pickedTeams: user.pickedTeams });
+        }
+    });
 });
 
 // Route to handle team selection
@@ -124,6 +119,7 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     const gamesCollection = mongoose.connection.db.collection('games');
 
     const allTeams = await teamsCollection.find().toArray();
+    the
     const currentGames = await gamesCollection.find().toArray();
 
     const mergedTeams = allTeams.map((team) => {
