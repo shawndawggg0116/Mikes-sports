@@ -21,78 +21,85 @@
 <body>
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
+  <div id="picked-teams"></div> <!-- Added container for displaying picked teams -->
   <script>
-    const token = localStorage.getItem('token');
+  document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('jwtToken');
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
+    fetchTeams(token);
+  });
 
-    async function fetchTeams() {
-      try {
-        const response = await fetch('/api/teams', {
-          headers: { Authorization: token },
-        });
-        const teams = await response.json();
+  async function fetchTeams(token) {
+    try {
+      const response = await fetch('/api/teams', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const teams = await response.json();
 
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
+      const container = document.getElementById('teams');
+      const pickedTeamsContainer = document.getElementById('picked-teams');
+      container.innerHTML = '';
+      let pickedTeamsText = 'Picked Teams: ';
 
-        teams.forEach((team) => {
-          const box = document.createElement('div');
-          // Apply the correct class based on the team status
-          box.className = `team-box ${getStatusClass(team.status)}`;
-          box.textContent = `${team.name} (${team.status})`;
+      teams.forEach(team => {
+        const box = document.createElement('div');
+        box.className = `team-box ${getStatusClass(team.status)}`;
+        box.textContent = `${team.name} (${team.status})`;
+        container.appendChild(box);
 
-          // Add click listener for "Available" or "Scheduled" teams
-          if (team.status === 'Available' || team.status === 'Scheduled') {
-            box.addEventListener('click', () => pickTeam(team.name));
-          }
-
-          container.appendChild(box);
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
-    }
-
-    // Function to return the correct class for the status
-    function getStatusClass(status) {
-      switch (status) {
-        case 'Available':
-          return 'green';
-        case 'Playing':
-          return 'orange';
-        case 'Completed':
-          return 'grey';
-        default:
-          return '';
-      }
-    }
-
-    async function pickTeam(teamName) {
-      try {
-        const response = await fetch('/api/pick-team', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: token
-          },
-          body: JSON.stringify({ team: teamName }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          alert('Team picked successfully!');
-          fetchTeams();
-        } else {
-          alert(result.message);
+        // Add click listener for selectable teams
+        if (team.status === 'Available' || team.status === 'Scheduled') {
+          box.addEventListener('click', () => pickTeam(team.name, token));
         }
-      } catch (error) {
-        console.error('Error picking team:', error);
-      }
-    }
 
-    fetchTeams();
-    setInterval(fetchTeams, 60000); // Refresh every minute
+        if (team.picked) {
+          pickedTeamsText += `${team.name}, `;
+        }
+      });
+
+      pickedTeamsContainer.textContent = pickedTeamsText.slice(0, -2);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  }
+
+  function getStatusClass(status) {
+    switch (status) {
+      case 'Available':
+        return 'green';
+      case 'Playing':
+        return 'orange';
+      case 'Completed':
+        return 'grey';
+      default:
+        return '';
+    }
+  }
+
+  async function pickTeam(teamName, token) {
+    try {
+      const response = await fetch('/api/pick-team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ team: teamName })
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert('Team picked successfully!');
+        fetchTeams(token);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error picking team:', error);
+    }
+  }
+
   </script>
 </body>
 </html>
