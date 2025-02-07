@@ -172,6 +172,40 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('token'); // Retrieve the token
+
+  if (!token) {
+      window.location.href = '/index.html'; // Redirect if not logged in
+  } else {
+      fetchUserTeams(token); // Pass the token to the function
+  }
+});
+
+function fetchUserTeams(token) { // Accept token as a parameter
+  fetch('/api/get-user', {
+      headers: { 'Authorization': `Bearer ${token}` } // Use the token in the request
+  })
+  .then(response => response.json())
+  .then(data => {
+      displayTeams(data.pickedTeams);
+  })
+  .catch(error => {
+      console.error('Failed to fetch teams:', error);
+  });
+}
+
+function displayTeams(pickedTeams) {
+  const teamsContainer = document.getElementById('teams');
+  teamsContainer.innerHTML = ''; // Clear previous teams
+  pickedTeams.forEach(team => {
+      const teamDiv = document.createElement('div');
+      teamDiv.textContent = team;
+      teamsContainer.appendChild(teamDiv);
+  });
+}
+
+
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
