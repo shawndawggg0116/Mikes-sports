@@ -27,68 +27,51 @@
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token'); // Retrieve the token from local storage
       if (!token) {
         window.location.href = '/index.html'; // Redirect if not logged in
       } else {
-        fetchUserTeams();
+        fetchTeams(token); // Ensure token is passed to function
       }
     });
 
-    function fetchUserTeams() {
-      fetch('/api/get-user', {
-          headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(response => response.json())
-      .then(data => {
-          displayTeams(data.pickedTeams);
-      })
-      .catch(error => console.error('Failed to fetch teams:', error));
-    }
-
-    function displayTeams(pickedTeams) {
-      const teamsContainer = document.getElementById('teams');
-      teamsContainer.innerHTML = ''; // Clear previous teams
-      pickedTeams.forEach(team => {
-        const teamDiv = document.createElement('div');
-        teamDiv.className = 'team-box';
-        teamDiv.textContent = team;
-        teamsContainer.appendChild(teamDiv);
-      });
-    }
-
-    let selectedTeam = null;
-
-    async function fetchTeams() {
+    async function fetchTeams(token) { // Accept token as a parameter
       try {
         const userResponse = await fetch('/api/get-user', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 'Authorization': `Bearer ${token}` }, // Use token here correctly
         });
         const userData = await userResponse.json();
-        selectedTeam = userData.selectedTeam;
+        const pickedTeams = userData.pickedTeams || []; // Use default empty array if undefined
+
+        const teamsContainer = document.getElementById('teams');
+        teamsContainer.innerHTML = ''; // Clear previous teams
+
+        pickedTeams.forEach(team => {
+          const teamDiv = document.createElement('div');
+          teamDiv.className = 'team-box';
+          teamDiv.textContent = team;
+          teamsContainer.appendChild(teamDiv);
+        });
 
         const response = await fetch('/api/teams', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 'Authorization': `Bearer ${token}` }, // Use token here correctly
         });
         const teams = await response.json();
-
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
 
         teams.forEach((team) => {
           const box = document.createElement('div');
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          if (team.name === selectedTeam) {
+          if (team.name === userData.selectedTeam) {
             box.classList.add('red');
           }
 
-          if (!selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
+          if (!userData.selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
             box.addEventListener('click', () => selectTeam(team.name, box));
           }
           
-          container.appendChild(box);
+          teamsContainer.appendChild(box);
         });
       } catch (error) {
         console.error('Error fetching teams:', error);
@@ -112,18 +95,18 @@
       document.getElementById('submit-btn').disabled = false;
     }
 
-    document.getElementById('submit-btn').addEventListener('click', async () => {
+    document.getElementById('submit-btn').addEventListener('click', async function() {
       if (!selectedTeam) return;
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // Ensure token is used correctly here
           body: JSON.stringify({ team: selectedTeam }),
         });
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
-          fetchTeams();
+          fetchTeams(token); // Refresh team list
           selectedTeam = null;
           document.getElementById('submit-btn').classList.remove('active');
           document.getElementById('submit-btn').disabled = true;
@@ -135,42 +118,7 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-    const token = localStorage.getItem('token'); // Retrieve the token
-
-    if (!token) {
-        window.location.href = '/index.html'; // Redirect if not logged in
-    } else {
-        fetchUserTeams(token); // Pass the token to the function
-    }
-});
-
-function fetchUserTeams(token) { // Accept token as a parameter
-    fetch('/api/get-user', {
-        headers: { 'Authorization': `Bearer ${token}` } // Use the token in the request
-    })
-    .then(response => response.json())
-    .then(data => {
-        displayTeams(data.pickedTeams);
-    })
-    .catch(error => {
-        console.error('Failed to fetch teams:', error);
-    });
-}
-
-function displayTeams(pickedTeams) {
-    const teamsContainer = document.getElementById('teams');
-    teamsContainer.innerHTML = ''; // Clear previous teams
-    pickedTeams.forEach(team => {
-        const teamDiv = document.createElement('div');
-        teamDiv.textContent = team;
-        teamsContainer.appendChild(teamDiv);
-    });
-}
-
-
-    fetchTeams();
-    setInterval(fetchTeams, 60000); // Refresh every minute
+    setInterval(() => fetchTeams(token), 60000); // Refresh every minute, pass token to function
   </script>
 </body>
 </html>
