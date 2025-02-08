@@ -30,19 +30,20 @@
     if (!token) {
       window.location.href = '/'; // Redirect to login if not logged in
     }
+    const authHeader = `Bearer ${token}`;
 
     let selectedTeam = null;
 
     async function fetchTeams() {
       try {
         const userResponse = await fetch('/api/get-user', {
-          headers: { Authorization: token },
+          headers: { 'Authorization': authHeader },
         });
         const userData = await userResponse.json();
         selectedTeam = userData.selectedTeam;
 
         const response = await fetch('/api/teams', {
-          headers: { Authorization: token },
+          headers: { 'Authorization': authHeader },
         });
         const teams = await response.json();
 
@@ -91,7 +92,7 @@
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
+          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
           body: JSON.stringify({ team: selectedTeam }),
         });
         const result = await response.json();

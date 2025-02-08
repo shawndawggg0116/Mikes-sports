@@ -8,8 +8,6 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
 
-
-
 const app = express();
 
 // Middleware
@@ -21,13 +19,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
 const mongoUri = process.env.MONGO_URI;     // Use the MongoDB URI from the environment variable
 
-
-  mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
-
-// JWT Secret
-
 
 // MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
@@ -40,7 +34,8 @@ const User = mongoose.model('User', UserSchema, 'users');
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer token
   if (!token) return res.status(403).json({ message: 'No token provided' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -86,15 +81,15 @@ app.post('/api/login', async (req, res) => {
 
 // Route to fetch user data using User.findById
 app.get('/api/get-user', authenticateToken, (req, res) => {
-    User.findById(req.user.id, (err, user) => {
-        if (err) {
-            res.status(500).send('Error on the server.');
-        } else if (!user) {
-            res.status(404).send('User not found.');
-        } else {
-            res.json({ pickedTeams: user.pickedTeams });
-        }
-    });
+  User.findById(req.user.id, (err, user) => {
+    if (err) {
+      res.status(500).send('Error on the server.');
+    } else if (!user) {
+      res.status(404).send('User not found.');
+    } else {
+      res.json({ pickedTeams: user.pickedTeams });
+    }
+  });
 });
 
 // Route to handle team selection
@@ -133,7 +128,7 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
 
-      if (game) {
+      if ( game) {
         const now = moment().tz('America/New_York'); // Current time in EST
         const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
         const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
@@ -177,7 +172,6 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
-
 
 // Server
 const PORT = process.env.PORT || 5000;
