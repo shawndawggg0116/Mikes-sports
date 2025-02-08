@@ -26,52 +26,43 @@
   <button id="submit-btn" disabled>Submit Pick</button>
   
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const token = localStorage.getItem('"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"'); // Retrieve the token from local storage
-      if (!"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE") {
-        window.location.href = '/index.html'; // Redirect if not logged in
-      } else {
-        fetchTeams("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"); // Ensure token is passed to function
-      }
-    });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/'; // Redirect to login if not logged in
+    }
 
-    async function fetchTeams(eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE) { // Accept token as a parameter
+    let selectedTeam = null;
+
+    async function fetchTeams() {
       try {
         const userResponse = await fetch('/api/get-user', {
-          headers: { 'Authorization': `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"}` }, // Use token here correctly
+          headers: { Authorization: token },
         });
         const userData = await userResponse.json();
-        const pickedTeams = userData.pickedTeams || []; // Use default empty array if undefined
-
-        const teamsContainer = document.getElementById('teams');
-        teamsContainer.innerHTML = ''; // Clear previous teams
-
-        pickedTeams.forEach(team => {
-          const teamDiv = document.createElement('div');
-          teamDiv.className = 'team-box';
-          teamDiv.textContent = team;
-          teamsContainer.appendChild(teamDiv);
-        });
+        selectedTeam = userData.selectedTeam;
 
         const response = await fetch('/api/teams', {
-          headers: { 'Authorization': `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"}` }, // Use token here correctly
+          headers: { Authorization: token },
         });
         const teams = await response.json();
+
+        const container = document.getElementById('teams');
+        container.innerHTML = '';
 
         teams.forEach((team) => {
           const box = document.createElement('div');
           box.className = `team-box ${getStatusClass(team.status)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          if (team.name === userData.selectedTeam) {
+          if (team.name === selectedTeam) {
             box.classList.add('red');
           }
 
-          if (!userData.selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
+          if (!selectedTeam && (team.status === 'Available' || team.status === 'Scheduled')) {
             box.addEventListener('click', () => selectTeam(team.name, box));
           }
           
-          teamsContainer.appendChild(box);
+          container.appendChild(box);
         });
       } catch (error) {
         console.error('Error fetching teams:', error);
@@ -95,18 +86,18 @@
       document.getElementById('submit-btn').disabled = false;
     }
 
-    document.getElementById('submit-btn').addEventListener('click', async function() {
+    document.getElementById('submit-btn').addEventListener('click', async () => {
       if (!selectedTeam) return;
       try {
         const response = await fetch('/api/pick-team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"}` }, // Ensure token is used correctly here
+          headers: { 'Content-Type': 'application/json', Authorization: token },
           body: JSON.stringify({ team: selectedTeam }),
         });
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
-          fetchTeams("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"); // Refresh team list
+          fetchTeams();
           selectedTeam = null;
           document.getElementById('submit-btn').classList.remove('active');
           document.getElementById('submit-btn').disabled = true;
@@ -118,7 +109,8 @@
       }
     });
 
-    setInterval(() => fetchTeams("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"), 60000); // Refresh every minute, pass token to function
+    fetchTeams();
+    setInterval(fetchTeams, 60000); // Refresh every minute
   </script>
 </body>
 </html>
