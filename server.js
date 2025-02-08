@@ -80,17 +80,20 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Route to fetch user data using User.findById
-app.get('/api/get-user', authenticateToken, (req, res) => {
-  User.findById(req.user.id, (err, user) => {
-    if (err) {
-      res.status(500).send('Error on the server.');
-    } else if (!user) {
-      res.status(404).send('User not found.');
-    } else {
-      res.json({ pickedTeams: user.pickedTeams });
-    }
-  });
+app.get('/api/get-user', authenticateToken, async (req, res) => {
+  try {
+      const user = await User.findById(req.user.id);  // Updated to use async/await
+      if (!user) {
+          res.status(404).json({ message: 'User not found' });
+      } else {
+          res.json({ pickedTeams: user.pickedTeams });
+      }
+  } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Error on the server.' });
+  }
 });
+
 
 // Route to handle team selection
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
