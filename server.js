@@ -123,7 +123,7 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     const gamesCollection = mongoose.connection.db.collection('games');
 
     const allTeams = await teamsCollection.find().toArray();
-    the
+    
     const currentGames = await gamesCollection.find().toArray();
 
     const mergedTeams = allTeams.map((team) => {
