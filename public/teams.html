@@ -38,7 +38,7 @@
     async function fetchTeams(token) { // Accept token as a parameter
       try {
         const userResponse = await fetch('/api/get-user', {
-          headers: { 'Authorization': `Bearer ${token}` }, // Use token here correctly
+          headers: { 'Authorization': `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM5MDI5MjkxLCJleHAiOjE3MzkwMzI4OTF9.RQAxUkBJiyvOLaLDfKUw7yJm4TcnmNWKtzSK73wF5GE"}` }, // Use token here correctly
         });
         const userData = await userResponse.json();
         const pickedTeams = userData.pickedTeams || []; // Use default empty array if undefined
