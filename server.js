@@ -10,6 +10,18 @@ const moment = require('moment-timezone'); // Include moment-timezone
 
 const app = express();
 
+// Middleware to authenticate API key
+function authenticateAPIKey(req, res, next) {
+    const apiKeyReceived = req.headers['x-rapidapi-key'];
+    const validApiKey = "10bf18f0demshb31eaae24d15703p127820jsn83bb8d8273b6"; // Your valid API key
+
+    if (apiKeyReceived === validApiKey) {
+        next(); // Proceed to the next middleware/function if the API key is valid
+    } else {
+        res.status(401).json({ error: "Unauthorized access: Invalid API key" });
+    }
+}
+
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
@@ -31,18 +43,6 @@ const UserSchema = new mongoose.Schema({
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
-
-// Middleware to authenticate API key
-function authenticateAPIKey(req, res, next) {
-    const apiKeyReceived = req.headers['x-rapidapi-key'];
-    const validApiKey = process.env.VALID_API_KEY; // Fetch the valid API key from environment variables
-
-    if (apiKeyReceived === validApiKey) {
-        next(); // Proceed if the API key is valid
-    } else {
-        res.status(401).json({ error: "Unauthorized access: Invalid API key" });
-    }
-}
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -92,7 +92,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Route to fetch user data using User.findById
-app.get('/api/get-user', authenticateToken, authenticateAPIKey, async (req, res) => {
+app.get('/api/get-user', authenticateToken, async (req, res) => {
   try {
       const user = await User.findById(req.user.id);  // Updated to use async/await
       if (!user) {
@@ -106,7 +106,86 @@ app.get('/api/get-user', authenticateToken, authenticateAPIKey, async (req, res)
   }
 });
 
-// Additional routes and server setup continue here...
+// Route to handle team selection
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.pickedTeams.includes(req.body.team)) {
+      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
+    }
+
+    user.pickedTeams.push(req.body.team);
+    user.lastPickDate = new Date();
+    await user.save();
+
+    res.json({ success: true, message: 'Team selected successfully' });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Fetch all teams with their statuses
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const gamesCollection = mongoose.connection.db.collection('games');
+
+    const allTeams = await teamsCollection.find().toArray();
+    
+    const currentGames = await gamesCollection.find().toArray();
+
+    const mergedTeams = allTeams.map((team) => {
+      const game = currentGames.find(
+        (g) => g.homeTeam === team.name || g.awayTeam === team.name
+      );
+
+      if ( game) {
+        const now = moment().tz('America/New_York'); // Current time in EST
+        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
+        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
+
+        const gameStatus =
+          now.isBetween(startTime, endTime)
+            ? "Playing"
+            : now.isAfter(endTime)
+            ? "Completed"
+            : "Scheduled";
+
+        return {
+          ...team,
+          status: gameStatus,
+          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+        };
+      }
+      return { ...team, status: 'Available' };
+    });
+
+    res.json(mergedTeams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).send('Error fetching teams');
+  }
+});
+
+// Serve the main page for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve the teams page for the /teams route
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Catch-all route to handle unmatched routes
+app.get('*', (req, res) => {
+  res.status(404).send('Page not found');
+});
 
 // Server
 const PORT = process.env.PORT || 5000;
