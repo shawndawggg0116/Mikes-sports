@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -7,6 +8,8 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
 
+
+
 const app = express();
 
 // Middleware
@@ -15,13 +18,16 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
+const mongoUri = process.env.MONGO_URI;     // Use the MongoDB URI from the environment variable
+
+
+  mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // JWT Secret
-const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
+
 
 // MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
@@ -171,6 +177,7 @@ app.get('/teams', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
+
 
 // Server
 const PORT = process.env.PORT || 5000;
