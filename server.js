@@ -8,6 +8,10 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
 
+
+
+
+
 const app = express();
 
 // Middleware to authenticate API key
@@ -57,6 +61,8 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+
+
 // User Registration
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
@@ -90,6 +96,8 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 
 // Route to fetch user data using User.findById
 app.get('/api/get-user', authenticateToken, async (req, res) => {
