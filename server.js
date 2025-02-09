@@ -17,7 +17,7 @@ const app = express();
 // Middleware to authenticate API key
 function authenticateAPIKey(req, res, next) {
     const apiKeyReceived = req.headers['x-rapidapi-key'];
-    const validApiKey = "myNewSecretKey12345"; // Your valid API key
+    const validApiKey = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4OTY5OTE2LCJleHAiOjE3Mzg5NzM1MTZ9.vMpwVAo94u7bPS03H1EVigP0JEiCXXGYNa69fliX4NE"; // Your valid API key
 
     if (apiKeyReceived === validApiKey) {
         next(); // Proceed to the next middleware/function if the API key is valid
