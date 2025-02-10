@@ -110,6 +110,11 @@ function getStatusClass(status, isPicked) {
   }
 }
 
+if (pickedTeams.includes(team.name)) {
+  box.classList.add('picked');
+  box.classList.remove('available', 'playing', 'completed', 'scheduled'); // Remove conflicting classes
+}
+
 
 async function fetchTeams() {
     try {
