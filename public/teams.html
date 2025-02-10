@@ -88,11 +88,7 @@ if (pickedTeams.map(team => team.toLowerCase()).includes(team.name.toLowerCase()
     }
 }
 
-if (pickedTeams.includes(team.name)) {
-    box.classList.add('picked'); // Apply 'picked' class after other classes
-} else if (team.status === 'Available' || team.status === 'Scheduled') {
-    box.addEventListener('click', () => selectTeam(team.name, box));
-}
+
 
 
     function getStatusClass(status) {
