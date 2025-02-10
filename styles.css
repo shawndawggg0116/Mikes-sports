@@ -35,18 +35,19 @@
     color: white; /* Optional: to ensure text is readable */
   }
   
-  /* Add to your existing styles.css */
-.picked {
-  position: relative;
-  pointer-events: none; /* Makes the item unclickable */
-  opacity: 0.7;         /* Optionally make it look different */
-}
-
-.picked::after {
-  content: '✖';
-  color: red;
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: 24px;
-}
+  .picked {
+    position: relative;
+    pointer-events: none; /* Makes the item unclickable */
+    opacity: 0.7 !important; /* Ensure this style is applied */
+  }
+  
+  .picked::after {
+    content: '✖';
+    color: red;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 24px;
+    z-index: 10; /* Ensure it's above other content */
+  }
+  
