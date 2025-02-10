@@ -68,6 +68,12 @@
             box.className = `team-box ${getStatusClass(team.status)}`;
             box.textContent = `${team.name} (${team.status})`;
 
+// Apply 'picked' class if the team has been picked (case-insensitive comparison)
+if (pickedTeams.map(team => team.toLowerCase()).includes(team.name.toLowerCase())) {
+    box.classList.add('picked');
+}
+
+
             // Check if the team is picked and modify style/class
             if (pickedTeams.includes(team.name)) {
                 box.classList.add('picked'); // Add the 'picked' class
