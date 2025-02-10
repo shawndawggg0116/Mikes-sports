@@ -43,17 +43,12 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 0;
-  padding: 20px;
   background-image: url('/background/teamsbackground.png');
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  color: #333; /* Ensure text remains readable */
+  background-size: cover;  /* Ensures the image covers the entire background */
+  background-position: center;  /* Centers the image */
+  background-repeat: no-repeat;  /* Prevents tiling */
 }
+
 
 .overlay {
   position: fixed;
