@@ -158,26 +158,31 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
 
+    const user = await User.findById(req.user.id);
+    const pickedTeams = user ? user.pickedTeams || [] : [];
+
     const allTeams = await teamsCollection.find().toArray();
-    
     const currentGames = await gamesCollection.find().toArray();
 
     const mergedTeams = allTeams.map((team) => {
+      if (pickedTeams.includes(team.name)) {
+        return { ...team, status: 'Picked' }; // Set status to "Picked"
+      }
+
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
 
-      if ( game) {
+      if (game) {
         const now = moment().tz('America/New_York'); // Current time in EST
         const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
         const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
 
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
+        const gameStatus = now.isBetween(startTime, endTime)
+          ? 'Playing'
+          : now.isAfter(endTime)
+          ? 'Completed'
+          : 'Scheduled';
 
         return {
           ...team,
@@ -196,6 +201,7 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     res.status(500).send('Error fetching teams');
   }
 });
+
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {

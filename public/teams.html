@@ -91,45 +91,49 @@ if (pickedTeams.map(team => team.toLowerCase()).includes(team.name.toLowerCase()
 
 
 
-    function getStatusClass(status) {
-      switch (status) {
-        case 'Available': return 'green';
-        case 'Playing': return 'orange';
-        case 'Completed': return 'grey';
-        default: return '';
-      }
-    }
+function getStatusClass(status) {
+  switch (status) {
+    case 'Available':
+      return 'available';
+    case 'Playing':
+      return 'playing';
+    case 'Completed':
+      return 'completed';
+    case 'Scheduled':
+      return 'scheduled';
+    case 'Picked': // Add the "Picked" status
+      return 'picked';
+    default:
+      return '';
+  }
+}
 
-    function selectTeam(teamName, box) {
-      selectedTeam = teamName;
-      document.querySelectorAll('.team-box').forEach(box => box.classList.remove('red'));
-      box.classList.add('red');
-      document.getElementById('submit-btn').classList.add('active');
-      document.getElementById('submit-btn').disabled = false;
-    }
-
-    document.getElementById('submit-btn').addEventListener('click', async () => {
-      if (!selectedTeam) return;
-      try {
-        const response = await fetch('/api/pick-team', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-          body: JSON.stringify({ team: selectedTeam }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          alert('Team picked successfully!');
-          fetchTeams();
-          selectedTeam = null;
-          document.getElementById('submit-btn').classList.remove('active');
-          document.getElementById('submit-btn').disabled = true;
-        } else {
-          alert(result.message);
-        }
-      } catch (error) {
-        console.error('Error picking team:', error);
-      }
+async function fetchTeams() {
+  try {
+    const response = await fetch('/api/teams', {
+      headers: { Authorization: authHeader },
     });
+    const teams = await response.json();
+
+    const container = document.getElementById('teams');
+    container.innerHTML = '';
+
+    teams.forEach((team) => {
+      const box = document.createElement('div');
+      box.className = `team-box ${getStatusClass(team.status)}`;
+      box.textContent = `${team.name} (${team.status})`;
+
+      if (team.status === 'Available' || team.status === 'Scheduled') {
+        box.addEventListener('click', () => selectTeam(team.name, box));
+      }
+
+      container.appendChild(box);
+    });
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+  }
+}
+
 
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute
