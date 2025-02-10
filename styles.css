@@ -35,32 +35,11 @@
     color: white; /* Optional: to ensure text is readable */
   }
   
-  .picked {
-    background-color: red; /* Set the background to red */
-    color: white; /* Change text color to white for better readability */
-    pointer-events: none; /* Makes the item unclickable */
-    opacity: 0.9 !important; /* Adjust opacity if needed */
-    position: relative; /* Ensure position relative for potential pseudo-elements or other positioning */
-}
-
-.team-box.picked {
-  background-color: red !important;
-  color: white !important;
-  pointer-events: none;
-  opacity: 0.9;
-}
-
-.team-box.picked {
-  background-color: red !important;
-  color: white !important;
-  pointer-events: none;
-  opacity: 0.9;
-  text-decoration: none !important; /* Overrides 'line-through' from .completed */
-}
-
-.picked {
-  background-color: red !important;
-  color: white !important;
-  pointer-events: none; /* Disable interaction */
-  opacity: 0.9; /* Optional */
-}
+  .team-box.picked {
+    background-color: red !important; /* Ensure 'picked' is applied */
+    color: white !important; /* Text should remain readable */
+    pointer-events: none; /* Disable interaction */
+    opacity: 0.9 !important; /* Optional for visual effect */
+    text-decoration: none !important; /* Ensure no line-through from 'completed' */
+  }
+  
