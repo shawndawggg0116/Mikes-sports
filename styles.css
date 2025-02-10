@@ -42,3 +42,10 @@
     opacity: 0.9 !important; /* Adjust opacity if needed */
     position: relative; /* Ensure position relative for potential pseudo-elements or other positioning */
 }
+
+.team-box.picked {
+  background-color: red !important;
+  color: white !important;
+  pointer-events: none;
+  opacity: 0.9;
+}
