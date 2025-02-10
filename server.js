@@ -61,6 +61,23 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Route to fetch user-specific data
+app.get('/api/user-data', authenticateToken, async (req, res) => {
+  try {
+    // Assuming req.user.id is available from JWT
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Send specific user data to the frontend
+    res.json({
+      username: user.username,
+      pickedTeams: user.pickedTeams
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 // User Registration
