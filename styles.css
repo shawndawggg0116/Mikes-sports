@@ -49,3 +49,11 @@
   pointer-events: none;
   opacity: 0.9;
 }
+
+.team-box.picked {
+  background-color: red !important;
+  color: white !important;
+  pointer-events: none;
+  opacity: 0.9;
+  text-decoration: none !important; /* Overrides 'line-through' from .completed */
+}
