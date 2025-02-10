@@ -35,11 +35,9 @@
     color: white; /* Optional: to ensure text is readable */
   }
   
-  .team-box.picked {
-    background-color: red !important; /* Ensure 'picked' is applied */
-    color: white !important; /* Text should remain readable */
-    pointer-events: none; /* Disable interaction */
-    opacity: 0.9 !important; /* Optional for visual effect */
-    text-decoration: none !important; /* Ensure no line-through from 'completed' */
-  }
-  
+  .picked {
+    background-color: red !important; /* Override other styles */
+    color: white !important;
+    pointer-events: none;
+    opacity: 0.9;
+}
