@@ -5,18 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Teams</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-    .team-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .team-box { padding: 20px; border: 1px solid #ccc; border-radius: 5px; text-transform: capitalize; cursor: pointer; }
-    .green { background-color: green; color: white; }
-    .red { background-color: red; color: white; }
-    .orange { background-color: orange; color: white; animation: flash 1s infinite alternate; }
-    .grey { background-color: grey; color: white; }
-    #submit-btn { margin-top: 20px; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; background-color: grey; color: white; cursor: not-allowed; }
-    #submit-btn.active { background-color: blue; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .team-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .team-box {
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      text-transform: capitalize;
+      cursor: pointer;
+    }
+
+    .green {
+      background-color: green;
+      color: white;
+    }
+
+    .red {
+      background-color: red;
+      color: white;
+    }
+
+    .orange {
+      background-color: orange;
+      color: white;
+      animation: flash 1s infinite alternate;
+    }
+
+    .grey {
+      background-color: grey;
+      color: white;
+    }
+
+    .picked {
+      background-color: red !important;
+      color: white !important;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    #submit-btn {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      background-color: grey;
+      color: white;
+      cursor: not-allowed;
+    }
+
+    #submit-btn.active {
+      background-color: blue;
+      cursor: pointer;
+    }
+
     @keyframes flash {
-      0% { opacity: 0.5; }
-      100% { opacity: 1; }
+      0% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 1;
+      }
     }
   </style>
 </head>
@@ -34,29 +94,18 @@
 
     let selectedTeam = null;
 
-   // Fetch user data with Authorization header
-   fetch('/api/user-data', {
-      headers: {
-        'Authorization': authHeader
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data); // Process and display data on the page
-    })
-    .catch(error => console.error('Error fetching user data:', error));
-
     async function fetchTeams() {
-    try {
+      try {
+        // Fetch user data
         const userResponse = await fetch('/api/get-user', {
-            headers: { 'Authorization': authHeader },
+          headers: { 'Authorization': authHeader },
         });
         const userData = await userResponse.json();
-        selectedTeam = userData.selectedTeam;
-        const pickedTeams = userData.pickedTeams || []; // Assuming this comes from your user data
+        const pickedTeams = userData.pickedTeams || [];
 
+        // Fetch teams
         const response = await fetch('/api/teams', {
-            headers: { 'Authorization': authHeader },
+          headers: { 'Authorization': authHeader },
         });
         const teams = await response.json();
 
@@ -64,96 +113,70 @@
         container.innerHTML = '';
 
         teams.forEach((team) => {
-            const box = document.createElement('div');
-            box.className = `team-box ${getStatusClass(team.status)}`;
-            box.textContent = `${team.name} (${team.status})`;
+          const box = document.createElement('div');
+          const isPicked = pickedTeams.includes(team.name);
 
-// Apply 'picked' class if the team has been picked (case-insensitive comparison)
-if (pickedTeams.map(team => team.toLowerCase()).includes(team.name.toLowerCase())) {
-    box.classList.add('picked');
-}
+          box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
+          box.textContent = `${team.name} (${team.status})`;
 
+          // Add "picked" logic
+          if (isPicked) {
+            box.classList.add('picked');
+          } else if (team.status === 'Available' || team.status === 'Scheduled') {
+            box.addEventListener('click', () => selectTeam(team.name, box));
+          }
 
-            // Check if the team is picked and modify style/class
-            if (pickedTeams.includes(team.name)) {
-                box.classList.add('picked'); // Add the 'picked' class
-            } else if (team.status === 'Available' || team.status === 'Scheduled') {
-                box.addEventListener('click', () => selectTeam(team.name, box));
-            }
-
-            container.appendChild(box);
+          container.appendChild(box);
         });
-    } catch (error) {
+      } catch (error) {
         console.error('Error fetching teams:', error);
+      }
     }
-}
 
-
-
-
-function getStatusClass(status, isPicked) {
-  if (isPicked) {
-    return 'picked'; // Always return 'picked' if the team is already picked
-  }
-
-  switch (status) {
-    case 'Available':
-      return 'available';
-    case 'Playing':
-      return 'playing';
-    case 'Completed':
-      return 'completed';
-    case 'Scheduled':
-      return 'scheduled';
-    default:
-      return '';
-  }
-}
-
-if (pickedTeams.includes(team.name)) {
-  box.classList.add('picked');
-  box.classList.remove('available', 'playing', 'completed', 'scheduled'); // Remove conflicting classes
-}
-
-
-async function fetchTeams() {
-    try {
-        const userResponse = await fetch('/api/get-user', {
-            headers: { Authorization: authHeader },
-        });
-        const userData = await userResponse.json();
-        const pickedTeams = userData.pickedTeams || []; // Safely initialize pickedTeams
-
-        const response = await fetch('/api/teams', {
-            headers: { Authorization: authHeader },
-        });
-        const teams = await response.json();
-
-        const container = document.getElementById('teams');
-        container.innerHTML = ''; // Clear container
-
-        teams.forEach((team) => {
-            const box = document.createElement('div');
-            box.className = `team-box ${getStatusClass(team.status)}`;
-            box.textContent = `${team.name} (${team.status})`;
-
-            // Apply 'picked' class if the team is picked
-            if (pickedTeams.includes(team.name)) {
-                box.classList.add('picked');
-            }
-
-            // Only attach click listeners to "Available" or "Scheduled" teams
-            if (team.status === 'Available' || team.status === 'Scheduled') {
-                box.addEventListener('click', () => selectTeam(team.name, box));
-            }
-
-            container.appendChild(box);
-        });
-    } catch (error) {
-        console.error('Error fetching teams:', error);
+    function getStatusClass(status, isPicked) {
+      if (isPicked) return 'picked';
+      switch (status) {
+        case 'Available': return 'green';
+        case 'Playing': return 'orange';
+        case 'Completed': return 'grey';
+        case 'Scheduled': return 'green'; // Adjusted as per "scheduled"
+        default: return '';
+      }
     }
-}
 
+    function selectTeam(teamName, box) {
+      selectedTeam = teamName;
+      document.querySelectorAll('.team-box').forEach((box) => box.classList.remove('red'));
+      box.classList.add('red');
+      document.getElementById('submit-btn').classList.add('active');
+      document.getElementById('submit-btn').disabled = false;
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', async () => {
+      if (!selectedTeam) return;
+      try {
+        const response = await fetch('/api/pick-team', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({ team: selectedTeam }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Team picked successfully!');
+          fetchTeams();
+          selectedTeam = null;
+          document.getElementById('submit-btn').classList.remove('active');
+          document.getElementById('submit-btn').disabled = true;
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        console.error('Error picking team:', error);
+      }
+    });
 
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute

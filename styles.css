@@ -42,7 +42,3 @@
     opacity: 0.9;
 }
 
-.team-box.picked {
-  background-color: red !important;
-  color: white !important;
-}
