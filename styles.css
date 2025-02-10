@@ -36,16 +36,9 @@
   }
   
   .picked {
-    position: relative;
-    pointer-events: none; /* Makes the item unclickable */
-    opacity: 0.7 !important; /* Ensure this style is applied */
-  }
-  
-  .picked {
     background-color: red; /* Set the background to red */
     color: white; /* Change text color to white for better readability */
     pointer-events: none; /* Makes the item unclickable */
-    opacity: 0.9 !important; /* Adjust opacity if needed, or remove if full color is desired */
+    opacity: 0.9 !important; /* Adjust opacity if needed */
+    position: relative; /* Ensure position relative for potential pseudo-elements or other positioning */
 }
-
-  
