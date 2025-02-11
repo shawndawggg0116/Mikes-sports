@@ -42,10 +42,4 @@
     opacity: 0.9;
 }
 
-body {
-  background-image: url('public/background/teamsbackground.png');
-  background-size: cover;  /* Ensures the image covers the entire background */
-  background-position: center;  /* Centers the image */
-  background-repeat: no-repeat;  /* Prevents tiling */
-}
 
