@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
-
+const io = new Server(server);
 
 
 
@@ -49,7 +49,23 @@ app.get('/rules', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'rules.html'));
 });
 
+app.get('/chat', (req, res) => {
+  res.sendFile(__dirname + '/public/chat.html');
+});
 
+
+// WebSocket logic
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('chat message', (msg) => {
+      io.emit('chat message', msg); // Broadcast message to all users
+  });
+
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
+  });
+});
 
 
 // MongoDB connection
