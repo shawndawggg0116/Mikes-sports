@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rules</title>
+  <link rel="stylesheet" href="/styles.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,6 +13,52 @@
       margin: 0;
       padding: 0;
     }
+
+    /* Navbar Styles */
+    .navbar {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      text-align: center;
+    }
+
+    .navbar ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .navbar ul li {
+      display: inline-block;
+    }
+
+    .navbar ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 10px 15px;
+      display: block;
+      transition: background 0.3s, border-radius 0.3s;
+    }
+
+    .navbar ul li a:hover {
+      background-color: #555;
+      border-radius: 5px;
+    }
+
+    /* Prevent content from hiding under navbar */
+    body {
+      padding-top: 60px;
+    }
+
     .container {
       max-width: 800px;
       margin: 30px auto;
@@ -33,15 +80,19 @@
     li {
       margin-bottom: 10px;
     }
-    footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #555;
-    }
   </style>
 </head>
 <body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <ul>
+      <li><a href="/">Teams</a></li>
+      <li><a href="/leaderboard">Leaderboard</a></li>
+      <li><a href="/rules">Rules</a></li>
+    </ul>
+  </nav>
+
   <div class="container">
     <h1>NFL Team Pick Game Rules and How to Play</h1>
     <p>Welcome to the NFL Team Pick Game! Follow these simple steps and rules to compete for the jackpot. Good luck and have fun!</p>
@@ -102,5 +153,6 @@
     
     <p>Good Luck and Have Fun!</p>
   </div>
+
 </body>
 </html>
