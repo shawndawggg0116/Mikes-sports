@@ -16,72 +16,100 @@
 }
 
 
-    .team-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
+.team-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Responsive grid */
+  gap: 10px;
+  padding: 10px;
+}
 
-    .team-box {
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      text-transform: capitalize;
-      cursor: pointer;
-    }
+.team-box {
+  padding: 15px;
+  border: 2px solid #ffffff; /* White border for contrast */
+  border-radius: 10px;
+  text-transform: capitalize;
+  font-size: 18px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-    .green {
-      background-color: green;
-      color: white;
-    }
+.team-box:hover {
+  transform: scale(1.05);
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
+}
 
-    .red {
-      background-color: rgb(49, 22, 228);
-      color: white;
-    }
+/* Ensure contrast between text and background */
+.green {
+  background-color: #008000;
+  color: white;
+}
 
-    .orange {
-      background-color: orange;
-      color: white;
-      animation: flash 1s infinite alternate;
-    }
+.red {
+  background-color: #ff0000;
+  color: white;
+}
 
-    .grey {
-      background-color: grey;
-      color: white;
-    }
+.orange {
+  background-color: #ffa500;
+  color: white;
+  animation: flash 1s infinite alternate;
+}
 
-    .picked {
-      background-color: red !important;
-      color: white !important;
-      pointer-events: none;
-      opacity: 0.9;
-    }
+.grey {
+  background-color: #808080;
+  color: white;
+}
 
-    #submit-btn {
-      margin-top: 20px;
-      padding: 15px 30px;
-      font-size: 18px;
-      border: none;
-      border-radius: 5px;
-      background-color: grey;
-      color: white;
-      cursor: not-allowed;
-    }
+.picked {
+  background-color: #b22222 !important;
+  color: white !important;
+  pointer-events: none;
+  opacity: 0.9;
+}
 
-    #submit-btn.active {
-      background-color: blue;
-      cursor: pointer;
-    }
+/* Adjust submit button */
+#submit-btn {
+  margin-top: 20px;
+  padding: 15px 30px;
+  font-size: 18px;
+  border: none;
+  border-radius: 5px;
+  background-color: grey;
+  color: white;
+  cursor: not-allowed;
+  transition: background 0.3s;
+}
 
-    @keyframes flash {
-      0% {
-        opacity: 0.5;
-      }
-      100% {
-        opacity: 1;
-      }
-    }
+#submit-btn.active {
+  background-color: blue;
+  cursor: pointer;
+}
+
+/* Flashing effect for "Playing" status */
+@keyframes flash {
+  0% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Make the grid responsive */
+@media (max-width: 768px) {
+  .team-container {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .team-container {
+    grid-template-columns: repeat(1, 1fr); /* 1 column on very small screens */
+  }
+}
+
   </style>
 </head>
 
