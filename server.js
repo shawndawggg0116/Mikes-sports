@@ -9,7 +9,18 @@ const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
 const io = new Server(server);
 
+// WebSocket logic
+io.on('connection', (socket) => {
+  console.log('A user connected');
 
+  socket.on('chat message', (msg) => {
+      io.emit('chat message', msg); // Broadcast message to all users
+  });
+
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
+  });
+});
 
 
 const app = express();
@@ -34,18 +45,6 @@ app.use(express.static(__dirname));
 
 app.use(express.static('public'));
 
-// WebSocket logic
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('chat message', (msg) => {
-      io.emit('chat message', msg); // Broadcast message to all users
-  });
-
-  socket.on('disconnect', () => {
-      console.log('User disconnected');
-  });
-});
 
 
 // Routes
