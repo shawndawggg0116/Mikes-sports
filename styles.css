@@ -45,7 +45,7 @@
 
 /* Navbar Styles */
 .navbar {
-  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+  background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent black */
   padding: 10px 0;
   position: fixed;
   top: 0;
@@ -54,6 +54,12 @@
   z-index: 1000;
   text-align: center;
 }
+
+/* Add this padding to push content down */
+body {
+  padding-top: 60px; /* Adjust this value based on navbar height */
+}
+
 
 .navbar ul {
   list-style-type: none;
