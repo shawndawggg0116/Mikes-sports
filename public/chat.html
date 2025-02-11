@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash Talk Chat</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            text-align: center;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .messages {
+            max-height: 300px;
+            overflow-y: auto;
+            border-bottom: 1px solid #fff;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            text-align: left;
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .own-message {
+            background-color: #007bff;
+            color: white;
+            text-align: right;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #f2a900;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="/teams">Teams</a></li>
+            <li><a href="/leaderboard">Leaderboard</a></li>
+            <li><a href="/rules">Rules</a></li>
+            <li><a href="/chat">Trash Talk Chat</a></li>
+        </ul>
+    </nav>
+
+    <div class="chat-container">
+        <h1>Trash Talk Chat Room</h1>
+        <div class="messages" id="messages"></div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Talk your trash...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        // Get elements
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Listen for messages
+        socket.on('chat message', (msg) => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.textContent = msg;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        // Send message
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('chat message', message);
+                messageInput.value = '';
+            }
+        });
+
+        // Enter key sends message
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+    </script>
+
+</body>
+</html>
