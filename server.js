@@ -227,21 +227,6 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
-// Serve static files (CSS, images, etc.)
-app.use(express.static(__dirname));
-
-// Routes for the navbar pages
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'teams.html'));
-});
-
-app.get('/leaderboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'leaderboard.html'));
-});
-
-app.get('/rules', (req, res) => {
-    res.sendFile(path.join(__dirname, 'rules.html'));
-});
 
 
 // Server
