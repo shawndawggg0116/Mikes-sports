@@ -51,7 +51,6 @@ app.get('/rules', (req, res) => {
 
 
 
-
 // MongoDB connection
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
 const mongoUri = process.env.MONGO_URI;     // Use the MongoDB URI from the environment variable
