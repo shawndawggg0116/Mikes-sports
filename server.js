@@ -8,16 +8,12 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
 
-
-
-
-
 const app = express();
 
 // Middleware to authenticate API key
 function authenticateAPIKey(req, res, next) {
     const apiKeyReceived = req.headers['x-rapidapi-key'];
-    const validApiKey = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4OTY5OTE2LCJleHAiOjE3Mzg5NzM1MTZ9.vMpwVAo94u7bPS03H1EVigP0JEiCXXGYNa69fliX4NE"; // Your valid API key
+    const validApiKey = "Your_valid_API_key"; // Your valid API key
 
     if (apiKeyReceived === validApiKey) {
         next(); // Proceed to the next middleware/function if the API key is valid
@@ -31,25 +27,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.use(express.static(__dirname));
-
 app.use(express.static('public'));
-
-// Routes
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Route for the Leaderboard page
-app.get('/leaderboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// Route for the Rules page
-app.get('/rules', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'rules.html'));
-});
-
-
 
 // MongoDB connection
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
@@ -63,7 +41,8 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
+  picks: [{ week: Number, team: String, result: String }],
+  totalScore: { type: Number, default: 0 },
   lastPickDate: { type: Date, default: null }
 });
 const User = mongoose.model('User', UserSchema, 'users');
@@ -81,14 +60,69 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Routes
+app.get('/api/get-user', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      username: user.username,
+      picks: user.picks,
+      totalScore: user.totalScore
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const { week, team } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const existingPick = user.picks.find(pick => pick.week === week);
+    if (existingPick) {
+      return res.status(400).json({ success: false, message: 'You already picked a team for this week' });
+    }
+
+    user.picks.push({ week, team, result: 'pending' });
+    user.lastPickDate = new Date();
+    await user.save();
+
+    res.json({ success: true, message: `Pick for Week ${week} saved!`, picks: user.picks });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+app.get('/api/get-leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username picks totalScore').lean();
+
+    const leaderboard = users.map(user => ({
+      username: user.username,
+      picks: user.picks,
+      totalScore: user.totalScore
+    }));
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {
   try {
-    // Assuming req.user.id is available from JWT
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Send specific user data to the frontend
     res.json({
       username: user.username,
       pickedTeams: user.pickedTeams
@@ -98,147 +132,6 @@ app.get('/api/user-data', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-
-// User Registration
-app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) return res.status(400).json({ message: 'Username already exists' });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully!' });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ message: 'Error registering user' });
-  }
-});
-
-// User Login
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token, username: user.username });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
-
-// Route to fetch user data using User.findById
-app.get('/api/get-user', authenticateToken, async (req, res) => {
-  try {
-      const user = await User.findById(req.user.id);  // Updated to use async/await
-      if (!user) {
-          res.status(404).json({ message: 'User not found' });
-      } else {
-          res.json({ pickedTeams: user.pickedTeams });
-      }
-  } catch (error) {
-      console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Error on the server.' });
-  }
-});
-
-// Route to handle team selection
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    if (user.pickedTeams.includes(req.body.team)) {
-      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
-    }
-
-    user.pickedTeams.push(req.body.team);
-    user.lastPickDate = new Date();
-    await user.save();
-
-    res.json({ success: true, message: 'Team selected successfully' });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// Fetch all teams with their statuses
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const gamesCollection = mongoose.connection.db.collection('games');
-
-    const user = await User.findById(req.user.id);
-    const pickedTeams = user ? user.pickedTeams || [] : [];
-
-    const allTeams = await teamsCollection.find().toArray();
-    const currentGames = await gamesCollection.find().toArray();
-
-    const mergedTeams = allTeams.map((team) => {
-      if (pickedTeams.includes(team.name)) {
-        return { ...team, status: 'Picked' }; // Set status to "Picked"
-      }
-
-      const game = currentGames.find(
-        (g) => g.homeTeam === team.name || g.awayTeam === team.name
-      );
-
-      if (game) {
-        const now = moment().tz('America/New_York'); // Current time in EST
-        const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
-        const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
-
-        const gameStatus = now.isBetween(startTime, endTime)
-          ? 'Playing'
-          : now.isAfter(endTime)
-          ? 'Completed'
-          : 'Scheduled';
-
-        return {
-          ...team,
-          status: gameStatus,
-          opponent: game.homeTeam === team.name ? game.awayTeam : game.homeTeam,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-        };
-      }
-      return { ...team, status: 'Available' };
-    });
-
-    res.json(mergedTeams);
-  } catch (error) {
-    console.error('Error fetching teams:', error);
-    res.status(500).send('Error fetching teams');
-  }
-});
-
-
-// Serve the main page for the root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Serve the teams page for the /teams route
-app.get('/teams', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
-});
-
-// Catch-all route to handle unmatched routes
-app.get('*', (req, res) => {
-  res.status(404).send('Page not found');
-});
-
-
 
 // Server
 const PORT = process.env.PORT || 5000;
