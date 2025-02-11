@@ -108,6 +108,74 @@
         grid-template-columns: repeat(1, 1fr); /* 1 column on very small screens */
       }
     }
+
+    /* Navbar Styles */
+.navbar {
+    background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+    padding: 10px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    text-align: center;
+}
+
+.navbar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px; /* Adds spacing between links */
+}
+
+.navbar ul li {
+    display: inline;
+}
+
+.navbar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px 15px;
+    display: block;
+    transition: background 0.3s, border-radius 0.3s;
+}
+
+.navbar ul li a:hover {
+    background-color: #555;
+    border-radius: 5px;
+}
+
+/* Mobile-Friendly Navbar */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 5px 0;
+    }
+
+    .navbar ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .navbar ul li {
+        margin: 5px 0;
+    }
+
+    .navbar ul li a {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+}
+
+/* Adjust body padding to prevent content from hiding under navbar */
+body {
+    padding-top: 50px;
+}
+
+
   </style>
 </head>
 <body>
