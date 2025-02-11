@@ -10,7 +10,6 @@ const moment = require('moment-timezone'); // Include moment-timezone
 
 
 
-app.use(express.static('public'));
 
 
 const app = express();
@@ -31,6 +30,9 @@ function authenticateAPIKey(req, res, next) {
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(express.static('public'));
+
 
 // MongoDB connection
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
