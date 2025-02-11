@@ -33,6 +33,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.static('public'));
 
+// Routes
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
 
 // MongoDB connection
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
