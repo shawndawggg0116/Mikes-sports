@@ -7,10 +7,12 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
-const http = require('http');
-const server = http.createServer(app); 
-const io = new Server(server);
+const http = require('http'); // ✅ Make sure to require 'http' BEFORE using it
+const { Server } = require('socket.io'); // ✅ Import Socket.io
 
+const app = express();
+const server = http.createServer(app); // ✅ Define the HTTP server correctly
+const io = new Server(server); // ✅ Attach Socket.io to the server
 // WebSocket logic
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -25,7 +27,7 @@ io.on('connection', (socket) => {
 });
 
 
-const app = express();
+
 
 // Middleware to authenticate API key
 function authenticateAPIKey(req, res, next) {
