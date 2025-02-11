@@ -13,6 +13,7 @@ const { Server } = require('socket.io'); // ✅ Import Socket.io
 const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
+
 // WebSocket logic
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -67,9 +68,8 @@ app.get('/rules', (req, res) => {
 });
 
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname + '/public/chat.html');
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
-
 
 
 
