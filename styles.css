@@ -42,15 +42,17 @@
     opacity: 0.9;
 }
 
+
 /* Navbar Styles */
 .navbar {
-  background-color: #333;
-  padding: 15px 0;
-  position: sticky;
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+  padding: 10px 0;
+  position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  z-index: 100;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  text-align: center;
 }
 
 .navbar ul {
@@ -59,10 +61,11 @@
   margin: 0;
   display: flex;
   justify-content: center;
+  gap: 15px; /* Adds spacing between links */
 }
 
 .navbar ul li {
-  margin: 0 20px;
+  display: inline;
 }
 
 .navbar ul li a {
@@ -70,7 +73,8 @@
   text-decoration: none;
   font-size: 18px;
   font-weight: bold;
-  padding: 10px 20px;
+  padding: 10px 15px;
+  display: block;
   transition: background 0.3s, border-radius 0.3s;
 }
 
@@ -79,15 +83,29 @@
   border-radius: 5px;
 }
 
-/* Responsive Navbar */
+/* Mobile-Friendly Navbar */
 @media (max-width: 768px) {
+  .navbar {
+      padding: 5px 0;
+  }
+
   .navbar ul {
       flex-direction: column;
       align-items: center;
   }
 
   .navbar ul li {
-      margin: 10px 0;
+      margin: 5px 0;
   }
+
+  .navbar ul li a {
+      font-size: 16px;
+      padding: 8px 12px;
+  }
+}
+
+/* Adjust body padding to prevent content from hiding under navbar */
+body {
+  padding-top: 50px;
 }
 
