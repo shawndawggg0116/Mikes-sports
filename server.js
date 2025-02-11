@@ -10,6 +10,7 @@ const moment = require('moment-timezone'); // Include moment-timezone
 
 
 
+app.use(express.static('public'));
 
 
 const app = express();
