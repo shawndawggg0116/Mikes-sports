@@ -34,6 +34,20 @@ app.use(express.static(__dirname));
 
 app.use(express.static('public'));
 
+// WebSocket logic
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('chat message', (msg) => {
+      io.emit('chat message', msg); // Broadcast message to all users
+  });
+
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
+  });
+});
+
+
 // Routes
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
@@ -54,18 +68,6 @@ app.get('/chat', (req, res) => {
 });
 
 
-// WebSocket logic
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('chat message', (msg) => {
-      io.emit('chat message', msg); // Broadcast message to all users
-  });
-
-  socket.on('disconnect', () => {
-      console.log('User disconnected');
-  });
-});
 
 
 // MongoDB connection
