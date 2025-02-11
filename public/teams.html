@@ -5,6 +5,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Teams</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-image: url('/background/teamsbackground.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .team-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Responsive grid */
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .team-box {
+      padding: 15px;
+      border: 2px solid #ffffff; /* White border for contrast */
+      border-radius: 10px;
+      text-transform: capitalize;
+      font-size: 18px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .team-box:hover {
+      transform: scale(1.05);
+      box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Ensure contrast between text and background */
+    .green {
+      background-color: #008000;
+      color: white;
+    }
+
+    .red {
+      background-color: #ff0000;
+      color: white;
+    }
+
+    .orange {
+      background-color: #ffa500;
+      color: white;
+      animation: flash 1s infinite alternate;
+    }
+
+    .grey {
+      background-color: #808080;
+      color: white;
+    }
+
+    .picked {
+      background-color: #b22222 !important;
+      color: white !important;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    /* Adjust submit button */
+    #submit-btn {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      background-color: grey;
+      color: white;
+      cursor: not-allowed;
+      transition: background 0.3s;
+    }
+
+    #submit-btn.active {
+      background-color: blue;
+      cursor: pointer;
+    }
+
+    /* Flashing effect for "Playing" status */
+    @keyframes flash {
+      0% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* Make the grid responsive */
+    @media (max-width: 768px) {
+      .team-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .team-container {
+        grid-template-columns: repeat(1, 1fr); /* 1 column on very small screens */
+      }
+    }
+
+    
+
+  </style>
 </head>
 <body>
   <!-- Navigation Bar -->
@@ -16,8 +123,9 @@
     </ul>
   </nav>
 
+
   <h1>Pick Your NFL Team</h1>
-  <div id="teams-container"></div>
+  <div class="team-container" id="teams"></div>
   <button id="submit-btn" disabled>Submit Pick</button>
   
   <script>
@@ -36,7 +144,7 @@
           headers: { 'Authorization': authHeader },
         });
         const userData = await userResponse.json();
-        const pickedTeams = userData.picks || [];
+        const pickedTeams = userData.pickedTeams || [];
 
         // Fetch teams
         const response = await fetch('/api/teams', {
@@ -44,12 +152,12 @@
         });
         const teams = await response.json();
 
-        const container = document.getElementById('teams-container');
+        const container = document.getElementById('teams');
         container.innerHTML = '';
 
         teams.forEach((team) => {
           const box = document.createElement('div');
-          const isPicked = pickedTeams.some(pick => pick.team === team.name);
+          const isPicked = pickedTeams.includes(team.name);
 
           box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
           box.textContent = `${team.name} (${team.status})`;
@@ -113,6 +221,8 @@
       }
     });
 
+
+    
     fetchTeams();
     setInterval(fetchTeams, 60000); // Refresh every minute
   </script>

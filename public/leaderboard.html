@@ -5,13 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard</title>
     <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* General Page Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .navbar ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .navbar ul li {
+            display: inline-block;
+        }
+
+        .navbar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 15px;
+            display: block;
+            transition: background 0.3s, border-radius 0.3s;
+        }
+
+        .navbar ul li a:hover {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        /* Leaderboard Container */
+        .leaderboard-container {
+            max-width: 90%;
+            margin: 80px auto 20px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #f2a900;
+            text-transform: uppercase;
+            font-size: 28px;
+        }
+
+        /* Leaderboard Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2a900;
+            color: black;
+        }
+
+        td {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Highlight the user's pick */
+        .picked-team {
+            font-weight: bold;
+            color: #00ff00; /* Green for visibility */
+        }
+
+        /* Responsive Styling */
+        @media (max-width: 768px) {
+            .leaderboard-container {
+                width: 100%;
+                padding: 15px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <nav class="navbar">
         <ul>
-            <li><a href="/teams">Teams</a></li>
+            <li><a href="/">Teams</a></li>
             <li><a href="/leaderboard">Leaderboard</a></li>
             <li><a href="/rules">Rules</a></li>
         </ul>
@@ -19,13 +131,12 @@
 
     <div class="leaderboard-container">
         <h1>NFL Weekly Leaderboard</h1>
-        <p>Current Week: <span id="week-number"></span></p>
         <table>
             <thead>
                 <tr>
                     <th>Rank</th>
                     <th>User</th>
-                    <th>Picked Team (Week <span id="week-header"></span>)</th>
+                    <th>Picked Team (Week <span id="week-number">1</span>)</th>
                     <th>Score</th>
                 </tr>
             </thead>
@@ -46,16 +157,6 @@
 
         async function fetchLeaderboard() {
             try {
-                // Fetch current week
-                const weekResponse = await fetch('/api/current-week', {
-                    headers: { 'Authorization': authHeader }
-                });
-                const { currentWeek } = await weekResponse.json();
-                
-                document.getElementById('week-number').textContent = currentWeek;
-                document.getElementById('week-header').textContent = currentWeek;
-
-                // Fetch leaderboard
                 const response = await fetch('/api/leaderboard', {
                     headers: { 'Authorization': authHeader }
                 });
@@ -64,45 +165,32 @@
                     throw new Error('Failed to fetch leaderboard');
                 }
 
-                const users = await response.json();
-                displayLeaderboard(users, currentWeek);
+                const data = await response.json();
+                displayLeaderboard(data);
             } catch (error) {
                 console.error('Error fetching leaderboard:', error);
             }
         }
 
-        function displayLeaderboard(users, currentWeek) {
+        function displayLeaderboard(users) {
             const leaderboardBody = document.getElementById('leaderboard-body');
             leaderboardBody.innerHTML = '';
 
             users.forEach((user, index) => {
-                const pickedWeek = user.picks.find(p => p.week === currentWeek);
-                const pickedTeam = pickedWeek ? pickedWeek.team : 'No Pick';
-                const resultClass = pickedWeek ? getResultClass(pickedWeek.result) : '';
-
                 const row = document.createElement('tr');
+
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${user.username}</td>
-                    <td class="picked-team ${resultClass}">${pickedTeam}</td>
-                    <td>${user.totalScore}</td>
+                    <td class="picked-team">${user.pickedTeam || 'No Pick'}</td>
+                    <td>${user.score}</td>
                 `;
 
                 leaderboardBody.appendChild(row);
             });
         }
 
-        function getResultClass(result) {
-            switch (result) {
-                case 'win': return 'win-class';
-                case 'loss': return 'loss-class';
-                case 'pending': return 'pending-class';
-                default: return '';
-            }
-        }
-
         fetchLeaderboard(); // Fetch leaderboard data on page load
-        setInterval(fetchLeaderboard, 60000); // Refresh every minute
     </script>
 
 </body>
