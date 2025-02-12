@@ -277,6 +277,64 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+// Middleware to check if user is an admin
+const authenticateAdmin = async (req, res, next) => {
+  try {
+      const user = await User.findById(req.user.id);
+      if (!user || user.role !== 'admin') {
+          return res.status(403).json({ message: 'Access denied' });
+      }
+      next();
+  } catch (error) {
+      console.error('Admin auth error:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Route to set winning teams
+app.post('/api/set-winners', authenticateToken, authenticateAdmin, async (req, res) => {
+  try {
+      const { winners } = req.body;
+      if (!winners || winners.length === 0) {
+          return res.status(400).json({ message: 'No winners provided' });
+      }
+
+      // Store winning teams for the current week
+      const currentWeek = moment().isoWeek();
+      await mongoose.connection.db.collection('winners').updateOne(
+          { week: currentWeek },
+          { $set: { teams: winners } },
+          { upsert: true }
+      );
+
+      // Update user scores
+      const users = await User.find();
+      for (const user of users) {
+          const userPick = user.picks?.[currentWeek]?.team;
+          if (userPick && winners.includes(userPick)) {
+              user.totalScore = (user.totalScore || 0) + 1;
+              await user.save();
+          }
+      }
+
+      res.json({ message: `Winning teams updated for Week ${currentWeek}` });
+  } catch (error) {
+      console.error('Error setting winners:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route to fetch winning teams
+app.get('/api/get-winners', async (req, res) => {
+  try {
+      const currentWeek = moment().isoWeek();
+      const winnerData = await mongoose.connection.db.collection('winners').findOne({ week: currentWeek });
+      res.json(winnerData ? winnerData.teams : []);
+  } catch (error) {
+      console.error('Error fetching winners:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 // Server

@@ -124,44 +124,39 @@
     const authHeader = `Bearer ${token}`;
     let selectedTeam = null;
 
-    async function fetchTeams() {
-      try {
-        // Fetch user data
-        const userResponse = await fetch('/api/get-user', {
-          headers: { 'Authorization': authHeader },
+    async function fetchLeaderboard() {
+    try {
+        const response = await fetch('/api/leaderboard', {
+            headers: { 'Authorization': authHeader }
         });
-        const userData = await userResponse.json();
+        const users = await response.json();
 
-        const pickedTeams = userData.picks ? Object.values(userData.picks).map(pick => pick.team) : []; 
+        const winnersResponse = await fetch('/api/get-winners');
+        const winners = await winnersResponse.json();
 
-        // Fetch teams
-        const response = await fetch('/api/teams', {
-          headers: { 'Authorization': authHeader },
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        leaderboardBody.innerHTML = '';
+
+        users.forEach((user, index) => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${user.username}</td>
+                <td>${user.totalScore}</td>
+            `;
+
+            leaderboardBody.appendChild(row);
         });
-        const teams = await response.json();
 
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
-
-        teams.forEach((team) => {
-          const box = document.createElement('div');
-          const isPicked = pickedTeams.includes(team.name);
-
-          box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
-          box.textContent = `${team.name} (${team.status})`;
-
-          if (isPicked) {
-            box.classList.add('picked');
-          } else if (team.status === 'Available' || team.status === 'Scheduled') {
-            box.addEventListener('click', () => selectTeam(team.name, box));
-          }
-
-          container.appendChild(box);
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
+        document.getElementById('winning-teams').textContent = winners.join(', ') || 'No winners yet';
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
     }
+}
+
+fetchLeaderboard();
+
 
     function getStatusClass(status, isPicked) {
       if (isPicked) return 'picked';
