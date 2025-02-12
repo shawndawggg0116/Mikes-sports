@@ -93,14 +93,13 @@ const UserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   lastPickDate: { type: Date, default: null },
 
-  // 🔹 This stores picks by week
+  // 🔹 Store picks as an Object instead of a Map
   picks: { 
-    type: Map, 
-    of: { team: String, result: { type: String, default: "pending" } }, 
+    type: Object, 
     default: {} 
   },  
 
-  totalScore: { type: Number, default: 0 } // 🏆 Track user score
+  totalScore: { type: Number, default: 0 } 
 });
 
 const User = mongoose.model('User', UserSchema, 'users');
@@ -194,37 +193,41 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
 // Route to handle team selection
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   try {
+    console.log("🔹 Pick request received from user:", req.user.id);
+    
     const user = await User.findById(req.user.id);
     if (!user) {
-      console.error("User not found:", req.user.id);
+      console.error("❌ User not found:", req.user.id);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     console.log("✅ User found:", user.username);
-    console.log("📌 Received team pick:", req.body.team);
+    console.log("🔹 Received team pick:", req.body.team);
 
+    // Ensure 'picks' is initialized correctly
     if (!user.picks) {
-      user.picks = new Map(); // Ensure picks is properly initialized as a Map
+      user.picks = new Map(); // Using Map to avoid undefined errors
     }
 
     // Get the current week
-    const currentWeek = moment().isoWeek().toString(); // Convert to string for Map key
+    const currentWeek = moment().isoWeek().toString(); // Convert to string for safety
 
-    // Check if user already picked a team for this week
+    // Check if the user has already picked a team for this week
     if (user.picks.has(currentWeek)) {
       console.error("❌ User already picked a team this week:", user.picks.get(currentWeek));
       return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
     }
 
-    // ✅ Correctly set the user's pick
-    user.picks.set(currentWeek, { team: req.body.team, result: "pending" });
+    // Store the user's pick
+    user.picks[currentWeek] = { team: req.body.team, result: "pending" };
     user.lastPickDate = new Date();
 
+    console.log("🛠 Saving user pick to MongoDB...");
     await user.save();
 
-    console.log("✅ Team pick successful:", user.picks);
-
-    res.json({ success: true, message: 'Team selected successfully', picks: Array.from(user.picks) });
+    console.log("✅ Team pick saved successfully:", user.picks);
+    
+    res.json({ success: true, message: 'Team selected successfully' });
   } catch (error) {
     console.error("❌ Error selecting team:", error);
     res.status(500).json({ success: false, message: 'Server error' });
