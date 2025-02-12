@@ -181,20 +181,13 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
       if (!user) {
           return res.status(404).json({ message: 'User not found' });
       }
-
-      // Convert picks object into an array
-      const userPicks = Object.keys(user.picks).map(week => ({
-          week: parseInt(week),
-          team: user.picks[week].team,
-          result: user.picks[week].result
-      }));
-
-      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
+      res.json({ username: user.username, picks: user.picks, totalScore: user.totalScore });
   } catch (error) {
       console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Error on the server.' });
+      res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 // Route to handle team selection

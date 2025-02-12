@@ -125,42 +125,34 @@
 
     let selectedTeam = null;
 
-    async function fetchTeams() {
-      try {
-        const userResponse = await fetch('/api/get-user', {
-          headers: { 'Authorization': authHeader },
-        });
-        const userData = await userResponse.json();
+    async function fetchUserData() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('No token found, redirecting to login.');
+    window.location.href = '/'; // Redirect if not logged in
+    return;
+  }
 
-        const pickedTeams = userData.picks ? userData.picks.map(pick => pick.team) : [];
-
-        const response = await fetch('/api/teams', {
-          headers: { 'Authorization': authHeader },
-        });
-        const teams = await response.json();
-
-        const container = document.getElementById('teams');
-        container.innerHTML = '';
-
-        teams.forEach((team) => {
-          const box = document.createElement('div');
-          const isPicked = pickedTeams.includes(team.name);
-
-          box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
-          box.textContent = `${team.name} (${team.status})`;
-
-          if (isPicked) {
-            box.classList.add('picked');
-          } else if (team.status === 'Available' || team.status === 'Scheduled') {
-            box.addEventListener('click', () => selectTeam(team.name, box));
-          }
-
-          container.appendChild(box);
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
+  try {
+    const response = await fetch('/api/get-user', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data');
     }
+
+    const userData = await response.json();
+    console.log('User Data:', userData);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+  }
+}
+
 
     function getStatusClass(status, isPicked) {
       if (isPicked) return 'picked';
