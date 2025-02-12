@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -6,22 +7,83 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
+const http = require('http'); // ✅ Make sure to require 'http' BEFORE using it
+const { Server } = require('socket.io'); // ✅ Import Socket.io
 
 const app = express();
+const server = http.createServer(app); // ✅ Define the HTTP server correctly
+const io = new Server(server); // ✅ Attach Socket.io to the server
+
+
+
+
+
+// WebSocket logic
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('chat message', (msg) => {
+      io.emit('chat message', msg); // Broadcast message to all users
+  });
+
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
+  });
+});
+
+
+
+
+// Middleware to authenticate API key
+function authenticateAPIKey(req, res, next) {
+    const apiKeyReceived = req.headers['x-rapidapi-key'];
+    const validApiKey = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4OTY5OTE2LCJleHAiOjE3Mzg5NzM1MTZ9.vMpwVAo94u7bPS03H1EVigP0JEiCXXGYNa69fliX4NE"; // Your valid API key
+
+    if (apiKeyReceived === validApiKey) {
+        next(); // Proceed to the next middleware/function if the API key is valid
+    } else {
+        res.status(401).json({ error: "Unauthorized access: Invalid API key" });
+    }
+}
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(express.static(__dirname));
+
+app.use(express.static('public'));
+
+
+
+// Routes
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
+
+// Route for the Leaderboard page
+app.get('/leaderboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
+});
+
+// Route for the Rules page
+app.get('/rules', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'rules.html'));
+});
+
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://shawnbuckhannon:S8h7a6wN@mikes-sports0new.pn8ro.mongodb.net/nfl-picks-app?retryWrites=true&w=majority&appName=mikes-sports0new';
+const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
+const mongoUri = process.env.MONGO_URI;     // Use the MongoDB URI from the environment variable
+
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-// JWT Secret
-const JWT_SECRET = 'your_secret_key'; // Replace with your secure key
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // MongoDB Schemas and Models
 const UserSchema = new mongoose.Schema({
@@ -34,7 +96,8 @@ const User = mongoose.model('User', UserSchema, 'users');
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer token
   if (!token) return res.status(403).json({ message: 'No token provided' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -43,6 +106,25 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+// Route to fetch user-specific data
+app.get('/api/user-data', authenticateToken, async (req, res) => {
+  try {
+    // Assuming req.user.id is available from JWT
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Send specific user data to the frontend
+    res.json({
+      username: user.username,
+      pickedTeams: user.pickedTeams
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 // User Registration
 app.post('/api/register', async (req, res) => {
@@ -78,21 +160,20 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Route to fetch user data
-app.get('/api/get-user', async (req, res) => {
+
+
+// Route to fetch user data using User.findById
+app.get('/api/get-user', authenticateToken, async (req, res) => {
   try {
-    const token = req.headers.authorization;
-    if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.id });
-
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    res.json({ success: true, selectedTeam: user.selectedTeam });
+      const user = await User.findById(req.user.id);  // Updated to use async/await
+      if (!user) {
+          res.status(404).json({ message: 'User not found' });
+      } else {
+          res.json({ pickedTeams: user.pickedTeams });
+      }
   } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Error on the server.' });
   }
 });
 
@@ -123,10 +204,17 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     const teamsCollection = mongoose.connection.db.collection('teams');
     const gamesCollection = mongoose.connection.db.collection('games');
 
+    const user = await User.findById(req.user.id);
+    const pickedTeams = user ? user.pickedTeams || [] : [];
+
     const allTeams = await teamsCollection.find().toArray();
     const currentGames = await gamesCollection.find().toArray();
 
     const mergedTeams = allTeams.map((team) => {
+      if (pickedTeams.includes(team.name)) {
+        return { ...team, status: 'Picked' }; // Set status to "Picked"
+      }
+
       const game = currentGames.find(
         (g) => g.homeTeam === team.name || g.awayTeam === team.name
       );
@@ -136,12 +224,11 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
         const startTime = moment.tz(game.startTime, 'America/New_York'); // Game start time in EST
         const endTime = moment.tz(game.endTime, 'America/New_York'); // Game end time in EST
 
-        const gameStatus =
-          now.isBetween(startTime, endTime)
-            ? "Playing"
-            : now.isAfter(endTime)
-            ? "Completed"
-            : "Scheduled";
+        const gameStatus = now.isBetween(startTime, endTime)
+          ? 'Playing'
+          : now.isAfter(endTime)
+          ? 'Completed'
+          : 'Scheduled';
 
         return {
           ...team,
@@ -161,6 +248,7 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
+
 // Serve the main page for the root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -176,6 +264,9 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+
+
 // Server
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
