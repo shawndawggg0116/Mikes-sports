@@ -32,44 +32,6 @@ io.on('connection', (socket) => {
 });
 
 
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      console.error("❌ User not found:", req.user.id);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    console.log("✅ User found:", user.username);
-    console.log("📌 Received team pick:", req.body.team);
-
-    // Ensure 'picks' is initialized correctly
-    if (!user.picks) {
-      user.picks = {}; // Using an object to store picks
-    }
-
-    // Get the current week number
-    const currentWeek = moment().isoWeek().toString(); // Store week as a string
-
-    // Check if the user has already picked a team for this week
-    if (user.picks[currentWeek]) {
-      console.error("❌ User already picked a team this week:", user.picks[currentWeek]);
-      return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
-    }
-
-    // Store the pick
-    user.picks[currentWeek] = { team: req.body.team, result: "pending" };
-    user.lastPickDate = new Date();
-    await user.save();
-
-    console.log("✅ Team pick saved successfully:", user.picks);
-
-    res.json({ success: true, message: 'Team selected successfully', picks: user.picks });
-  } catch (error) {
-    console.error("❌ Error selecting team:", error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
 
 
 // Middleware to authenticate API key
@@ -322,6 +284,44 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error("❌ User not found:", req.user.id);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    console.log("✅ User found:", user.username);
+    console.log("📌 Received team pick:", req.body.team);
+
+    // Ensure 'picks' is initialized correctly
+    if (!user.picks) {
+      user.picks = {}; // Using an object to store picks
+    }
+
+    // Get the current week number
+    const currentWeek = moment().isoWeek().toString(); // Store week as a string
+
+    // Check if the user has already picked a team for this week
+    if (user.picks[currentWeek]) {
+      console.error("❌ User already picked a team this week:", user.picks[currentWeek]);
+      return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
+    }
+
+    // Store the pick
+    user.picks[currentWeek] = { team: req.body.team, result: "pending" };
+    user.lastPickDate = new Date();
+    await user.save();
+
+    console.log("✅ Team pick saved successfully:", user.picks);
+
+    res.json({ success: true, message: 'Team selected successfully', picks: user.picks });
+  } catch (error) {
+    console.error("❌ Error selecting team:", error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 
 // Server
