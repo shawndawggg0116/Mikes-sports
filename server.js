@@ -75,6 +75,18 @@ app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
+const authenticateAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 
 // MongoDB connection
@@ -362,18 +374,6 @@ app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (
   }
 });
 
-const authenticateAdmin = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    next();
-  } catch (error) {
-    console.error('Admin auth error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 
 
 // Server
