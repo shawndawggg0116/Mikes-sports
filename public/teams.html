@@ -121,34 +121,25 @@
     if (!token) {
       window.location.href = '/'; 
     }
-
     const authHeader = `Bearer ${token}`;
     let selectedTeam = null;
 
     async function fetchTeams() {
       try {
+        // Fetch user data
         const userResponse = await fetch('/api/get-user', {
           headers: { 'Authorization': authHeader },
         });
-
-        if (!userResponse.ok) {
-          console.error('Failed to fetch user data');
-          return;
-        }
-
         const userData = await userResponse.json();
+
         const pickedTeams = userData.picks ? Object.values(userData.picks).map(pick => pick.team) : []; 
 
+        // Fetch teams
         const response = await fetch('/api/teams', {
           headers: { 'Authorization': authHeader },
         });
-
-        if (!response.ok) {
-          console.error('Failed to fetch teams');
-          return;
-        }
-
         const teams = await response.json();
+
         const container = document.getElementById('teams');
         container.innerHTML = '';
 
@@ -202,12 +193,6 @@
           },
           body: JSON.stringify({ team: selectedTeam }),
         });
-
-        if (!response.ok) {
-          console.error('Error picking team');
-          return;
-        }
-
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
