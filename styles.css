@@ -44,33 +44,31 @@
   opacity: 0.9;
 }
 
-/* Sidebar Navigation */
+/* Navbar Styles (Horizontal) */
 .navbar {
   position: fixed;
-  left: 0;
   top: 0;
-  width: 200px; /* Adjust width */
-  height: 100%;
+  left: 0;
+  width: 100%;
   background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
-  padding-top: 20px;
+  padding: 10px 0;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-/* Style for the navbar list */
+/* Ensure items are in a row */
 .navbar ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  width: 100%;
+  display: flex;
+  justify-content: center; /* Centers items */
+  gap: 20px; /* Space between items */
 }
 
+/* Navbar items should be inline */
 .navbar ul li {
-  width: 100%;
+  display: inline-block;
 }
-
 
 /* Navbar link styles */
 .navbar ul li a {
@@ -79,37 +77,19 @@
   text-decoration: none;
   font-size: 18px;
   font-weight: bold;
-  padding: 15px;
+  padding: 15px 20px;
   text-align: center;
-  transition: background 0.3s;
+  transition: background 0.3s, border-radius 0.3s;
 }
 
-/* Navbar hover effect */
+/* Hover effect */
 .navbar ul li a:hover {
   background-color: #555;
+  border-radius: 5px;
 }
 
-/* Push main content to the right */
+/* Push content down so it doesn't hide under the navbar */
 body {
-  margin-left: 220px; /* Shift content to make space for navbar */
-  padding: 20px;
-}
-
-
-/* Mobile Responsive Sidebar */
-@media (max-width: 768px) {
-  .navbar {
-      width: 160px; /* Smaller width for mobile */
-  }
-
-  body {
-      margin-left: 180px; /* Adjust margin */
-  }
-}
-
-
-/* Ensure content is pushed down for better spacing */
-body {
-  padding-top: 20px;
+  padding-top: 60px; /* Adjust based on navbar height */
 }
 
