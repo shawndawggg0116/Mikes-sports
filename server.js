@@ -89,9 +89,19 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null }
+  role: { type: String, default: "user" },
+  createdAt: { type: Date, default: Date.now },
+  lastPickDate: { type: Date, default: null },
+
+  // 🔹 Store picks as an Object with week numbers
+  picks: { 
+    type: Object, 
+    default: {} 
+  },  
+
+  totalScore: { type: Number, default: 0 } 
 });
+
 const User = mongoose.model('User', UserSchema, 'users');
 
 // JWT Authentication Middleware
@@ -169,12 +179,21 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
       if (!user) {
           return res.status(404).json({ message: 'User not found' });
       }
-      res.json({ username: user.username, picks: user.picks, totalScore: user.totalScore });
+
+      // Convert picks object into an array
+      const userPicks = Object.keys(user.picks).map(week => ({
+          week: parseInt(week),
+          team: user.picks[week].team,
+          result: user.picks[week].result
+      }));
+
+      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
   } catch (error) {
       console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: 'Error on the server.' });
   }
 });
+
 
 // Route to handle team selection
 app.get('/api/get-user', authenticateToken, async (req, res) => {
