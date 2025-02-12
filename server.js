@@ -32,28 +32,6 @@ io.on('connection', (socket) => {
 });
 
 
-
-
-// Middleware to authenticate API key
-function authenticateAPIKey(req, res, next) {
-    const apiKeyReceived = req.headers['x-rapidapi-key'];
-    const validApiKey = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4OTY5OTE2LCJleHAiOjE3Mzg5NzM1MTZ9.vMpwVAo94u7bPS03H1EVigP0JEiCXXGYNa69fliX4NE"; // Your valid API key
-
-    if (apiKeyReceived === validApiKey) {
-        next(); // Proceed to the next middleware/function if the API key is valid
-    } else {
-        res.status(401).json({ error: "Unauthorized access: Invalid API key" });
-    }
-}
-
-// Middleware
-app.use(bodyParser.json());
-app.use(cors());
-
-app.use(express.static(__dirname));
-
-app.use(express.static('public'));
-
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -92,6 +70,28 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
+
+// Middleware to authenticate API key
+function authenticateAPIKey(req, res, next) {
+    const apiKeyReceived = req.headers['x-rapidapi-key'];
+    const validApiKey = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGZiMjYxYmU3MTcwYzFkNTUwNzk3ZiIsInVzZXJuYW1lIjoic2hhd24xIiwiaWF0IjoxNzM4OTY5OTE2LCJleHAiOjE3Mzg5NzM1MTZ9.vMpwVAo94u7bPS03H1EVigP0JEiCXXGYNa69fliX4NE"; // Your valid API key
+
+    if (apiKeyReceived === validApiKey) {
+        next(); // Proceed to the next middleware/function if the API key is valid
+    } else {
+        res.status(401).json({ error: "Unauthorized access: Invalid API key" });
+    }
+}
+
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use(express.static(__dirname));
+
+app.use(express.static('public'));
+
 
 
 // Routes
