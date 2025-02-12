@@ -16,46 +16,6 @@
             text-align: center;
         }
 
-        /* Navbar */
-        .navbar {
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 10px 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-            text-align: center;
-        }
-
-        .navbar ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .navbar ul li {
-            display: inline-block;
-        }
-
-        .navbar ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 10px 15px;
-            display: block;
-            transition: background 0.3s, border-radius 0.3s;
-        }
-
-        .navbar ul li a:hover {
-            background-color: #555;
-            border-radius: 5px;
-        }
-
         /* Leaderboard Container */
         .leaderboard-container {
             max-width: 90%;
@@ -95,12 +55,6 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* Highlight the user's pick */
-        .picked-team {
-            font-weight: bold;
-            color: #00ff00; /* Green for visibility */
-        }
-
         /* Responsive Styling */
         @media (max-width: 768px) {
             .leaderboard-container {
@@ -137,8 +91,8 @@
                 <tr>
                     <th>Rank</th>
                     <th>User</th>
-                    <th>Picked Team (Week <span id="week-number">1</span>)</th>
                     <th>Score</th>
+                    <th>Winning Teams of the Week</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
@@ -183,8 +137,8 @@
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${user.username}</td>
-                    <td class="picked-team">${user.pickedTeam || 'No Pick'}</td>
                     <td>${user.score}</td>
+                    <td>${user.winningTeams ? user.winningTeams.join(', ') : 'No Data'}</td>
                 `;
 
                 leaderboardBody.appendChild(row);
