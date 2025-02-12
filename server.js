@@ -190,26 +190,47 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
 
 
 
+
 // Route to handle team selection
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    if (user.pickedTeams.includes(req.body.team)) {
-      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
+    if (!user) {
+      console.error("User not found:", req.user.id);
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.pickedTeams.push(req.body.team);
+    console.log("User found:", user.username);
+    console.log("Received team pick:", req.body.team);
+
+    // Ensure 'picks' is initialized correctly
+    if (!user.picks) {
+      user.picks = {};
+    }
+
+    // Get the current week
+    const currentWeek = moment().isoWeek();
+
+    // Check if the user has already picked a team for this week
+    if (user.picks[currentWeek]) {
+      console.error("User already picked a team this week:", user.picks[currentWeek]);
+      return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
+    }
+
+    // Store the user's pick
+    user.picks[currentWeek] = { team: req.body.team, result: "pending" };
     user.lastPickDate = new Date();
     await user.save();
 
+    console.log("Team pick successful:", user.picks);
+
     res.json({ success: true, message: 'Team selected successfully' });
   } catch (error) {
-    console.error('Error selecting team:', error);
+    console.error("Error selecting team:", error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
