@@ -89,10 +89,22 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null }
+  role: { type: String, default: "user" }, 
+  createdAt: { type: Date, default: Date.now },
+  lastPickDate: { type: Date, default: null },
+
+  // 🔹 This stores picks by week
+  picks: { 
+    type: Map, 
+    of: { team: String, result: { type: String, default: "pending" } }, 
+    default: {} 
+  },  
+
+  totalScore: { type: Number, default: 0 } // 🏆 Track user score
 });
+
 const User = mongoose.model('User', UserSchema, 'users');
+
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
