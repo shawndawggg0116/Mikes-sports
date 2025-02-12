@@ -4,109 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
-  <link rel="stylesheet" href="/styles.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #1e1e1e;
-      color: white;
-    }
-    .admin-container {
-      max-width: 600px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: rgba(0, 0, 0, 0.7);
-      border-radius: 10px;
-    }
-    .team-checkbox {
-      display: block;
-      margin: 10px;
-      font-size: 18px;
-    }
-    #submit-winners {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #f2a900;
-      border: none;
-      cursor: pointer;
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 0; 
+      padding: 20px; 
+      background-color: #d2b48c; /* Light brown */
+      color: black; 
     }
   </style>
 </head>
 <body>
-
-  <nav class="navbar">
-    <ul>
-      <li><a href="/teams">Teams</a></li>
-      <li><a href="/leaderboard">Leaderboard</a></li>
-      <li><a href="/rules">Rules</a></li>
-      <li><a href="/chat">Chat Room</a></li>
-      <li><a href="/admin">Admin</a></li>
-    </ul>
-  </nav>
-
-  <div class="admin-container">
-    <h1>Admin Panel - Select Winning Teams</h1>
-    <form id="admin-form">
-      <div id="teams-list"></div>
-      <button type="submit" id="submit-winners">Submit Winners</button>
-    </form>
-  </div>
-
-  <script>
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/';
-    }
-
-    async function fetchTeams() {
-      try {
-        const response = await fetch('/api/teams', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const teams = await response.json();
-        const container = document.getElementById('teams-list');
-        container.innerHTML = '';
-
-        teams.forEach(team => {
-          const label = document.createElement('label');
-          label.className = 'team-checkbox';
-          label.innerHTML = `<input type="checkbox" value="${team.name}"> ${team.name}`;
-          container.appendChild(label);
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      }
-    }
-
-    document.getElementById('admin-form').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const selectedTeams = Array.from(document.querySelectorAll('.team-checkbox input:checked'))
-        .map(input => input.value);
-
-      if (selectedTeams.length === 0) return alert('Select at least one winning team.');
-
-      try {
-        const response = await fetch('/api/set-winners', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ winners: selectedTeams })
-        });
-
-        const result = await response.json();
-        alert(result.message);
-        fetchTeams();
-      } catch (error) {
-        console.error('Error submitting winners:', error);
-      }
-    });
-
-    fetchTeams();
-  </script>
-
+  <h1>Admin Panel</h1>
+  <p>Welcome, Admin!</p>
 </body>
 </html>

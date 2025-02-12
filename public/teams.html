@@ -183,30 +183,31 @@
     }
 
     document.getElementById('submit-btn').addEventListener('click', async () => {
-      if (!selectedTeam) return;
-      try {
-        const response = await fetch('/api/pick-team', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-          },
-          body: JSON.stringify({ team: selectedTeam }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          alert('Team picked successfully!');
-          fetchTeams();
-          selectedTeam = null;
-          document.getElementById('submit-btn').classList.remove('active');
-          document.getElementById('submit-btn').disabled = true;
-        } else {
-          alert(result.message);
-        }
-      } catch (error) {
-        console.error('Error picking team:', error);
-      }
+  if (!selectedTeam) return;
+
+  try {
+    const response = await fetch('/api/pick-team', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Ensure the token is sent
+      },
+      body: JSON.stringify({ team: selectedTeam }),
     });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert('Team picked successfully!');
+      fetchTeams(); // Refresh the team list
+    } else {
+      alert(result.message); // Show error if pick fails
+    }
+  } catch (error) {
+    console.error('Error picking team:', error);
+  }
+});
+
 
     fetchTeams();
     setInterval(fetchTeams, 60000);

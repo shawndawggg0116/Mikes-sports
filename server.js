@@ -156,21 +156,32 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+
 // User Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token, username: user.username });
+
+    const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({ 
+      success: true, 
+      token, 
+      username: user.username, 
+      role: user.role // Send user role
+    });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 
@@ -266,6 +277,11 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     console.error('Error fetching teams:', error);
     res.status(500).send('Error fetching teams');
   }
+});
+
+// Serve Admin Page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 
