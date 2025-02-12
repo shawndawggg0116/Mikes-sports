@@ -30,6 +30,11 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static(__dirname));
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/teams', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teams.html'));
+});
 
 // MongoDB Connection
 const JWT_SECRET = process.env.JWT_SECRET;
