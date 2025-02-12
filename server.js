@@ -165,15 +165,14 @@ app.post('/api/login', async (req, res) => {
 // Route to fetch user data using User.findById
 app.get('/api/get-user', authenticateToken, async (req, res) => {
   try {
-      const user = await User.findById(req.user.id);  // Updated to use async/await
+      const user = await User.findById(req.user.id);
       if (!user) {
-          res.status(404).json({ message: 'User not found' });
-      } else {
-          res.json({ pickedTeams: user.pickedTeams });
+          return res.status(404).json({ message: 'User not found' });
       }
+      res.json({ username: user.username, picks: user.picks, totalScore: user.totalScore });
   } catch (error) {
       console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Error on the server.' });
+      res.status(500).json({ message: 'Server error' });
   }
 });
 
