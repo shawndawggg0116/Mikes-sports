@@ -92,15 +92,17 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, default: "user" },
   createdAt: { type: Date, default: Date.now },
   lastPickDate: { type: Date, default: null },
-
-  // 🔹 Store picks as an Object with week numbers
-  picks: { 
-    type: Object, 
-    default: {} 
-  },  
-
-  totalScore: { type: Number, default: 0 } 
+  
+  // ✅ Picks stored as an array
+  picks: [{
+    week: Number,
+    team: String,
+    result: { type: String, default: "pending" }
+  }],
+  
+  totalScore: { type: Number, default: 0 }
 });
+
 
 const User = mongoose.model('User', UserSchema, 'users');
 
@@ -180,19 +182,17 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
           return res.status(404).json({ message: 'User not found' });
       }
 
-      // Convert picks object into an array
-      const userPicks = Object.keys(user.picks).map(week => ({
-          week: parseInt(week),
-          team: user.picks[week].team,
-          result: user.picks[week].result
-      }));
+      // Ensure picks are sorted by week
+      const userPicks = user.picks.sort((a, b) => a.week - b.week);
 
       res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
   } catch (error) {
       console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Error on the server.' });
+      res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 
 
 // Route to handle team selection
@@ -295,22 +295,19 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
     console.log("✅ User found:", user.username);
     console.log("📌 Received team pick:", req.body.team);
 
-    // Ensure 'picks' is initialized correctly
-    if (!user.picks) {
-      user.picks = {}; // Using an object to store picks
-    }
-
     // Get the current week number
-    const currentWeek = moment().isoWeek().toString(); // Store week as a string
+    const currentWeek = moment().isoWeek();
 
     // Check if the user has already picked a team for this week
-    if (user.picks[currentWeek]) {
-      console.error("❌ User already picked a team this week:", user.picks[currentWeek]);
+    const existingPickIndex = user.picks.findIndex(p => p.week === currentWeek);
+    
+    if (existingPickIndex !== -1) {
+      console.error("❌ User already picked a team this week:", user.picks[existingPickIndex]);
       return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
     }
 
-    // Store the pick
-    user.picks[currentWeek] = { team: req.body.team, result: "pending" };
+    // Store the pick as a new array entry
+    user.picks.push({ week: currentWeek, team: req.body.team, result: "pending" });
     user.lastPickDate = new Date();
     await user.save();
 
