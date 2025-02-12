@@ -337,6 +337,45 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 });
 
 
+app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, 'username role _id');
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    res.json({ success: true, message: `User '${deletedUser.username}' deleted successfully.` });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+const authenticateAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
 // Server
 
 const PORT = process.env.PORT || 5000;

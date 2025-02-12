@@ -13,10 +13,135 @@
       background-color: #d2b48c; /* Light brown */
       color: black; 
     }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: darkred;
+      color: white;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background-color: red;
+    }
   </style>
 </head>
 <body>
   <h1>Admin Panel</h1>
-  <p>Welcome, Admin!</p>
+  
+  <div class="container">
+    <h3>Register User</h3>
+    <label for="newUsername">Username:</label>
+    <input type="text" id="newUsername" placeholder="Enter username">
+    
+    <label for="newPassword">Password:</label>
+    <input type="password" id="newPassword" placeholder="Enter password">
+    
+    <label for="userRole">Role:</label>
+    <select id="userRole">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+    
+    <button onclick="registerUser()">Register</button>
+  </div>
+
+  <div class="container">
+    <h3>Delete User</h3>
+    <label for="userList">Select User:</label>
+    <select id="userList"></select>
+    <button onclick="deleteUser()">Delete</button>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/'; // Redirect if not logged in
+    }
+
+    const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // Register a new user
+    async function registerUser() {
+      const username = document.getElementById('newUsername').value;
+      const password = document.getElementById('newPassword').value;
+      const role = document.getElementById('userRole').value;
+
+      if (!username || !password) {
+        alert("Please enter username and password.");
+        return;
+      }
+
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify({ username, password, role })
+      });
+
+      const result = await response.json();
+      alert(result.message);
+      if (result.success) {
+        loadUsers(); // Refresh user list
+      }
+    }
+
+    // Fetch users to populate dropdown
+    async function loadUsers() {
+      const response = await fetch('/api/users', { headers: authHeader });
+      const users = await response.json();
+      const userList = document.getElementById('userList');
+      userList.innerHTML = ''; // Clear existing options
+
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user._id;
+        option.textContent = `${user.username} (${user.role})`;
+        userList.appendChild(option);
+      });
+    }
+
+    // Delete user
+    async function deleteUser() {
+      const userId = document.getElementById('userList').value;
+      if (!userId) return alert("No user selected.");
+
+      const response = await fetch(`/api/delete-user/${userId}`, {
+        method: 'DELETE',
+        headers: authHeader
+      });
+
+      const result = await response.json();
+      alert(result.message);
+      if (result.success) {
+        loadUsers(); // Refresh list
+      }
+    }
+
+    // Load users on page load
+    loadUsers();
+  </script>
+
 </body>
 </html>
