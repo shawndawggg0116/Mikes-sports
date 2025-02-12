@@ -121,42 +121,56 @@
     if (!token) {
       window.location.href = '/'; 
     }
+
     const authHeader = `Bearer ${token}`;
     let selectedTeam = null;
 
-    async function fetchLeaderboard() {
-    try {
-        const response = await fetch('/api/leaderboard', {
-            headers: { 'Authorization': authHeader }
-        });
-        const users = await response.json();
-
-        const winnersResponse = await fetch('/api/get-winners');
-        const winners = await winnersResponse.json();
-
-        const leaderboardBody = document.getElementById('leaderboard-body');
-        leaderboardBody.innerHTML = '';
-
-        users.forEach((user, index) => {
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${user.username}</td>
-                <td>${user.totalScore}</td>
-            `;
-
-            leaderboardBody.appendChild(row);
+    async function fetchTeams() {
+      try {
+        const userResponse = await fetch('/api/get-user', {
+          headers: { 'Authorization': authHeader },
         });
 
-        document.getElementById('winning-teams').textContent = winners.join(', ') || 'No winners yet';
-    } catch (error) {
-        console.error('Error fetching leaderboard:', error);
+        if (!userResponse.ok) {
+          console.error('Failed to fetch user data');
+          return;
+        }
+
+        const userData = await userResponse.json();
+        const pickedTeams = userData.picks ? Object.values(userData.picks).map(pick => pick.team) : []; 
+
+        const response = await fetch('/api/teams', {
+          headers: { 'Authorization': authHeader },
+        });
+
+        if (!response.ok) {
+          console.error('Failed to fetch teams');
+          return;
+        }
+
+        const teams = await response.json();
+        const container = document.getElementById('teams');
+        container.innerHTML = '';
+
+        teams.forEach((team) => {
+          const box = document.createElement('div');
+          const isPicked = pickedTeams.includes(team.name);
+
+          box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
+          box.textContent = `${team.name} (${team.status})`;
+
+          if (isPicked) {
+            box.classList.add('picked');
+          } else if (team.status === 'Available' || team.status === 'Scheduled') {
+            box.addEventListener('click', () => selectTeam(team.name, box));
+          }
+
+          container.appendChild(box);
+        });
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      }
     }
-}
-
-fetchLeaderboard();
-
 
     function getStatusClass(status, isPicked) {
       if (isPicked) return 'picked';
@@ -188,6 +202,12 @@ fetchLeaderboard();
           },
           body: JSON.stringify({ team: selectedTeam }),
         });
+
+        if (!response.ok) {
+          console.error('Error picking team');
+          return;
+        }
+
         const result = await response.json();
         if (result.success) {
           alert('Team picked successfully!');
