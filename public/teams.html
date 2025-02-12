@@ -17,14 +17,14 @@
 
     .team-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Responsive grid */
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 10px;
       padding: 10px;
     }
 
     .team-box {
       padding: 15px;
-      border: 2px solid #ffffff; /* White border for contrast */
+      border: 2px solid #ffffff;
       border-radius: 10px;
       text-transform: capitalize;
       font-size: 18px;
@@ -39,7 +39,6 @@
       box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
     }
 
-    /* Ensure contrast between text and background */
     .green {
       background-color: #008000;
       color: white;
@@ -68,7 +67,6 @@
       opacity: 0.9;
     }
 
-    /* Adjust submit button */
     #submit-btn {
       margin-top: 20px;
       padding: 15px 30px;
@@ -86,35 +84,25 @@
       cursor: pointer;
     }
 
-    /* Flashing effect for "Playing" status */
     @keyframes flash {
-      0% {
-        opacity: 0.5;
-      }
-      100% {
-        opacity: 1;
-      }
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
 
-    /* Make the grid responsive */
     @media (max-width: 768px) {
       .team-container {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
     @media (max-width: 480px) {
       .team-container {
-        grid-template-columns: repeat(1, 1fr); /* 1 column on very small screens */
+        grid-template-columns: repeat(1, 1fr);
       }
     }
-
-    
-
   </style>
 </head>
 <body>
-  <!-- Navigation Bar -->
   <nav class="navbar">
     <ul>
         <li><a href="/teams">Teams</a></li>
@@ -122,17 +110,16 @@
         <li><a href="/rules">Rules</a></li>
         <li><a href="/chat">Chat Room</a></li>
     </ul>
-</nav>
-
+  </nav>
 
   <h1>Pick Your NFL Team</h1>
   <div class="team-container" id="teams"></div>
   <button id="submit-btn" disabled>Submit Pick</button>
-  
+
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/'; // Redirect to login if not logged in
+      window.location.href = '/'; 
     }
     const authHeader = `Bearer ${token}`;
 
@@ -140,14 +127,13 @@
 
     async function fetchTeams() {
       try {
-        // Fetch user data
         const userResponse = await fetch('/api/get-user', {
           headers: { 'Authorization': authHeader },
         });
         const userData = await userResponse.json();
-        const pickedTeams = userData.pickedTeams || [];
 
-        // Fetch teams
+        const pickedTeams = userData.picks ? userData.picks.map(pick => pick.team) : [];
+
         const response = await fetch('/api/teams', {
           headers: { 'Authorization': authHeader },
         });
@@ -163,7 +149,6 @@
           box.className = `team-box ${getStatusClass(team.status, isPicked)}`;
           box.textContent = `${team.name} (${team.status})`;
 
-          // Add "picked" logic
           if (isPicked) {
             box.classList.add('picked');
           } else if (team.status === 'Available' || team.status === 'Scheduled') {
@@ -183,7 +168,7 @@
         case 'Available': return 'green';
         case 'Playing': return 'orange';
         case 'Completed': return 'grey';
-        case 'Scheduled': return 'green'; // Adjusted as per "scheduled"
+        case 'Scheduled': return 'green';
         default: return '';
       }
     }
@@ -222,10 +207,8 @@
       }
     });
 
-
-    
     fetchTeams();
-    setInterval(fetchTeams, 60000); // Refresh every minute
+    setInterval(fetchTeams, 60000);
   </script>
 </body>
 </html>
