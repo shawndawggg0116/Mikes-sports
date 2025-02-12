@@ -14,6 +14,10 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
+
+
+
+
 // WebSocket logic
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -263,5 +267,6 @@ app.get('*', (req, res) => {
 
 
 // Server
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
