@@ -177,25 +177,27 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
 });
 
 // Route to handle team selection
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
+app.get('/api/get-user', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+      const user = await User.findById(req.user.id);
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
 
-    if (user.pickedTeams.includes(req.body.team)) {
-      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
-    }
+      // Convert picks object into an array
+      const userPicks = Object.keys(user.picks).map(week => ({
+          week: parseInt(week),
+          team: user.picks[week].team,
+          result: user.picks[week].result
+      }));
 
-    user.pickedTeams.push(req.body.team);
-    user.lastPickDate = new Date();
-    await user.save();
-
-    res.json({ success: true, message: 'Team selected successfully' });
+      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
   } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Error on the server.' });
   }
 });
+
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
