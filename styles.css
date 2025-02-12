@@ -1,117 +1,115 @@
 /* Glowing orange for "Playing" */
 .playing {
-    background-color: orange;
-    color: white;
-    animation: glow 2s infinite;
-  }
-  
-  @keyframes glow {
-    0% {
+  background-color: orange;
+  color: white;
+  animation: glow 2s infinite;
+}
+
+@keyframes glow {
+  0% {
       box-shadow: 0 0 5px orange;
-    }
-    50% {
+  }
+  50% {
       box-shadow: 0 0 15px orange;
-    }
-    100% {
+  }
+  100% {
       box-shadow: 0 0 5px orange;
-    }
   }
-  
-  /* Grey for "Completed" */
-  .completed {
-    background-color: grey;
-    color: white;
-    text-decoration: line-through;
-  }
-  
-  /* Green for "Available" */
-  .available {
-    background-color: green;
-    color: white;
-  }
-  
-  .scheduled {
-    background-color: darkgreen;
-    color: white; /* Optional: to ensure text is readable */
-  }
-  
-  .picked {
-    background-color: red !important; /* Override other styles */
-    color: white !important;
-    pointer-events: none;
-    opacity: 0.9;
 }
 
+/* Grey for "Completed" */
+.completed {
+  background-color: grey;
+  color: white;
+  text-decoration: line-through;
+}
 
-/* Navbar Styles */
+/* Green for "Available" */
+.available {
+  background-color: green;
+  color: white;
+}
+
+/* Dark green for "Scheduled" */
+.scheduled {
+  background-color: darkgreen;
+  color: white;
+}
+
+/* Picked teams styling */
+.picked {
+  background-color: red !important;
+  color: white !important;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Sidebar Navigation */
 .navbar {
-  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black */
-  padding: 10px 0;
   position: fixed;
-  top: 0;
   left: 0;
-  width: 100%;
+  top: 0;
+  width: 200px; /* Adjust width */
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+  padding-top: 20px;
   z-index: 1000;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Add this padding to push content down */
-body {
-  padding-top: 60px; /* Adjust this value based on navbar height */
-}
-
-
+/* Style for the navbar list */
 .navbar ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  gap: 15px; /* Adds spacing between links */
+  width: 100%;
 }
 
 .navbar ul li {
-  display: inline;
+  width: 100%;
 }
 
+
+/* Navbar link styles */
 .navbar ul li a {
+  display: block;
   color: white;
   text-decoration: none;
   font-size: 18px;
   font-weight: bold;
-  padding: 10px 15px;
-  display: block;
-  transition: background 0.3s, border-radius 0.3s;
+  padding: 15px;
+  text-align: center;
+  transition: background 0.3s;
 }
 
+/* Navbar hover effect */
 .navbar ul li a:hover {
   background-color: #555;
-  border-radius: 5px;
 }
 
-/* Mobile-Friendly Navbar */
+/* Push main content to the right */
+body {
+  margin-left: 220px; /* Shift content to make space for navbar */
+  padding: 20px;
+}
+
+
+/* Mobile Responsive Sidebar */
 @media (max-width: 768px) {
   .navbar {
-      padding: 5px 0;
+      width: 160px; /* Smaller width for mobile */
   }
 
-  .navbar ul {
-      flex-direction: column;
-      align-items: center;
-  }
-
-  .navbar ul li {
-      margin: 5px 0;
-  }
-
-  .navbar ul li a {
-      font-size: 16px;
-      padding: 8px 12px;
+  body {
+      margin-left: 180px; /* Adjust margin */
   }
 }
 
-/* Adjust body padding to prevent content from hiding under navbar */
+
+/* Ensure content is pushed down for better spacing */
 body {
-  padding-top: 50px;
+  padding-top: 20px;
 }
 
