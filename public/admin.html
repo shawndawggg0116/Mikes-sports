@@ -110,21 +110,21 @@
       }
     }
 
-    // Fetch users to populate dropdown
-    async function loadUsers() {
-      const response = await fetch('/api/users', { headers: authHeader });
-      const users = await response.json();
-      const userList = document.getElementById('userList');
-      userList.innerHTML = ''; // Clear existing options
-
-      users.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user._id;
-        option.textContent = `${user.username} (${user.role})`;
-        userList.appendChild(option);
-      });
+    const authenticateAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
     }
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
+
+    // Fetch users to populate dropdown
     async function fetchUsers() {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -137,9 +137,13 @@
       headers: { 'Authorization': `Bearer ${token}` },
     });
 
+    if (!response.ok) throw new Error("Failed to fetch users");
+
     const users = await response.json();
-    const userDropdown = document.getElementById('userList'); // Ensure correct ID is used
-    userDropdown.innerHTML = ""; // Clear previous options
+    console.log("Fetched Users:", users); // Debugging log
+
+    const userDropdown = document.getElementById('userList'); 
+    userDropdown.innerHTML = ""; 
 
     if (users.length === 0) {
       userDropdown.innerHTML = `<option value="">No users found</option>`;
@@ -148,8 +152,8 @@
 
     users.forEach(user => {
       const option = document.createElement('option');
-      option.value = user._id; // Set user ID as value
-      option.textContent = `${user.username} (${user.role})`; // Show username and role
+      option.value = user._id;
+      option.textContent = `${user.username} (${user.role})`;
       userDropdown.appendChild(option);
     });
   } catch (error) {
@@ -160,6 +164,7 @@
 
 // Fetch users when the page loads
 fetchUsers();
+
 
 
 

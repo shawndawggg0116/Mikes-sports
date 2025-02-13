@@ -351,13 +351,14 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 
 app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, 'username role _id'); // Fetch only necessary fields
+    const users = await User.find({}, 'username role'); // Fetch only needed fields
     res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
