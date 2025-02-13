@@ -71,12 +71,13 @@
   <div class="container">
     <h3>Delete User</h3>
     <label for="userList">Select User:</label>
-    <select id="userList"></select>
-    <option value="">Loading users...</option>
-  </select>
+    <select id="userList">
+      <option value="">Loading users...</option>
+    </select>
     <button onclick="deleteUser()">Delete</button>
   </div>
-
+  
+  
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -135,9 +136,9 @@
     const response = await fetch('/api/users', {
       headers: { 'Authorization': `Bearer ${token}` },
     });
-    const users = await response.json();
 
-    const userDropdown = document.getElementById('user-list');
+    const users = await response.json();
+    const userDropdown = document.getElementById('userList'); // Ensure correct ID is used
     userDropdown.innerHTML = ""; // Clear previous options
 
     if (users.length === 0) {
@@ -147,8 +148,8 @@
 
     users.forEach(user => {
       const option = document.createElement('option');
-      option.value = user._id;  // Set the ID as value
-      option.textContent = user.username; // Show username in dropdown
+      option.value = user._id; // Set user ID as value
+      option.textContent = `${user.username} (${user.role})`; // Show username and role
       userDropdown.appendChild(option);
     });
   } catch (error) {
@@ -157,23 +158,19 @@
   }
 }
 
-// Call function when the page loads
+// Fetch users when the page loads
 fetchUsers();
+
 
 
     // Delete user
     async function deleteUser() {
   const token = localStorage.getItem('token');
-  const userDropdown = document.getElementById('user-list');
+  const userDropdown = document.getElementById('userList'); // Ensure correct ID is used
   const userId = userDropdown.value;
 
   if (!userId) {
     alert("Please select a user to delete.");
-    return;
-  }
-
-  if (!token) {
-    alert("Unauthorized access. Please log in.");
     return;
   }
 
