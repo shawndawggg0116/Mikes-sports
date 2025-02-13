@@ -353,10 +353,10 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 });
 
 
-app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => {
-  console.log("🟢 Incoming request to /api/users");  // Debug log
+app.get('/api/users', async (req, res) => {
+  console.log("🟢 Incoming request to /api/users");  
   try {
-    const users = await User.find({}, 'username role'); // Fetch only needed fields
+    const users = await User.find({}, 'username role');
     console.log("✅ Users fetched:", users);
     res.json(users);
   } catch (error) {
@@ -387,6 +387,7 @@ app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (
 });
 
 
+console.log("✅ Registering /api/users route...");
 
 // Server
 
