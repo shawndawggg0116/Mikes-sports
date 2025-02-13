@@ -145,7 +145,36 @@
             });
         }
 
-        fetchLeaderboard(); // Fetch leaderboard data on page load
+        
+
+        async function fetchLeaderboard() {
+  try {
+    const response = await fetch('/api/leaderboard');
+    const users = await response.json();
+
+    const table = document.getElementById("leaderboardTable");
+    table.innerHTML = "";
+
+    users.forEach((user, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${user.username}</td>
+        <td>${user.totalScore}</td>
+      `;
+      table.appendChild(row);
+    });
+
+    console.log("✅ Leaderboard updated.");
+  } catch (error) {
+    console.error("❌ Error fetching leaderboard:", error);
+    alert("Failed to load leaderboard.");
+  }
+}
+
+fetchLeaderboard();
+
+
     </script>
 
 </body>

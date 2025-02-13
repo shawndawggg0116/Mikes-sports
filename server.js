@@ -370,6 +370,45 @@ app.get('*', (req, res) => {
 });
 
 
+app.post('/api/admin/update-results', authenticateToken, authenticateAdmin, async (req, res) => {
+  try {
+    const { results } = req.body;
+    const currentWeek = moment().isoWeek();
+
+    const winningTeams = Object.keys(results).filter(team => results[team] === "win");
+
+    if (winningTeams.length === 0) {
+      return res.status(400).json({ message: "No winning teams selected." });
+    }
+
+    // Find all users who picked a winning team this week
+    const users = await User.find({ "picks.week": currentWeek });
+
+    users.forEach(async (user) => {
+      const pick = user.picks.find(p => p.week === currentWeek);
+      if (pick && winningTeams.includes(pick.team)) {
+        user.totalScore += 1;  // ✅ Add 1 point for this week’s win
+        pick.result = "win";  // ✅ Mark the pick as a win
+        await user.save();
+      }
+    });
+
+    res.json({ success: true, message: "Results updated and points assigned!" });
+  } catch (error) {
+    console.error("❌ Error updating results:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username totalScore').sort({ totalScore: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error("❌ Error fetching leaderboard:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 // Server
