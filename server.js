@@ -135,6 +135,29 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+app.get('/api/all-users-data', authenticateToken, async (req, res) => {
+  try {
+    // Fetch all users with their picks and totalScore
+    const users = await User.find({}, 'username picks totalScore');
+
+    // Format the data to include weekly picks, wins, and points
+    const formattedUsers = users.map(user => ({
+      username: user.username,
+      totalScore: user.totalScore,
+      picks: user.picks.map(pick => ({
+        week: pick.week,
+        team: pick.team,
+        result: pick.result,
+      })),
+    }));
+
+    res.json({ success: true, users: formattedUsers });
+  } catch (error) {
+    console.error("❌ Error fetching all users' data:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {
   try {
@@ -367,62 +390,6 @@ app.get('/api/users', async (req, res) => {
 
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
-});
-
-
-app.post('/api/update-scores', authenticateToken, authenticateAdmin, async (req, res) => {
-  try {
-      const { winningTeams } = req.body;
-      const users = await User.find();
-
-      users.forEach(async (user) => {
-          let pointsAdded = 0;
-          user.picks.forEach(pick => {
-              if (pick.week === moment().isoWeek()) {
-                  if (winningTeams[pick.team] === "win" && pick.result !== "win") {
-                      pick.result = "win";
-                      pointsAdded += 1;
-                  } else if (winningTeams[pick.team] === "lose") {
-                      pick.result = "lose";
-                  }
-              }
-          });
-
-          user.totalScore += pointsAdded;
-          await user.save();
-      });
-
-      res.json({ success: true, message: "Scores updated successfully!" });
-  } catch (error) {
-      console.error("❌ Error updating scores:", error);
-      res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-
-app.get('/api/leaderboard', authenticateToken, async (req, res) => {
-  try {
-      const users = await User.find({}, 'username totalScore picks');
-      const currentWeek = moment().isoWeek(); // Get the current week
-
-      const leaderboard = users.map(user => {
-          const winningTeams = user.picks
-              .filter(pick => pick.week === currentWeek && pick.result === "win")
-              .map(pick => pick.team);
-
-          return {
-              username: user.username,
-              totalScore: user.totalScore,
-              winningTeams
-          };
-      });
-
-      res.json(leaderboard);
-  } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      res.status(500).json({ message: "Server error" });
-  }
 });
 
 
