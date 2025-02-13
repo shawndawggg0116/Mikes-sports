@@ -16,7 +16,7 @@
 
     .container {
       max-width: 400px;
-      margin: auto;
+      margin: 20px auto;
       padding: 20px;
       background: white;
       border-radius: 10px;
@@ -46,6 +46,31 @@
     button:hover {
       background-color: red;
     }
+
+    .teams-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .teams-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .team-card {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      flex: 1 1 calc(25% - 20px);
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -69,21 +94,21 @@
   </div>
 
   <div class="container">
-    <h3>Update Team Results</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Team</th>
-          <th>Win</th>
-          <th>Lose</th>
-        </tr>
-      </thead>
-      <tbody id="teamsTable"></tbody>
-    </table>
-    <button onclick="submitResults()">Submit Results</button>
+    <h3>Delete User</h3>
+    <label for="userList">Select User:</label>
+    <select id="userList">
+      <option value="">Loading users...</option>
+    </select>
+    <button onclick="deleteUser()">Delete</button>
+  </div>
+
+  <div class="teams-container">
+    <h3>All Teams</h3>
+    <div class="teams-list" id="teams-list">
+      <!-- Teams will be dynamically inserted here -->
+    </div>
   </div>
   
-
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -91,89 +116,6 @@
     }
 
     const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-
-    async function fetchTeams() {
-    try {
-        const response = await fetch('/api/teams', { headers: authHeader });
-        const teams = await response.json();
-
-        const teamList = document.getElementById('teamsTable');
-        teamList.innerHTML = '';
-
-        teams.forEach(team => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${team.name}</td>
-                <td><input type="radio" name="team-${team.name}" value="win"></td>
-                <td><input type="radio" name="team-${team.name}" value="lose"></td>
-            `;
-            teamList.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error("❌ Error fetching teams:", error);
-    }
-}
-fetchTeams();
-
-
-async function submitWinningTeams() {
-    const selectedTeams = {};
-
-    document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-        const team = input.name.replace('team-', '');
-        selectedTeams[team] = input.value;
-    });
-
-    try {
-        const response = await fetch('/api/update-scores', {
-            method: 'POST',
-            headers: {
-                'Authorization': authHeader,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ winningTeams: selectedTeams })
-        });
-
-        const result = await response.json();
-        alert(result.message);
-        fetchLeaderboard(); // Refresh leaderboard after update
-    } catch (error) {
-        console.error("❌ Error updating scores:", error);
-    }
-}
-
-
-
-async function submitResults() {
-  const results = {};
-
-  document.querySelectorAll("tbody tr").forEach(row => {
-    const teamName = row.cells[0].innerText;
-    const winChecked = row.cells[1].querySelector("input").checked;
-    const loseChecked = row.cells[2].querySelector("input").checked;
-
-    if (winChecked) results[teamName] = "win";
-    if (loseChecked) results[teamName] = "lose";
-  });
-
-  try {
-    const response = await fetch('/api/admin/update-results', {
-      method: 'POST',
-      headers: authHeader,
-      body: JSON.stringify({ results })
-    });
-
-    const data = await response.json();
-    alert(data.message);
-    fetchTeams(); // Refresh teams after update
-  } catch (error) {
-    console.error("❌ Error submitting results:", error);
-    alert("Failed to update results.");
-  }
-}
-
-
 
     // ✅ Register a new user with role selection
     async function registerUser() {
@@ -196,11 +138,136 @@ async function submitResults() {
         const result = await response.json();
         alert(result.message);
 
+        if (result.success) {
+          fetchUsers(); // Refresh user list
+        }
       } catch (error) {
         console.error("Error registering user:", error);
         alert("Failed to register user.");
       }
     }
+
+    // ✅ Fetch and display users
+    async function fetchUsers() {
+      try {
+        const response = await fetch('/api/users', { headers: authHeader });
+
+        if (!response.ok) {
+          console.error("❌ Failed to fetch users. Server Response:", response.status);
+          alert("Failed to load users.");
+          return;
+        }
+
+        const data = await response.json();
+        console.log("📌 API Response:", data);
+
+        if (!data.success || !data.users) {
+          console.error("⚠ API returned no users.");
+          alert("No users found.");
+          return;
+        }
+
+        const users = data.users;
+        const userDropdown = document.getElementById('userList');
+        userDropdown.innerHTML = ""; // Clear existing options
+
+        if (users.length === 0) {
+          userDropdown.innerHTML = `<option value="">No users found</option>`;
+          return;
+        }
+
+        users.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user._id;
+          option.textContent = `${user.username} (${user.role})`;
+          userDropdown.appendChild(option);
+        });
+
+        console.log("✅ Users added to dropdown.");
+      } catch (error) {
+        console.error("❌ Error fetching users:", error);
+        alert("Failed to load users.");
+      }
+    }
+
+    // ✅ Delete user by ID
+    async function deleteUser() {
+      const userDropdown = document.getElementById('userList');
+      const userId = userDropdown.value;
+
+      if (!userId) {
+        alert("Please select a user to delete.");
+        return;
+      }
+
+      if (!confirm("Are you sure you want to delete this user?")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/delete-user/${userId}`, {
+          method: 'DELETE',
+          headers: authHeader,
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+        if (result.success) {
+          fetchUsers(); // Refresh dropdown after deletion
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to delete user.");
+      }
+    }
+
+    // ✅ Fetch and display all teams
+    async function fetchTeams() {
+      try {
+        const response = await fetch('/api/teams', { headers: authHeader });
+
+        if (!response.ok) {
+          console.error("❌ Failed to fetch teams. Server Response:", response.status);
+          alert("Failed to load teams.");
+          return;
+        }
+
+        const data = await response.json();
+        console.log("📌 Teams API Response:", data);
+
+        if (!data.success || !data.teams) {
+          console.error("⚠ API returned no teams.");
+          alert("No teams found.");
+          return;
+        }
+
+        const teams = data.teams;
+        const teamsList = document.getElementById('teams-list');
+        teamsList.innerHTML = ""; // Clear existing content
+
+        if (teams.length === 0) {
+          teamsList.innerHTML = `<p>No teams found.</p>`;
+          return;
+        }
+
+        teams.forEach(team => {
+          const teamCard = document.createElement('div');
+          teamCard.className = 'team-card';
+          teamCard.textContent = team.name;
+          teamsList.appendChild(teamCard);
+        });
+
+        console.log("✅ Teams added to the list.");
+      } catch (error) {
+        console.error("❌ Error fetching teams:", error);
+        alert("Failed to load teams.");
+      }
+    }
+
+    // Load users and teams on page load
+    fetchUsers();
+    fetchTeams();
   </script>
 </body>
 </html>
