@@ -14,6 +14,18 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
+const authenticateAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 
 
@@ -54,18 +66,7 @@ app.use(express.static(__dirname));
 
 app.use(express.static('public'));
 
-const authenticateAdmin = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    next();
-  } catch (error) {
-    console.error('Admin auth error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+
 
 
 // Routes
@@ -354,22 +355,14 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 
 app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => {
   try {
-    console.log("🔍 Fetching Users..."); // Debugging log
-
     const users = await User.find({}, 'username role'); // Fetch only needed fields
-
-    if (!users || users.length === 0) {
-      console.log("⚠ No users found in database.");
-      return res.status(404).json({ success: false, message: "No users found." });
-    }
-
-    console.log("✅ Users fetched successfully:", users);
-    res.json({ success: true, users });
+    res.json(users);
   } catch (error) {
-    console.error("❌ Error fetching users:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 
