@@ -111,39 +111,45 @@
         const authHeader = `Bearer ${token}`;
 
         async function fetchLeaderboard() {
-            try {
-                const response = await fetch('/api/leaderboard', {
-                    headers: { 'Authorization': authHeader }
-                });
+    try {
+        const response = await fetch('/api/leaderboard', {
+            headers: { 'Authorization': authHeader }
+        });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch leaderboard');
-                }
-
-                const data = await response.json();
-                displayLeaderboard(data);
-            } catch (error) {
-                console.error('Error fetching leaderboard:', error);
-            }
+        if (!response.ok) {
+            throw new Error('Failed to fetch leaderboard');
         }
 
-        function displayLeaderboard(users) {
-            const leaderboardBody = document.getElementById('leaderboard-body');
-            leaderboardBody.innerHTML = '';
+        const users = await response.json();
+        displayLeaderboard(users);
+    } catch (error) {
+        console.error("❌ Error fetching leaderboard:", error);
+        alert("Failed to load leaderboard.");
+    }
+}
 
-            users.forEach((user, index) => {
-                const row = document.createElement('tr');
+function displayLeaderboard(users) {
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    leaderboardBody.innerHTML = '';
 
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${user.username}</td>
-                    <td>${user.score}</td>
-                    <td>${user.winningTeams ? user.winningTeams.join(', ') : 'No Data'}</td>
-                `;
+    users.forEach((user, index) => {
+        const row = document.createElement('tr');
 
-                leaderboardBody.appendChild(row);
-            });
-        }
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${user.username}</td>
+            <td>${user.totalScore}</td>
+            <td>${user.winningTeams.length > 0 ? user.winningTeams.join(', ') : 'No Wins Yet'}</td>
+        `;
+
+        leaderboardBody.appendChild(row);
+    });
+
+    console.log("✅ Leaderboard updated.");
+}
+
+fetchLeaderboard();
+
 
         
 

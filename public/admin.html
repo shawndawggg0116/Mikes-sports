@@ -93,31 +93,58 @@
     const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
     async function fetchTeams() {
-  try {
-    const response = await fetch('/api/teams', { headers: authHeader });
-    const teams = await response.json();
+    try {
+        const response = await fetch('/api/teams', { headers: authHeader });
+        const teams = await response.json();
 
-    const table = document.getElementById("teamsTable");
-    table.innerHTML = "";
+        const teamList = document.getElementById('teamList');
+        teamList.innerHTML = '';
 
-    teams.forEach(team => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${team.name}</td>
-        <td><input type="radio" name="${team.name}" value="win"></td>
-        <td><input type="radio" name="${team.name}" value="lose"></td>
-      `;
-      table.appendChild(row);
+        teams.forEach(team => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${team.name}</td>
+                <td>
+                    <input type="radio" name="team-${team.name}" value="win"> Win
+                    <input type="radio" name="team-${team.name}" value="lose"> Lose
+                </td>
+            `;
+            teamList.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching teams:", error);
+    }
+}
+
+async function submitWinningTeams() {
+    const selectedTeams = {};
+
+    document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+        const team = input.name.replace('team-', '');
+        selectedTeams[team] = input.value;
     });
 
-    console.log("✅ Teams loaded successfully.");
-  } catch (error) {
-    console.error("❌ Error fetching teams:", error);
-    alert("Failed to load teams.");
-  }
+    try {
+        const response = await fetch('/api/update-scores', {
+            method: 'POST',
+            headers: {
+                'Authorization': authHeader,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ winningTeams: selectedTeams })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+        fetchLeaderboard(); // Refresh leaderboard after update
+    } catch (error) {
+        console.error("❌ Error updating scores:", error);
+    }
 }
 
 fetchTeams();
+
 
 async function submitResults() {
   const results = {};

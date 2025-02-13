@@ -370,45 +370,56 @@ app.get('*', (req, res) => {
 });
 
 
-app.post('/api/admin/update-results', authenticateToken, authenticateAdmin, async (req, res) => {
+app.post('/api/update-scores', authenticateToken, authenticateAdmin, async (req, res) => {
   try {
-    const { results } = req.body;
-    const currentWeek = moment().isoWeek();
+      const { winningTeams } = req.body;
 
-    const winningTeams = Object.keys(results).filter(team => results[team] === "win");
+      // Get all users
+      const users = await User.find();
 
-    if (winningTeams.length === 0) {
-      return res.status(400).json({ message: "No winning teams selected." });
-    }
+      users.forEach(async (user) => {
+          let pointsAdded = 0;
 
-    // Find all users who picked a winning team this week
-    const users = await User.find({ "picks.week": currentWeek });
+          user.picks.forEach(pick => {
+              if (winningTeams[pick.team] === "win" && pick.result !== "win") {
+                  pick.result = "win";
+                  pointsAdded += 1;
+              } else if (winningTeams[pick.team] === "lose") {
+                  pick.result = "lose";
+              }
+          });
 
-    users.forEach(async (user) => {
-      const pick = user.picks.find(p => p.week === currentWeek);
-      if (pick && winningTeams.includes(pick.team)) {
-        user.totalScore += 1;  // ✅ Add 1 point for this week’s win
-        pick.result = "win";  // ✅ Mark the pick as a win
-        await user.save();
-      }
-    });
+          user.totalScore += pointsAdded;
+          await user.save();
+      });
 
-    res.json({ success: true, message: "Results updated and points assigned!" });
+      res.json({ success: true, message: "Scores updated successfully!" });
   } catch (error) {
-    console.error("❌ Error updating results:", error);
-    res.status(500).json({ message: "Server error" });
+      console.error("❌ Error updating scores:", error);
+      res.status(500).json({ message: "Server error" });
   }
 });
+
 
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    const users = await User.find({}, 'username totalScore').sort({ totalScore: -1 });
-    res.json(users);
+      const users = await User.find({}, 'username totalScore picks');
+
+      const formattedUsers = users.map(user => ({
+          username: user.username,
+          totalScore: user.totalScore,
+          winningTeams: user.picks
+              .filter(pick => pick.result === "win")
+              .map(pick => pick.team)
+      }));
+
+      res.json(formattedUsers);
   } catch (error) {
-    console.error("❌ Error fetching leaderboard:", error);
-    res.status(500).json({ message: "Server error" });
+      console.error("❌ Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 // Server
