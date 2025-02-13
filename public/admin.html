@@ -125,45 +125,34 @@
 
 
     // Fetch users to populate dropdown
-    async function fetchUsers() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert("Unauthorized access. Please log in.");
+
+
+// Fetch users when the page loads
+fetch('/api/users', {
+  headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+})
+.then(response => response.json())
+.then(users => {
+  const userDropdown = document.getElementById('userList'); // Ensure correct ID
+  userDropdown.innerHTML = ''; // Clear old options
+
+  if (users.length === 0) {
+    userDropdown.innerHTML = `<option value="">No users found</option>`;
     return;
   }
 
-  try {
-    const response = await fetch('/api/users', {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
+  users.forEach(user => {
+    const option = document.createElement('option');
+    option.value = user._id;
+    option.textContent = `${user.username} (${user.role})`;
+    userDropdown.appendChild(option);
+  });
+})
+.catch(error => {
+  console.error("Error fetching users:", error);
+  alert("Failed to load users.");
+});
 
-    if (!response.ok) throw new Error("Failed to fetch users");
-
-    const users = await response.json();
-    console.log("Fetched Users:", users); // Debugging log
-
-    const userDropdown = document.getElementById('userList'); 
-    userDropdown.innerHTML = ""; 
-
-    if (users.length === 0) {
-      userDropdown.innerHTML = `<option value="">No users found</option>`;
-      return;
-    }
-
-    users.forEach(user => {
-      const option = document.createElement('option');
-      option.value = user._id;
-      option.textContent = `${user.username} (${user.role})`;
-      userDropdown.appendChild(option);
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    alert("Failed to load users.");
-  }
-}
-
-// Fetch users when the page loads
-fetchUsers();
 
 
 
