@@ -373,19 +373,18 @@ app.get('*', (req, res) => {
 app.post('/api/update-scores', authenticateToken, authenticateAdmin, async (req, res) => {
   try {
       const { winningTeams } = req.body;
-
-      // Get all users
       const users = await User.find();
 
       users.forEach(async (user) => {
           let pointsAdded = 0;
-
           user.picks.forEach(pick => {
-              if (winningTeams[pick.team] === "win" && pick.result !== "win") {
-                  pick.result = "win";
-                  pointsAdded += 1;
-              } else if (winningTeams[pick.team] === "lose") {
-                  pick.result = "lose";
+              if (pick.week === moment().isoWeek()) {
+                  if (winningTeams[pick.team] === "win" && pick.result !== "win") {
+                      pick.result = "win";
+                      pointsAdded += 1;
+                  } else if (winningTeams[pick.team] === "lose") {
+                      pick.result = "lose";
+                  }
               }
           });
 
@@ -401,24 +400,31 @@ app.post('/api/update-scores', authenticateToken, authenticateAdmin, async (req,
 });
 
 
-app.get('/api/leaderboard', async (req, res) => {
+
+app.get('/api/leaderboard', authenticateToken, async (req, res) => {
   try {
       const users = await User.find({}, 'username totalScore picks');
+      const currentWeek = moment().isoWeek(); // Get the current week
 
-      const formattedUsers = users.map(user => ({
-          username: user.username,
-          totalScore: user.totalScore,
-          winningTeams: user.picks
-              .filter(pick => pick.result === "win")
-              .map(pick => pick.team)
-      }));
+      const leaderboard = users.map(user => {
+          const winningTeams = user.picks
+              .filter(pick => pick.week === currentWeek && pick.result === "win")
+              .map(pick => pick.team);
 
-      res.json(formattedUsers);
+          return {
+              username: user.username,
+              totalScore: user.totalScore,
+              winningTeams
+          };
+      });
+
+      res.json(leaderboard);
   } catch (error) {
-      console.error("❌ Error fetching leaderboard:", error);
+      console.error("Error fetching leaderboard:", error);
       res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 

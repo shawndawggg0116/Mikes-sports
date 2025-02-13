@@ -97,17 +97,15 @@
         const response = await fetch('/api/teams', { headers: authHeader });
         const teams = await response.json();
 
-        const teamList = document.getElementById('teamList');
+        const teamList = document.getElementById('teamsTable');
         teamList.innerHTML = '';
 
         teams.forEach(team => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${team.name}</td>
-                <td>
-                    <input type="radio" name="team-${team.name}" value="win"> Win
-                    <input type="radio" name="team-${team.name}" value="lose"> Lose
-                </td>
+                <td><input type="radio" name="team-${team.name}" value="win"></td>
+                <td><input type="radio" name="team-${team.name}" value="lose"></td>
             `;
             teamList.appendChild(row);
         });
@@ -116,6 +114,8 @@
         console.error("❌ Error fetching teams:", error);
     }
 }
+fetchTeams();
+
 
 async function submitWinningTeams() {
     const selectedTeams = {};
@@ -143,7 +143,6 @@ async function submitWinningTeams() {
     }
 }
 
-fetchTeams();
 
 
 async function submitResults() {
