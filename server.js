@@ -365,7 +365,9 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-
+app.get('*', (req, res) => {
+  res.status(404).send('Page not found');
+});
 
 
 console.log("✅ Registering /api/users route...");
@@ -391,5 +393,5 @@ console.log("✅ Registering /api/users route...");
 
 // Server
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;  // Ensure this matches Railway logs
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
