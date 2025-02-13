@@ -354,11 +354,13 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
 
 
 app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => {
+  console.log("🟢 Incoming request to /api/users");  // Debug log
   try {
     const users = await User.find({}, 'username role'); // Fetch only needed fields
+    console.log("✅ Users fetched:", users);
     res.json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("❌ Error fetching users:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
