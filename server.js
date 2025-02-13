@@ -368,6 +368,7 @@ app.get('/api/users', authenticateToken, authenticateAdmin, async (req, res) => 
 
 
 
+console.log("✅ Registering /api/users route...");
 
 app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
   try {
