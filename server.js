@@ -14,18 +14,6 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
-const authenticateAdmin = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    next();
-  } catch (error) {
-    console.error('Admin auth error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 
 
 
@@ -68,7 +56,6 @@ app.use(express.static('public'));
 
 
 
-
 // Routes
 app.get('/teams', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'teams.html'));
@@ -90,9 +77,6 @@ app.get('/chat', (req, res) => {
 
 
 
-
-
-
 // MongoDB connection
 const JWT_SECRET = process.env.JWT_SECRET;  // Use the secret key from the environment variable
 const mongoUri = process.env.MONGO_URI;     // Use the MongoDB URI from the environment variable
@@ -105,21 +89,9 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: "user" },
-  createdAt: { type: Date, default: Date.now },
-  lastPickDate: { type: Date, default: null },
-  
-  // ✅ Picks stored as an array
-  picks: [{
-    week: Number,
-    team: String,
-    result: { type: String, default: "pending" }
-  }],
-  
-  totalScore: { type: Number, default: 0 }
+  pickedTeams: { type: [String], default: [] },
+  lastPickDate: { type: Date, default: null }
 });
-
-
 const User = mongoose.model('User', UserSchema, 'users');
 
 // JWT Authentication Middleware
@@ -135,7 +107,23 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Route to fetch user-specific data
+app.get('/api/user-data', authenticateToken, async (req, res) => {
+  try {
+    // Assuming req.user.id is available from JWT
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Send specific user data to the frontend
+    res.json({
+      username: user.username,
+      pickedTeams: user.pickedTeams
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 // User Registration
@@ -156,32 +144,59 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-
 // User Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-
-    res.json({ 
-      success: true, 
-      token, 
-      username: user.username, 
-      role: user.role // Send user role
-    });
-
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token, username: user.username });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
+
+
+// Route to fetch user data using User.findById
+app.get('/api/get-user', authenticateToken, async (req, res) => {
+  try {
+      const user = await User.findById(req.user.id);  // Updated to use async/await
+      if (!user) {
+          res.status(404).json({ message: 'User not found' });
+      } else {
+          res.json({ pickedTeams: user.pickedTeams });
+      }
+  } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Error on the server.' });
+  }
+});
+
+// Route to handle team selection
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.pickedTeams.includes(req.body.team)) {
+      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
+    }
+
+    user.pickedTeams.push(req.body.team);
+    user.lastPickDate = new Date();
+    await user.save();
+
+    res.json({ success: true, message: 'Team selected successfully' });
+  } catch (error) {
+    console.error('Error selecting team:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
@@ -233,11 +248,6 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
-// Serve Admin Page
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {
@@ -256,5 +266,7 @@ app.get('*', (req, res) => {
 
 
 
-const PORT = process.env.PORT || 8080;  // Ensure this matches Railway logs
+// Server
+
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
