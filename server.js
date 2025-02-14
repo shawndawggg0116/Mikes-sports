@@ -316,6 +316,13 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+const TeamSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  // Add other fields if needed (e.g., conference, division, etc.)
+});
+
+const Team = mongoose.model('Team', TeamSchema, 'teams');
+
 app.post('/api/pick-team', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -351,6 +358,7 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 
 app.get('/api/users', async (req, res) => {
