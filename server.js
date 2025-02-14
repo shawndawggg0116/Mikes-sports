@@ -15,7 +15,8 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
-
+// server.js (relevant part)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
