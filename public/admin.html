@@ -180,46 +180,46 @@
     }
 
     async function fetchTeams() {
-      const week = document.getElementById('week-select').value;
-      try {
-        console.log('Attempting to fetch teams for admin for week:', week);
-        const response = await fetch(`/api/teams-for-admin-week/${week}`, { headers: authHeader });
-        console.log('Fetch response status:', response.status);
-        if (!response.ok) {
-          const errorText = await response.text(); // Get the error message from the server if any
-          console.error('Fetch response error:', errorText);
-          throw new Error(`Failed to fetch teams for admin for week ${week}. Status: ${response.status}, Error: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('Fetched teams data for admin:', data);
-
-        const teamsList = document.getElementById('teams-list');
-        teamsList.innerHTML = "";
-
-        if (data.length === 0) {
-          teamsList.innerHTML = `<p>No teams found.</p>`;
-          console.log('No teams found in the database for admin for week:', week);
-        } else {
-          data.forEach(team => {
-            const teamCard = document.createElement('div');
-            teamCard.className = 'team-card';
-            teamCard.innerHTML = `
-              <span>${team.name}</span>
-              <div>
-                <button class="win-btn" data-team="${team.name}">Win</button>
-                <button class="loss-btn" data-team="${team.name}">Loss</button>
-              </div>
-            `;
-            teamsList.appendChild(teamCard);
-          });
-          console.log('Teams added to the list for admin for week:', week);
-        }
-      } catch (error) {
-        console.error("Error fetching teams for admin:", error);
-        alert("Failed to load teams for admin. Please check console for details.");
-      }
+  const week = document.getElementById('week-select').value;
+  try {
+    console.log('Attempting to fetch teams for admin for week:', week);
+    const response = await fetch(`/api/teams-for-admin-week/${week}`, { headers: authHeader });
+    console.log('Fetch response status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text(); // Get the error message from the server if any
+      console.error('Fetch response error:', errorText);
+      throw new Error(`Failed to fetch teams for admin for week ${week}. Status: ${response.status}, Error: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log('Fetched teams data for admin:', data);
+
+    const teamsList = document.getElementById('teams-list');
+    teamsList.innerHTML = "";
+
+    if (data.length === 0) {
+      teamsList.innerHTML = `<p>No teams found.</p>`;
+      console.log('No teams found in the database for admin for week:', week);
+    } else {
+      data.forEach(team => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'team-card';
+        teamCard.innerHTML = `
+          <span>${team.name}</span>
+          <div>
+            <button class="win-btn" data-team="${team.name}">Win</button>
+            <button class="loss-btn" data-team="${team.name}">Loss</button>
+          </div>
+        `;
+        teamsList.appendChild(teamCard);
+      });
+      console.log('Teams added to the list for admin for week:', week);
+    }
+  } catch (error) {
+    console.error("Error fetching teams for admin:", error);
+    alert("Failed to load teams for admin. Please check console for details.");
+  }
+}
 
     // Function to handle the result submission
     async function submitResults() {
