@@ -134,7 +134,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
           totalScore: 1,
           picks: {
             $filter: {
-              input: '$picks',
+              input: { $ifNull: ['$picks', []] }, // Ensure picks is treated as an array
               as: 'pick',
               cond: { $and: [
                 { $eq: ['$$pick.week', week] },
@@ -146,7 +146,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
       },
       {
         $addFields: {
-          winsThisWeek: { $size: "$picks" }
+          winsThisWeek: { $size: { $ifNull: ['$picks', []] } } // Use $ifNull here as well
         }
       },
       {
@@ -157,7 +157,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
     res.json({ success: true, leaderboard: users });
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
 
