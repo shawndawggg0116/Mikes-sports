@@ -6,6 +6,7 @@
     <title>Leaderboard</title>
     <link rel="stylesheet" href="/styles.css">
     <style>
+        
         /* General Page Styles */
         body {
             font-family: Arial, sans-serif;
@@ -110,53 +111,55 @@
 
         const authHeader = `Bearer ${token}`;
 
+        // Function to fetch leaderboard data
         async function fetchLeaderboard() {
-    const authHeader = `Bearer ${localStorage.getItem('token')}`; // Ensure you're using authentication tokens correctly
+            try {
+                const response = await fetch('/api/all-users-data', {
+                    headers: {
+                        'Authorization': authHeader
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
 
-    try {
-        const response = await fetch('/api/all-users-data', {
-            method: 'GET',
-            headers: { 'Authorization': authHeader }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                
+                if (data.success && data.users) {
+                    displayLeaderboard(data.users);
+                } else {
+                    throw new Error('Failed to load leaderboard data');
+                }
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                alert('Failed to load leaderboard data.');
+            }
         }
 
-        const data = await response.json();
-        if (data.success && data.users) {
-            displayLeaderboard(data.users);
-        } else {
-            throw new Error('Failed to load users or no users found');
+        // Function to display leaderboard data
+        function displayLeaderboard(users) {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = ''; // Clear existing entries
+
+            users.sort((a, b) => b.totalScore - a.totalScore); // Sort by score descending
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                const userWins = user.winningTeams ? user.winningTeams.join(', ') : 'No wins yet';
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>${user.totalScore}</td>
+                    <td>${userWins}</td>
+                `;
+
+                leaderboardBody.appendChild(row);
+            });
         }
-    } catch (error) {
-        console.error('Error fetching leaderboard:', error.message);
-        alert('Failed to load leaderboard data.');
-    }
-}
 
-function displayLeaderboard(users) {
-    const leaderboardBody = document.getElementById('leaderboard-body');
-    leaderboardBody.innerHTML = ''; // Clear existing entries
-
-    users.forEach((user, index) => {
-        const row = document.createElement('tr');
-        const userPicks = user.winningPicks.map(pick => pick.team).join(', ');
-
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${user.username}</td>
-            <td>${user.totalScore}</td>
-            <td>${userPicks || 'No wins yet'}</td>
-        `;
-
-        leaderboardBody.appendChild(row);
-    });
-}
-
-// Call fetchLeaderboard when the page loads or when needed
-fetchLeaderboard();
-
+        // Fetch leaderboard data when the page loads
+        fetchLeaderboard();
     </script>
 
 </body>

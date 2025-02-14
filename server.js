@@ -135,23 +135,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Route to fetch user-specific data
-app.get('/api/user-data', authenticateToken, async (req, res) => {
-  try {
-    // Assuming req.user.id is available from JWT
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Send specific user data to the frontend
-    res.json({
-      username: user.username,
-      pickedTeams: user.pickedTeams
-    });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 
 // User Registration
@@ -169,30 +153,6 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ message: 'Error registering user' });
-  }
-});
-
-app.get('/api/all-users-data', async (req, res) => {
-  try {
-      const usersData = await User.aggregate([
-          {
-              $project: {
-                  username: 1,
-                  totalScore: 1,
-                  winningPicks: {
-                      $filter: {
-                          input: "$picks",
-                          as: "pick",
-                          cond: { $eq: ["$$pick.result", "win"] }
-                      }
-                  }
-              }
-          }
-      ]);
-
-      res.status(200).json({ success: true, users: usersData });
-  } catch (error) {
-      res.status(500).json({ success: false, message: "Failed to fetch user data", error: error.message });
   }
 });
 
@@ -224,47 +184,24 @@ app.post('/api/login', async (req, res) => {
 
 
 
-
-// Route to fetch user data using User.findById
-app.get('/api/get-user', authenticateToken, async (req, res) => {
+app.get('/api/user', authenticateToken, async (req, res) => {
   try {
-      const user = await User.findById(req.user.id);
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      // Ensure picks are sorted by week
-      const userPicks = user.picks.sort((a, b) => a.week - b.week);
+    // Ensure picks are sorted by week
+    const userPicks = user.picks.sort((a, b) => a.week - b.week);
 
-      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
+    res.json({ 
+      username: user.username, 
+      picks: userPicks, 
+      totalScore: user.totalScore 
+    });
   } catch (error) {
-      console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
-
-
-// Route to handle team selection
-app.get('/api/get-user', authenticateToken, async (req, res) => {
-  try {
-      const user = await User.findById(req.user.id);
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Convert picks object into an array
-      const userPicks = Object.keys(user.picks).map(week => ({
-          week: parseInt(week),
-          team: user.picks[week].team,
-          result: user.picks[week].result
-      }));
-
-      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
-  } catch (error) {
-      console.error('Error fetching user data:', error);
-      res.status(500).json({ message: 'Error on the server.' });
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -376,63 +313,41 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
   }
 });
 
-
-app.get('/api/users', async (req, res) => {
-  console.log("🟢 Incoming request to /api/users");  
+app.get('/api/all-users-data', async (req, res) => {
   try {
-    const users = await User.find({}, 'username role');
-    console.log("✅ Users fetched:", users);
-    res.json(users);
+    const usersData = await User.aggregate([
+      {
+        $project: {
+          username: 1,
+          totalScore: 1,
+          winningTeams: {
+            $filter: {
+              input: "$picks",
+              as: "pick",
+              cond: { $eq: ["$$pick.result", "win"] }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          winningTeams: {
+            $map: {
+              input: "$winningTeams",
+              as: "win",
+              in: "$$win.team" // Just get the team names
+            }
+          }
+        }
+      }
+    ]);
+
+    res.status(200).json({ success: true, users: usersData });
   } catch (error) {
-    console.error("❌ Error fetching users:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Failed to fetch leaderboard data:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch leaderboard data", error: error.message });
   }
 });
-
-app.get('*', (req, res) => {
-  res.status(404).send('Page not found');
-});
-
-
-app.delete('/api/delete-user/:userId', async (req, res) => {
-  const userId = req.params.userId;
-
-  try {
-    const result = await db.collection('users').deleteOne({ _id: ObjectId(userId) });
-    if (result.deletedCount === 1) {
-      res.json({ success: true, message: 'User deleted successfully.' });
-    } else {
-      res.status(404).json({ success: false, message: 'User not found.' });
-    }
-  } catch (error) {
-    console.error('Failed to delete user:', error);
-    res.status(500).json({ success: false, message: 'Error deleting user.' });
-  }
-});
-
-
-console.log("✅ Registering /api/users route...");
-
-app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const deletedUser = await User.findByIdAndDelete(userId);
-
-    if (!deletedUser) {
-      return res.status(404).json({ success: false, message: "User not found." });
-    }
-
-    res.json({ success: true, message: "User deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-
-console.log("✅ Registering /api/users route...");
-
-// Server
 
 const PORT = process.env.PORT || 8080;  // Ensure this matches Railway logs
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
