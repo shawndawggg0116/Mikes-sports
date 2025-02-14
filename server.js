@@ -365,6 +365,29 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+app.get('/api/all-users-data', authenticateToken, async (req, res) => {
+  try {
+    // Fetch all users with their picks and totalScore
+    const users = await User.find({}, 'username picks totalScore');
+
+    // Format the data to include weekly picks, wins, and points
+    const formattedUsers = users.map(user => ({
+      username: user.username,
+      totalScore: user.totalScore,
+      picks: user.picks.map(pick => ({
+        week: pick.week,
+        team: pick.team,
+        result: pick.result,
+      })),
+    }));
+
+    res.json({ success: true, users: formattedUsers });
+  } catch (error) {
+    console.error("❌ Error fetching all users' data:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
