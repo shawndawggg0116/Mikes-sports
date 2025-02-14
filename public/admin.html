@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" crossorigin="anonymous"></script>
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -73,30 +74,39 @@
     }
 
     .button {
-  padding: 10px 20px;
-  margin: 5px;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
+      padding: 10px 20px;
+      margin: 5px;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
 
-.active {
-  background-color: #28a745; /* Green for active win */
-  border: 2px solid darkgreen; /* Optional: add a border to highlight */
-}
+    .active {
+      background-color: #28a745; /* Green for active win */
+      border: 2px solid darkgreen; /* Optional: add a border to highlight */
+    }
 
-/* Modify the .active-loss if you want to use it, or use a single active style */
-.active-loss {
-  background-color: #040d66; /* Dark blue for active loss */
-  border: 2px solid navy; /* Optional: add a border to highlight */
-}
+    .active-loss {
+      background-color: #040d66; /* Dark blue for active loss */
+      border: 2px solid navy; /* Optional: add a border to highlight */
+    }
 
-
+    .week-selector {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <h1>Admin Panel</h1>
   
+  <!-- Week Selector -->
+  <div class="week-selector">
+    <label for="week-select">Select Week:</label>
+    <select id="week-select" onchange="updateWeek()">
+      <!-- Week options will be dynamically inserted here -->
+    </select>
+  </div>
+
   <div class="container">
     <h3>Register User</h3>
     <label for="newUsername">Username:</label>
@@ -123,10 +133,8 @@
     <button onclick="deleteUser()">Delete</button>
   </div>
 
-  
-  
   <div class="teams-container" id="teams-container">
-    <h3>All Teams</h3>
+    <h3>Teams for Week <span id="current-week"></span></h3>
     <div class="teams-list" id="teams-list">
       <!-- Teams will be dynamically inserted here -->
     </div>
@@ -141,7 +149,7 @@
 
     const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-    // ✅ Register a new user with role selection
+    // Register a new user with role selection
     async function registerUser() {
       const username = document.getElementById('newUsername').value.trim();
       const password = document.getElementById('newPassword').value.trim();
@@ -172,98 +180,97 @@
     }
 
     async function fetchTeams() {
-  try {
-    console.log('Attempting to fetch teams for admin...');
-    const response = await fetch('/api/teams-for-admin', { headers: authHeader });
-    console.log('Fetch response status:', response.status);
-    if (!response.ok) {
-      const errorText = await response.text(); // Get the error message from the server if any
-      console.error('Fetch response error:', errorText);
-      throw new Error(`Failed to fetch teams for admin. Status: ${response.status}, Error: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('Fetched teams data for admin:', data);
-
-    const teamsList = document.getElementById('teams-list');
-    teamsList.innerHTML = "";
-
-    if (data.length === 0) {
-      teamsList.innerHTML = `<p>No teams found.</p>`;
-      console.log('No teams found in the database for admin.');
-    } else {
-      data.forEach(team => {
-        const teamCard = document.createElement('div');
-        teamCard.className = 'team-card';
-        teamCard.innerHTML = `
-          <span>${team.name}</span>
-          <div>
-            <button class="win-btn" data-team="${team.name}">Win</button>
-            <button class="loss-btn" data-team="${team.name}">Loss</button>
-          </div>
-        `;
-        teamsList.appendChild(teamCard);
-      });
-      console.log('Teams added to the list for admin.');
-    }
-  } catch (error) {
-    console.error("Error fetching teams for admin:", error);
-    alert("Failed to load teams for admin. Please check console for details.");
-  }
-}
-// Function to handle the result submission
-async function submitResults() {
-            try {
-                const winButtons = document.querySelectorAll('.win-btn');
-                const results = [];
-
-                winButtons.forEach(button => {
-                    const teamName = button.getAttribute('data-team');
-                    const isWin = button.classList.contains('active');
-                    results.push({ team: teamName, result: isWin ? 'win' : 'loss' });
-                });
-
-                const response = await fetch('/api/update-results', {
-                    method: 'POST',
-                    headers: {
-                        ...authHeader,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ results })
-                });
-
-                if (!response.ok) throw new Error('Failed to update results');
-                alert('Results updated successfully');
-                // Optionally, refresh the page or fetch teams again to reflect changes
-            } catch (error) {
-                console.error("Error submitting results:", error);
-                alert("Failed to update results.");
-            }
+      const week = document.getElementById('week-select').value;
+      try {
+        console.log('Attempting to fetch teams for admin for week:', week);
+        const response = await fetch(`/api/teams-for-admin-week/${week}`, { headers: authHeader });
+        console.log('Fetch response status:', response.status);
+        if (!response.ok) {
+          const errorText = await response.text(); // Get the error message from the server if any
+          console.error('Fetch response error:', errorText);
+          throw new Error(`Failed to fetch teams for admin for week ${week}. Status: ${response.status}, Error: ${errorText}`);
         }
 
-// Event listeners for win/loss buttons
-document.getElementById('teams-container').addEventListener('click', function(e) {
-  if (e.target.classList.contains('win-btn') || e.target.classList.contains('loss-btn')) {
-    // Toggle 'active' class on clicked button
-    e.target.classList.toggle('active');
-    
-    // Ensure that only one button can be active at a time: either win or loss
-    const siblingButton = e.target.parentElement.querySelector(
-      e.target.classList.contains('win-btn') ? '.loss-btn' : '.win-btn'
-    );
-    
-    // Remove 'active' class from the sibling button if present
-    siblingButton.classList.remove('active');
-  }
-});
+        const data = await response.json();
+        console.log('Fetched teams data for admin:', data);
 
- // Event listener for submit button
- document.getElementById('submit-results').addEventListener('click', submitResults);
+        const teamsList = document.getElementById('teams-list');
+        teamsList.innerHTML = "";
 
-// Fetch teams when the page loads
-document.addEventListener('DOMContentLoaded', fetchTeams);
+        if (data.length === 0) {
+          teamsList.innerHTML = `<p>No teams found.</p>`;
+          console.log('No teams found in the database for admin for week:', week);
+        } else {
+          data.forEach(team => {
+            const teamCard = document.createElement('div');
+            teamCard.className = 'team-card';
+            teamCard.innerHTML = `
+              <span>${team.name}</span>
+              <div>
+                <button class="win-btn" data-team="${team.name}">Win</button>
+                <button class="loss-btn" data-team="${team.name}">Loss</button>
+              </div>
+            `;
+            teamsList.appendChild(teamCard);
+          });
+          console.log('Teams added to the list for admin for week:', week);
+        }
+      } catch (error) {
+        console.error("Error fetching teams for admin:", error);
+        alert("Failed to load teams for admin. Please check console for details.");
+      }
+    }
 
-    // ✅ Delete user by ID
+    // Function to handle the result submission
+    async function submitResults() {
+      try {
+        const winButtons = document.querySelectorAll('.win-btn');
+        const results = [];
+
+        winButtons.forEach(button => {
+          const teamName = button.getAttribute('data-team');
+          const isWin = button.classList.contains('active');
+          results.push({ team: teamName, result: isWin ? 'win' : 'loss' });
+        });
+
+        const response = await fetch('/api/update-results', {
+          method: 'POST',
+          headers: {
+            ...authHeader,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ results })
+        });
+
+        if (!response.ok) throw new Error('Failed to update results');
+        alert('Results updated successfully');
+        // Optionally, refresh the page or fetch teams again to reflect changes
+      } catch (error) {
+        console.error("Error submitting results:", error);
+        alert("Failed to update results.");
+      }
+    }
+
+    // Event listeners for win/loss buttons
+    document.getElementById('teams-container').addEventListener('click', function(e) {
+      if (e.target.classList.contains('win-btn') || e.target.classList.contains('loss-btn')) {
+        // Toggle 'active' class on clicked button
+        e.target.classList.toggle('active');
+        
+        // Ensure that only one button can be active at a time: either win or loss
+        const siblingButton = e.target.parentElement.querySelector(
+          e.target.classList.contains('win-btn') ? '.loss-btn' : '.win-btn'
+        );
+        
+        // Remove 'active' class from the sibling button if present
+        siblingButton.classList.remove('active');
+      }
+    });
+
+    // Event listener for submit button
+    document.getElementById('submit-results').addEventListener('click', submitResults);
+
+    // Delete user by ID
     async function deleteUser() {
       const userDropdown = document.getElementById('userList');
       const userId = userDropdown.value;
@@ -296,40 +303,58 @@ document.addEventListener('DOMContentLoaded', fetchTeams);
     }
 
     async function fetchUsers() {
-  try {
-    const response = await fetch('/api/all-users-data', { headers: authHeader });
-    if (!response.ok) throw new Error('Failed to fetch users');
+      try {
+        const response = await fetch('/api/all-users-data', { headers: authHeader });
+        if (!response.ok) throw new Error('Failed to fetch users');
 
-    const data = await response.json();
-    const userList = document.getElementById('userList');
-    userList.innerHTML = '<option value="">Select User</option>'; // Reset the dropdown
+        const data = await response.json();
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '<option value="">Select User</option>'; // Reset the dropdown
 
-    if (data.success && data.users) {
-      data.users.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user._id;
-        option.textContent = user.username;
-        userList.appendChild(option);
-      });
-    } else {
-      throw new Error('Failed to load user data');
+        if (data.success && data.users) {
+          data.users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user._id;
+            option.textContent = user.username;
+            userList.appendChild(option);
+          });
+        } else {
+          throw new Error('Failed to load user data');
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        alert("Failed to load users.");
+      }
     }
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    alert("Failed to load users.");
-  }
-}
 
+    // Function to populate the week selector
+    function populateWeekSelector() {
+      const currentWeek = moment().isoWeek();
+      const select = document.getElementById('week-select');
+      for (let i = 1; i <= currentWeek; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `Week ${i}`;
+        select.appendChild(option);
+      }
+      select.value = currentWeek; // Set to current week by default
+      document.getElementById('current-week').textContent = currentWeek;
+      fetchTeams(); // Fetch teams for the current week initially
+    }
 
+    // Function to update week when selection changes
+    function updateWeek() {
+      const selectedWeek = document.getElementById('week-select').value;
+      document.getElementById('current-week').textContent = selectedWeek;
+      fetchTeams(); // Fetch teams for the newly selected week
+    }
 
-// Call fetchUsers when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-  fetchTeams();
-  fetchUsers();
-});
-
-
-
+    // Fetch teams, users, and populate week selector when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchTeams();
+      fetchUsers();
+      populateWeekSelector();
+    });
   </script>
 </body>
 </html>
