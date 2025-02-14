@@ -370,6 +370,23 @@ app.get('*', (req, res) => {
 });
 
 
+app.delete('/api/delete-user/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const result = await db.collection('users').deleteOne({ _id: ObjectId(userId) });
+    if (result.deletedCount === 1) {
+      res.json({ success: true, message: 'User deleted successfully.' });
+    } else {
+      res.status(404).json({ success: false, message: 'User not found.' });
+    }
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+    res.status(500).json({ success: false, message: 'Error deleting user.' });
+  }
+});
+
+
 console.log("✅ Registering /api/users route...");
 
 app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
