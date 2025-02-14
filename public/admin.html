@@ -151,7 +151,7 @@
     // ✅ Fetch and display users
     async function fetchUsers() {
       try {
-        const response = await fetch('/api/users', { headers: authHeader });
+        const response = await fetch('/api/all-users-data', { headers: authHeader });
 
         if (!response.ok) {
           console.error("❌ Failed to fetch users. Server Response:", response.status);
