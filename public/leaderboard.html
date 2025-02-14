@@ -111,59 +111,52 @@
         const authHeader = `Bearer ${token}`;
 
         async function fetchLeaderboard() {
-            try {
-                const response = await fetch('/api/all-users-data', {
-                    headers: { 'Authorization': authHeader }
-                });
+    const authHeader = `Bearer ${localStorage.getItem('token')}`; // Ensure you're using authentication tokens correctly
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch leaderboard data');
-                }
+    try {
+        const response = await fetch('/api/all-users-data', {
+            method: 'GET',
+            headers: { 'Authorization': authHeader }
+        });
 
-                const data = await response.json();
-                if (!data.success || !data.users) {
-                    throw new Error('No users found');
-                }
-
-                // Format the data for the leaderboard
-                const formattedUsers = data.users.map(user => ({
-                    username: user.username,
-                    score: user.totalScore,
-                    winningTeams: user.picks
-                        .filter(pick => pick.result === 'win') // Filter only winning teams
-                        .map(pick => pick.team) // Extract team names
-                }));
-
-                // Sort users by score in descending order
-                formattedUsers.sort((a, b) => b.score - a.score);
-
-                // Display the leaderboard
-                displayLeaderboard(formattedUsers);
-            } catch (error) {
-                console.error('Error fetching leaderboard:', error);
-                alert('Failed to load leaderboard data.');
-            }
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        function displayLeaderboard(users) {
-            const leaderboardBody = document.getElementById('leaderboard-body');
-            leaderboardBody.innerHTML = ''; // Clear existing content
-
-            users.forEach((user, index) => {
-                const row = document.createElement('tr');
-
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${user.username}</td>
-                    <td>${user.score}</td>
-                    <td>${user.winningTeams.length > 0 ? user.winningTeams.join(', ') : 'No wins yet'}</td>
-                `;
-
-                leaderboardBody.appendChild(row);
-            });
+        const data = await response.json();
+        if (data.success && data.users) {
+            displayLeaderboard(data.users);
+        } else {
+            throw new Error('Failed to load users or no users found');
         }
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error.message);
+        alert('Failed to load leaderboard data.');
+    }
+}
 
-        fetchLeaderboard(); // Fetch leaderboard data on page load
+function displayLeaderboard(users) {
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    leaderboardBody.innerHTML = ''; // Clear existing entries
+
+    users.forEach((user, index) => {
+        const row = document.createElement('tr');
+        const userPicks = user.winningPicks.map(pick => pick.team).join(', ');
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${user.username}</td>
+            <td>${user.totalScore}</td>
+            <td>${userPicks || 'No wins yet'}</td>
+        `;
+
+        leaderboardBody.appendChild(row);
+    });
+}
+
+// Call fetchLeaderboard when the page loads or when needed
+fetchLeaderboard();
+
     </script>
 
 </body>
