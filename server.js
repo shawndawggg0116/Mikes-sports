@@ -90,7 +90,12 @@ app.get('/chat', (req, res) => {
 
 
 
+const TeamSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  // Add other fields if needed (e.g., conference, division, etc.)
+});
 
+const Team = mongoose.model('Team', TeamSchema, 'teams');
 
 
 // MongoDB connection
@@ -157,6 +162,35 @@ app.get('/api/all-users-data', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+
+
+// ✅ Fetch all teams (for admin panel)
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    // Fetch all teams from the MongoDB collection
+    const teams = await mongoose.connection.db.collection('teams').find({}).toArray();
+    res.json({ success: true, teams });
+  } catch (error) {
+    console.error("❌ Error fetching teams:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+// ✅ Fetch all users (for admin panel)
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    // Fetch all users from the MongoDB collection
+    const users = await User.find({}, 'username role'); // Only fetch username and role
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error("❌ Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {

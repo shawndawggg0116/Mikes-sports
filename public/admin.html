@@ -109,6 +109,7 @@
     </div>
   </div>
   
+  
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -222,52 +223,52 @@
       }
     }
 
-    // ✅ Fetch and display all teams
-    async function fetchTeams() {
-      try {
-        const response = await fetch('/api/teams', { headers: authHeader });
+// ✅ Fetch and display all teams
+async function fetchTeams() {
+  try {
+    const response = await fetch('/api/teams', { headers: authHeader });
 
-        if (!response.ok) {
-          console.error("❌ Failed to fetch teams. Server Response:", response.status);
-          alert("Failed to load teams.");
-          return;
-        }
-
-        const data = await response.json();
-        console.log("📌 Teams API Response:", data);
-
-        if (!data.success || !data.teams) {
-          console.error("⚠ API returned no teams.");
-          alert("No teams found.");
-          return;
-        }
-
-        const teams = data.teams;
-        const teamsList = document.getElementById('teams-list');
-        teamsList.innerHTML = ""; // Clear existing content
-
-        if (teams.length === 0) {
-          teamsList.innerHTML = `<p>No teams found.</p>`;
-          return;
-        }
-
-        teams.forEach(team => {
-          const teamCard = document.createElement('div');
-          teamCard.className = 'team-card';
-          teamCard.textContent = team.name;
-          teamsList.appendChild(teamCard);
-        });
-
-        console.log("✅ Teams added to the list.");
-      } catch (error) {
-        console.error("❌ Error fetching teams:", error);
-        alert("Failed to load teams.");
-      }
+    if (!response.ok) {
+      console.error("❌ Failed to fetch teams. Server Response:", response.status);
+      alert("Failed to load teams.");
+      return;
     }
 
-    // Load users and teams on page load
-    fetchUsers();
-    fetchTeams();
+    const data = await response.json();
+    console.log("📌 Teams API Response:", data);
+
+    if (!data.success || !data.teams) {
+      console.error("⚠ API returned no teams.");
+      alert("No teams found.");
+      return;
+    }
+
+    const teams = data.teams;
+    const teamsList = document.getElementById('teams-list');
+    teamsList.innerHTML = ""; // Clear existing content
+
+    if (teams.length === 0) {
+      teamsList.innerHTML = `<p>No teams found.</p>`;
+      return;
+    }
+
+    teams.forEach(team => {
+      const teamCard = document.createElement('div');
+      teamCard.className = 'team-card';
+      teamCard.textContent = team.name;
+      teamsList.appendChild(teamCard);
+    });
+
+    console.log("✅ Teams added to the list.");
+  } catch (error) {
+    console.error("❌ Error fetching teams:", error);
+    alert("Failed to load teams.");
+  }
+}
+
+// Load users and teams on page load
+fetchUsers();
+fetchTeams();
   </script>
 </body>
 </html>
