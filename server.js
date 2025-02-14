@@ -181,24 +181,17 @@ app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) =
 });
 
 app.get('/api/teams-for-admin', authenticateToken, async (req, res) => {
-  console.log('Fetching teams for admin for week:', req.params.week);
+  console.log('Fetching teams for admin route accessed');
   try {
-    const week = parseInt(req.params.week);
-    if (isNaN(week)) {
-      return res.status(400).json({ success: false, message: 'Invalid week number' });
-    }
-
-    // Since we are not filtering teams by week in this example, we're just fetching all teams
     const teamsCollection = mongoose.connection.db.collection('teams');
     const allTeams = await teamsCollection.find().toArray();
-
+    console.log('Fetched teams for admin:', allTeams);
     res.json(allTeams);
   } catch (error) {
     console.error('Error fetching teams for admin:', error);
     res.status(500).send('Error fetching teams');
   }
 });
-
 
 // API Route to fetch all users data
 app.get('/api/all-users-data', async (req, res) => {
