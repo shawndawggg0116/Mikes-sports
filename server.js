@@ -183,29 +183,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-
-app.get('/api/user', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Ensure picks are sorted by week
-    const userPicks = user.picks.sort((a, b) => a.week - b.week);
-
-    res.json({ 
-      username: user.username, 
-      picks: userPicks, 
-      totalScore: user.totalScore 
-    });
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
