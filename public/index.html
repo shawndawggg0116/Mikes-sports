@@ -12,6 +12,11 @@
     button:hover { background-color: darkgreen; }
     .error { color: red; margin-top: 10px; }
   </style>
+  <link rel="manifest" href="/manifest.json">
+  <!-- Apple touch icon meta tags -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
 </head>
 <body>
   <h1>NFL Picks - Login</h1>
@@ -21,8 +26,6 @@
     <button onclick="login()">Login</button>
     <p class="error" id="error-message"></p>
   </div>
-
-  <link rel="manifest" href="/manifest.json">
 
   <script>
     async function login() {
@@ -55,7 +58,6 @@
         errorMessage.textContent = result.message; // Show error message
       }
     }
-
   </script>
 </body>
 </html>
