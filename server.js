@@ -119,6 +119,16 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// API Route to fetch all users data
+app.get('/api/all-users-data', async (req, res) => {
+  try {
+    const users = await User.find({}, '-password'); // Exclude the password field
+    res.json({ success: true, users: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching users data', error: error.message });
+  }
+});
+
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {
   try {
