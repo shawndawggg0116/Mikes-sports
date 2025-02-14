@@ -15,6 +15,8 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
+
+
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -27,6 +29,24 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').then(registration => {
+    console.log('Service Worker registered with scope:', registration.scope);
+
+    // Request permission for notifications
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        console.log('Notification permission granted.');
+      } else {
+        console.log('Notification permission denied.');
+      }
+    });
+  }).catch(error => {
+    console.error('Service Worker registration failed:', error);
+  });
+}
 
 
 // WebSocket logic
