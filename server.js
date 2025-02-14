@@ -398,11 +398,13 @@ app.get('/api/all-users-data', authenticateToken, async (req, res) => {
 
 // Add this to your existing server.js file
 
+
+
 // ✅ Fetch all teams (for admin panel)
 app.get('/api/teams', authenticateToken, async (req, res) => {
   try {
     // Fetch all teams from the MongoDB collection
-    const teams = await Team.find({}, 'name'); // Only fetch the team names
+    const teams = await mongoose.connection.db.collection('teams').find({}).toArray();
     res.json({ success: true, teams });
   } catch (error) {
     console.error("❌ Error fetching teams:", error);
