@@ -213,7 +213,18 @@ app.get('/api/get-user', authenticateToken, async (req, res) => {
   }
 });
 
-
+app.delete('/api/delete-user/:userId', authenticateToken, async (req, res) => {
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.userId);
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 
 // Route to handle team selection
