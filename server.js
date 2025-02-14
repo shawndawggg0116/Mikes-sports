@@ -90,12 +90,7 @@ app.get('/chat', (req, res) => {
 
 
 
-const TeamSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  // Add other fields if needed (e.g., conference, division, etc.)
-});
 
-const Team = mongoose.model('Team', TeamSchema, 'teams');
 
 
 // MongoDB connection
@@ -139,57 +134,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-app.get('/api/all-users-data', authenticateToken, async (req, res) => {
-  try {
-    // Fetch all users with their picks and totalScore
-    const users = await User.find({}, 'username picks totalScore');
-
-    // Format the data to include weekly picks, wins, and points
-    const formattedUsers = users.map(user => ({
-      username: user.username,
-      totalScore: user.totalScore,
-      picks: user.picks.map(pick => ({
-        week: pick.week,
-        team: pick.team,
-        result: pick.result,
-      })),
-    }));
-
-    res.json({ success: true, users: formattedUsers });
-  } catch (error) {
-    console.error("❌ Error fetching all users' data:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// Add this to your existing server.js file
-
-// ✅ Fetch all teams (for admin panel)
-app.get('/api/teams', authenticateToken, async (req, res) => {
-  try {
-    // Fetch all teams from the MongoDB collection
-    const teams = await Team.find({}, 'name'); // Only fetch the team names
-    res.json({ success: true, teams });
-  } catch (error) {
-    console.error("❌ Error fetching teams:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// ✅ Fetch all users (for admin panel)
-app.get('/api/users', authenticateToken, async (req, res) => {
-  try {
-    // Fetch all users from the MongoDB collection
-    const users = await User.find({}, 'username role'); // Only fetch username and role
-    res.json({ success: true, users });
-  } catch (error) {
-    console.error("❌ Error fetching users:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-
 
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {
@@ -426,7 +370,26 @@ app.get('*', (req, res) => {
 });
 
 
+console.log("✅ Registering /api/users route...");
 
+app.delete('/api/delete-user/:id', authenticateToken, authenticateAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    res.json({ success: true, message: "User deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+console.log("✅ Registering /api/users route...");
 
 // Server
 
