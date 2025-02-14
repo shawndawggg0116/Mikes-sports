@@ -6,8 +6,7 @@
     <title>Leaderboard</title>
     <link rel="stylesheet" href="/styles.css">
     <style>
-        
-        /* General Page Styles */
+        /* Your existing styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #1e1e1e;
@@ -17,7 +16,6 @@
             text-align: center;
         }
 
-        /* Leaderboard Container */
         .leaderboard-container {
             max-width: 90%;
             margin: 80px auto 20px;
@@ -34,7 +32,6 @@
             font-size: 28px;
         }
 
-        /* Leaderboard Table */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -56,7 +53,6 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* Responsive Styling */
         @media (max-width: 768px) {
             .leaderboard-container {
                 width: 100%;
@@ -75,7 +71,6 @@
 </head>
 <body>
 
-    <!-- Navigation Bar -->
     <nav class="navbar">
         <ul>
             <li><a href="/teams">Teams</a></li>
@@ -87,6 +82,11 @@
 
     <div class="leaderboard-container">
         <h1>NFL Weekly Leaderboard</h1>
+        <!-- Add Week Selector -->
+        <label for="week-select">Select Week:</label>
+        <select id="week-select" onchange="fetchLeaderboard()">
+            <!-- Weeks will be dynamically inserted here -->
+        </select>
         <table>
             <thead>
                 <tr>
@@ -109,25 +109,22 @@
             window.location.href = '/'; // Redirect if not logged in
         }
 
-        const authHeader = `Bearer ${token}`;
+        const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
         // Function to fetch leaderboard data
         async function fetchLeaderboard() {
+            const week = document.getElementById('week-select').value;
             try {
-                const response = await fetch('/api/all-users-data', {
-                    headers: {
-                        'Authorization': authHeader
-                    }
-                });
+                const response = await fetch(`/api/leaderboard/${week}`, { headers: authHeader });
                 
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error('Failed to fetch leaderboard');
                 }
 
                 const data = await response.json();
                 
-                if (data.success && data.users) {
-                    displayLeaderboard(data.users);
+                if (data.success && data.leaderboard) {
+                    displayLeaderboard(data.leaderboard);
                 } else {
                     throw new Error('Failed to load leaderboard data');
                 }
@@ -142,10 +139,9 @@
             const leaderboardBody = document.getElementById('leaderboard-body');
             leaderboardBody.innerHTML = ''; // Clear existing entries
 
-            users.sort((a, b) => b.totalScore - a.totalScore); // Sort by score descending
             users.forEach((user, index) => {
                 const row = document.createElement('tr');
-                const userWins = user.winningTeams ? user.winningTeams.join(', ') : 'No wins yet';
+                const userWins = user.picks.filter(pick => pick.week == document.getElementById('week-select').value && pick.result == 'win').map(pick => pick.team).join(', ') || 'No wins this week';
 
                 row.innerHTML = `
                     <td>${index + 1}</td>
@@ -158,8 +154,22 @@
             });
         }
 
+        // Function to populate the week selector
+        function populateWeekSelector() {
+            const currentWeek = moment().isoWeek();
+            const select = document.getElementById('week-select');
+            for (let i = 1; i <= currentWeek; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Week ${i}`;
+                select.appendChild(option);
+            }
+            select.value = currentWeek; // Set to current week by default
+            fetchLeaderboard(); // Fetch leaderboard for the current week initially
+        }
+
         // Fetch leaderboard data when the page loads
-        fetchLeaderboard();
+        document.addEventListener('DOMContentLoaded', populateWeekSelector);
     </script>
 
 </body>
