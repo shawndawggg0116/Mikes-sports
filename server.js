@@ -127,7 +127,6 @@ app.get('/api/leaderboard/:week', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
 
-    // Fetch users and their picks for the specified week where the result is 'win'
     const users = await User.aggregate([
       {
         $project: {
