@@ -172,6 +172,30 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+app.get('/api/all-users-data', async (req, res) => {
+  try {
+      const usersData = await User.aggregate([
+          {
+              $project: {
+                  username: 1,
+                  totalScore: 1,
+                  winningPicks: {
+                      $filter: {
+                          input: "$picks",
+                          as: "pick",
+                          cond: { $eq: ["$$pick.result", "win"] }
+                      }
+                  }
+              }
+          }
+      ]);
+
+      res.status(200).json({ success: true, users: usersData });
+  } catch (error) {
+      res.status(500).json({ success: false, message: "Failed to fetch user data", error: error.message });
+  }
+});
+
 
 // User Login
 app.post('/api/login', async (req, res) => {
