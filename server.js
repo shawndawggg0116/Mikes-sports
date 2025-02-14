@@ -15,7 +15,18 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer token
+  if (!token) return res.status(403).json({ message: 'No token provided' });
 
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
 
 
 // WebSocket logic
@@ -108,18 +119,7 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema, 'users');
 
-// JWT Authentication Middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer token
-  if (!token) return res.status(403).json({ message: 'No token provided' });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(401).json({ message: 'Invalid token' });
-    req.user = user;
-    next();
-  });
-};
 
 // API Route to fetch all users data
 app.get('/api/all-users-data', async (req, res) => {
