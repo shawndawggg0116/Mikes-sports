@@ -71,6 +71,23 @@
       flex: 1 1 calc(25% - 20px);
       box-sizing: border-box;
     }
+
+    .button {
+  padding: 10px 20px;
+  margin: 5px;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.active-win {
+  background-color: #28a745; /* Green for win */
+}
+
+.active-loss {
+  background-color: #040d66; /* Red for loss */
+}
+
   </style>
 </head>
 <body>
@@ -223,11 +240,19 @@ async function submitResults() {
 // Event listeners for win/loss buttons
 document.getElementById('teams-container').addEventListener('click', function(e) {
   if (e.target.classList.contains('win-btn') || e.target.classList.contains('loss-btn')) {
+    // Toggle 'active' class on clicked button
     e.target.classList.toggle('active');
-    const siblingButton = e.target.parentElement.querySelector(e.target.classList.contains('win-btn') ? '.loss-btn' : '.win-btn');
+    
+    // Ensure that only one button can be active at a time: either win or loss
+    const siblingButton = e.target.parentElement.querySelector(
+      e.target.classList.contains('win-btn') ? '.loss-btn' : '.win-btn'
+    );
+    
+    // Remove 'active' class from the sibling button if present
     siblingButton.classList.remove('active');
   }
 });
+
  // Event listener for submit button
  document.getElementById('submit-results').addEventListener('click', submitResults);
 
@@ -290,6 +315,8 @@ document.addEventListener('DOMContentLoaded', fetchTeams);
     alert("Failed to load users.");
   }
 }
+
+
 
 // Call fetchUsers when the page loads
 document.addEventListener('DOMContentLoaded', () => {
