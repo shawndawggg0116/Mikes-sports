@@ -119,6 +119,49 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema, 'users');
 
+// Add this to your server.js
+app.get('/api/leaderboard/:week', async (req, res) => {
+  try {
+    const week = parseInt(req.params.week);
+    if (isNaN(week)) {
+      return res.status(400).json({ success: false, message: 'Invalid week number' });
+    }
+
+    // Fetch users and their picks for the specified week where the result is 'win'
+    const users = await User.aggregate([
+      {
+        $project: {
+          username: 1,
+          totalScore: 1,
+          picks: {
+            $filter: {
+              input: '$picks',
+              as: 'pick',
+              cond: { $and: [
+                { $eq: ['$$pick.week', week] },
+                { $eq: ['$$pick.result', 'win'] }
+              ]}
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          winsThisWeek: { $size: "$picks" }
+        }
+      },
+      {
+        $sort: { winsThisWeek: -1, totalScore: -1 }
+      }
+    ]);
+
+    res.json({ success: true, leaderboard: users });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 app.get('/api/teams-for-admin', authenticateToken, async (req, res) => {
   console.log('Fetching teams for admin route accessed');
   try {
