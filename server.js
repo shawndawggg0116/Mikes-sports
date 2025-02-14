@@ -100,9 +100,11 @@ const UserSchema = new mongoose.Schema({
     result: { type: String, default: "pending" }
   }],
   
-  totalScore: { type: Number, default: 0 }
+  totalScore: { type: Number, default: 0 },
+  
+  // Add pickedTeams as an array of strings
+  pickedTeams: [{ type: String, default: [] }]
 });
-
 
 const User = mongoose.model('User', UserSchema, 'users');
 
@@ -150,14 +152,14 @@ app.get('/api/user-data', authenticateToken, async (req, res) => {
 
 // User Registration
 app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body; // Include role
   if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
 
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) return res.status(400).json({ message: 'Username already exists' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username, password: hashedPassword, role: role }); // Add role
     await newUser.save();
     res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
@@ -346,11 +348,18 @@ app.post('/api/pick-team', authenticateToken, async (req, res) => {
     // Store the pick as a new array entry
     user.picks.push({ week: currentWeek, team: req.body.team, result: "pending" });
     user.lastPickDate = new Date();
+
+    // Add the team to pickedTeams if it's not already there
+    if (!user.pickedTeams.includes(req.body.team)) {
+      user.pickedTeams.push(req.body.team);
+    }
+
     await user.save();
 
     console.log("✅ Team pick saved successfully:", user.picks);
+    console.log("✅ Team added to pickedTeams:", user.pickedTeams);
 
-    res.json({ success: true, message: 'Team selected successfully', picks: user.picks });
+    res.json({ success: true, message: 'Team selected successfully', picks: user.picks, pickedTeams: user.pickedTeams });
   } catch (error) {
     console.error("❌ Error selecting team:", error);
     res.status(500).json({ success: false, message: 'Server error' });
