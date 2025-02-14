@@ -89,9 +89,21 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  pickedTeams: { type: [String], default: [] },
-  lastPickDate: { type: Date, default: null }
+  role: { type: String, default: "user" },
+  createdAt: { type: Date, default: Date.now },
+  lastPickDate: { type: Date, default: null },
+  
+  // ✅ Picks stored as an array
+  picks: [{
+    week: Number,
+    team: String,
+    result: { type: String, default: "pending" }
+  }],
+  
+  totalScore: { type: Number, default: 0 }
 });
+
+
 const User = mongoose.model('User', UserSchema, 'users');
 
 // JWT Authentication Middleware
@@ -144,16 +156,26 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+
 // User Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token, username: user.username });
+
+    const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({ 
+      success: true, 
+      token, 
+      username: user.username, 
+      role: user.role // Send user role
+    });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -162,41 +184,50 @@ app.post('/api/login', async (req, res) => {
 
 
 
+
 // Route to fetch user data using User.findById
 app.get('/api/get-user', authenticateToken, async (req, res) => {
   try {
-      const user = await User.findById(req.user.id);  // Updated to use async/await
+      const user = await User.findById(req.user.id);
       if (!user) {
-          res.status(404).json({ message: 'User not found' });
-      } else {
-          res.json({ pickedTeams: user.pickedTeams });
+          return res.status(404).json({ message: 'User not found' });
       }
+
+      // Ensure picks are sorted by week
+      const userPicks = user.picks.sort((a, b) => a.week - b.week);
+
+      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
+  } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+// Route to handle team selection
+app.get('/api/get-user', authenticateToken, async (req, res) => {
+  try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Convert picks object into an array
+      const userPicks = Object.keys(user.picks).map(week => ({
+          week: parseInt(week),
+          team: user.picks[week].team,
+          result: user.picks[week].result
+      }));
+
+      res.json({ username: user.username, picks: userPicks, totalScore: user.totalScore });
   } catch (error) {
       console.error('Error fetching user data:', error);
       res.status(500).json({ message: 'Error on the server.' });
   }
 });
 
-// Route to handle team selection
-app.post('/api/pick-team', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    if (user.pickedTeams.includes(req.body.team)) {
-      return res.status(400).json({ success: false, message: 'You have already picked this team this season' });
-    }
-
-    user.pickedTeams.push(req.body.team);
-    user.lastPickDate = new Date();
-    await user.save();
-
-    res.json({ success: true, message: 'Team selected successfully' });
-  } catch (error) {
-    console.error('Error selecting team:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
 
 // Fetch all teams with their statuses
 app.get('/api/teams', authenticateToken, async (req, res) => {
@@ -248,6 +279,11 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
+// Serve Admin Page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 
 // Serve the main page for the root route
 app.get('/', (req, res) => {
@@ -264,6 +300,41 @@ app.get('*', (req, res) => {
   res.status(404).send('Page not found');
 });
 
+app.post('/api/pick-team', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error("❌ User not found:", req.user.id);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    console.log("✅ User found:", user.username);
+    console.log("📌 Received team pick:", req.body.team);
+
+    // Get the current week number
+    const currentWeek = moment().isoWeek();
+
+    // Check if the user has already picked a team for this week
+    const existingPickIndex = user.picks.findIndex(p => p.week === currentWeek);
+    
+    if (existingPickIndex !== -1) {
+      console.error("❌ User already picked a team this week:", user.picks[existingPickIndex]);
+      return res.status(400).json({ success: false, message: 'You have already picked a team this week' });
+    }
+
+    // Store the pick as a new array entry
+    user.picks.push({ week: currentWeek, team: req.body.team, result: "pending" });
+    user.lastPickDate = new Date();
+    await user.save();
+
+    console.log("✅ Team pick saved successfully:", user.picks);
+
+    res.json({ success: true, message: 'Team selected successfully', picks: user.picks });
+  } catch (error) {
+    console.error("❌ Error selecting team:", error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 
 // Server
