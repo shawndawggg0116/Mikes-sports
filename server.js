@@ -180,18 +180,6 @@ app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) =
   }
 });
 
-app.get('/api/teams-for-admin', authenticateToken, async (req, res) => {
-  console.log('Fetching teams for admin route accessed');
-  try {
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const allTeams = await teamsCollection.find().toArray();
-    console.log('Fetched teams for admin:', allTeams);
-    res.json(allTeams);
-  } catch (error) {
-    console.error('Error fetching teams for admin:', error);
-    res.status(500).send('Error fetching teams');
-  }
-});
 
 // API Route to fetch all users data
 app.get('/api/all-users-data', async (req, res) => {
