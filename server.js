@@ -190,22 +190,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Delete a user (for admin panel)
-app.delete('/api/delete-user/:id', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const deletedUser = await User.findByIdAndDelete(userId);
 
-    if (!deletedUser) {
-      return res.status(404).json({ success: false, message: "User not found." });
-    }
-
-    res.json({ success: true, message: "User deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
 
 // Route to fetch user-specific data
 app.get('/api/user-data', authenticateToken, async (req, res) => {
