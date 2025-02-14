@@ -151,32 +151,45 @@
     }
 
     async function fetchTeams() {
-            try {
-                const response = await fetch('/api/teams-for-admin', { headers: authHeader });
-                if (!response.ok) throw new Error('Failed to fetch teams');
+  try {
+    console.log('Attempting to fetch teams for admin...');
+    const response = await fetch('/api/teams-for-admin', { headers: authHeader });
+    console.log('Fetch response status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text(); // Get the error message from the server if any
+      console.error('Fetch response error:', errorText);
+      throw new Error(`Failed to fetch teams for admin. Status: ${response.status}, Error: ${errorText}`);
+    }
 
-                const data = await response.json();
-                const teamsList = document.getElementById('teams-list');
-                teamsList.innerHTML = "";
+    const data = await response.json();
+    console.log('Fetched teams data for admin:', data);
 
-                data.forEach(team => {
-                    const teamCard = document.createElement('div');
-                    teamCard.className = 'team-card';
-                    teamCard.innerHTML = `
-                        <span>${team.name}</span>
-                        <div>
-                            <button class="win-btn" data-team="${team.name}">Win</button>
-                            <button class="loss-btn" data-team="${team.name}">Loss</button>
-                        </div>
-                    `;
-                    teamsList.appendChild(teamCard);
-                });
-            } catch (error) {
-                console.error("Error fetching teams:", error);
-                alert("Failed to load teams.");
-            }
-        }
+    const teamsList = document.getElementById('teams-list');
+    teamsList.innerHTML = "";
 
+    if (data.length === 0) {
+      teamsList.innerHTML = `<p>No teams found.</p>`;
+      console.log('No teams found in the database for admin.');
+    } else {
+      data.forEach(team => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'team-card';
+        teamCard.innerHTML = `
+          <span>${team.name}</span>
+          <div>
+            <button class="win-btn" data-team="${team.name}">Win</button>
+            <button class="loss-btn" data-team="${team.name}">Loss</button>
+          </div>
+        `;
+        teamsList.appendChild(teamCard);
+      });
+      console.log('Teams added to the list for admin.');
+    }
+  } catch (error) {
+    console.error("Error fetching teams for admin:", error);
+    alert("Failed to load teams for admin. Please check console for details.");
+  }
+}
 // Function to handle the result submission
 async function submitResults() {
             try {
