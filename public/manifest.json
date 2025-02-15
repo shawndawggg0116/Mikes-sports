@@ -1,7 +1,6 @@
 {
   "name": "NFL Picks App",
   "short_name": "NFL Picks",
-  "description": "An app for NFL team picks",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#d2b48c",
