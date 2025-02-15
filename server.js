@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
-const routes = require("./routes/app");  // Load your app.js from routes folder
+
 
 // server.js (relevant part)
 app.use(express.static(path.join(__dirname, 'public')));
