@@ -30,6 +30,8 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
 const admin = require("firebase-admin");
 
@@ -40,7 +42,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const messaging = admin.messaging();
+
 
 // Send a Test Notification Function
 async function sendTestNotification() {
