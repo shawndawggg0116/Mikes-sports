@@ -14,24 +14,6 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
-const routes = require("./app");
-
-
-const admin = require("firebase-admin");
-
-// ✅ Ensure Firebase Admin is initialized only once
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: "mikes-sport-picks",
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,  // Load from environment variables
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Ensure new lines are handled correctly
-    }),
-  });
-}
-
-const messaging = admin.messaging();
-
 
 // server.js (relevant part)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -48,10 +30,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-
-
-
 
 
 
@@ -92,31 +70,6 @@ app.use(express.static(__dirname));
 
 app.use(express.static('public'));
 
-app.post('/api/send-notification', async (req, res) => {
-  try {
-      const { token, title, body } = req.body;
-
-      if (!token) {
-          return res.status(400).json({ success: false, message: "FCM Token is required." });
-      }
-
-      const message = {
-          notification: {
-              title: title || "🏈 NFL Picks Notification!",
-              body: body || "Reminder: Pick your team for this week!",
-          },
-          token: token,
-      };
-
-      const response = await messaging.send(message);
-      console.log("✅ Notification Sent:", response);
-      res.status(200).json({ success: true, message: "Notification sent successfully!" });
-
-  } catch (error) {
-      console.error("❌ Error sending notification:", error);
-      res.status(500).json({ success: false, message: "Failed to send notification", error: error.message });
-  }
-});
 
 
 // Routes
@@ -518,8 +471,6 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
     res.status(500).send('Error updating results');
   }
 });
-
-
 
 // Server
 

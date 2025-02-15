@@ -18,25 +18,7 @@
   <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png">
   <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
 </head>
-<script>
-  function requestNotificationPermission() {
-    Notification.requestPermission().then(permission => {
-      console.log("Notification Permission:", permission);
-      if (permission === "granted") {
-        alert("✅ Notifications enabled!");
-      } else if (permission === "denied") {
-        alert("❌ Notifications blocked. Enable them in browser settings.");
-      } else {
-        alert("⚠️ Notification permission is still 'default'.");
-      }
-    }).catch(error => console.error("Error requesting permission:", error));
-  }
-</script>
-
 <body>
-  <button onclick="requestNotificationPermission()">Enable Notifications</button>
-
-
   <h1>NFL Picks - Login</h1>
   <!-- Image added here, before your login form -->
   <img src="/login-screen-image.png" alt="NFL Picks App Logo" style="width:200px; height:auto; display:block; margin:0 auto 20px;">
