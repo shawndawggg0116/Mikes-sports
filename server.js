@@ -13,7 +13,8 @@ const { Server } = require('socket.io'); // ✅ Import Socket.io
 const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
-
+const admin = require("firebase-admin");
+const routes = require("./routes/app");  // Load your app.js from routes folder
 
 // server.js (relevant part)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,6 +33,18 @@ const authenticateToken = (req, res, next) => {
 };
 
 
+const admin = require("firebase-admin");
+
+// Prevent duplicate Firebase Admin initialization
+if (!admin.apps.length) {
+    const serviceAccount = require("./firebase-service-account.json"); // Ensure this file exists
+
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
+
+const messaging = admin.messaging();
 
 
 // WebSocket logic
@@ -70,6 +83,31 @@ app.use(express.static(__dirname));
 
 app.use(express.static('public'));
 
+app.post('/api/send-notification', async (req, res) => {
+  try {
+      const { token, title, body } = req.body;
+
+      if (!token) {
+          return res.status(400).json({ success: false, message: "FCM Token is required." });
+      }
+
+      const message = {
+          notification: {
+              title: title || "🏈 NFL Picks Notification!",
+              body: body || "Reminder: Pick your team for this week!",
+          },
+          token: token,
+      };
+
+      const response = await messaging.send(message);
+      console.log("✅ Notification Sent:", response);
+      res.status(200).json({ success: true, message: "Notification sent successfully!" });
+
+  } catch (error) {
+      console.error("❌ Error sending notification:", error);
+      res.status(500).json({ success: false, message: "Failed to send notification", error: error.message });
+  }
+});
 
 
 // Routes
