@@ -31,45 +31,35 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Import Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+const admin = require("firebase-admin");
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAkVxa2Sl_n2ilctVtAMAR08_YodZs_2qc",
-  authDomain: "mikes-sport-picks.firebaseapp.com",
-  projectId: "mikes-sport-picks",
-  storageBucket: "mikes-sport-picks.appspot.com",
-  messagingSenderId: "194004518324",
-  appId: "1:194004518324:web:b16f742de1f2cef1f25ee1",
-  measurementId: "G-CX80D31MNE"
-};
+// Initialize Firebase Admin SDK for Server
+const serviceAccount = require("./firebase-service-account.json"); // Make sure this file exists
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
+const messaging = admin.messaging();
 
-// Request FCM Token
-async function requestFCMToken() {
-  try {
-    const token = await getToken(messaging, { vapidKey: "BDxeWrtXOIPm27MeNeXygF6rRXma7L4A-efs6J8l2tFjiIOtXCFD0SyyRUeS2u8qE6PsOgFfiOXGSZChE1VInX4" });
-    if (token) {
-      console.log("📲 FCM Token:", token);
-    } else {
-      console.log("⚠️ No FCM Token received.");
-    }
-  } catch (error) {
-    console.error("❌ Error getting FCM token:", error);
-  }
+// Send a Test Notification Function
+async function sendTestNotification() {
+    const token = "PASTE_YOUR_FCM_TOKEN_HERE"; // Replace with the real token
+
+    const message = {
+        notification: {
+            title: "🏈 NFL Picks Notification!",
+            body: "This is a test push notification from the NFL Picks App.",
+        },
+        token: token,
+    };
+
+    messaging.send(message)
+        .then(response => console.log("✅ Notification Sent:", response))
+        .catch(error => console.error("❌ Error sending notification:", error));
 }
 
-// Call the function to request the FCM Token
-requestFCMToken();
-
-// Listen for foreground push notifications
-onMessage(messaging, (payload) => {
-  console.log("📩 Foreground Notification Received:", payload);
-  alert(`📢 New Notification: ${payload.notification.title} - ${payload.notification.body}`);
-});
+sendTestNotification();
 
 
 
