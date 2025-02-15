@@ -13,7 +13,7 @@ const { Server } = require('socket.io'); // ✅ Import Socket.io
 const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
-const admin = require("firebase-admin");
+
 const routes = require("./routes/app");  // Load your app.js from routes folder
 
 // server.js (relevant part)
@@ -31,6 +31,7 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
 
 
 
