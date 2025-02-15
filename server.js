@@ -31,6 +31,45 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Import Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAkVxa2Sl_n2ilctVtAMAR08_YodZs_2qc",
+  authDomain: "mikes-sport-picks.firebaseapp.com",
+  projectId: "mikes-sport-picks",
+  storageBucket: "mikes-sport-picks.appspot.com",
+  messagingSenderId: "194004518324",
+  appId: "1:194004518324:web:b16f742de1f2cef1f25ee1",
+  measurementId: "G-CX80D31MNE"
+};
+
+
+
+// Request FCM Token
+async function requestFCMToken() {
+  try {
+    const token = await getToken(messaging, { vapidKey: "BDxeWrtXOIPm27MeNeXygF6rRXma7L4A-efs6J8l2tFjiIOtXCFD0SyyRUeS2u8qE6PsOgFfiOXGSZChE1VInX4" });
+    if (token) {
+      console.log("📲 FCM Token:", token);
+    } else {
+      console.log("⚠️ No FCM Token received.");
+    }
+  } catch (error) {
+    console.error("❌ Error getting FCM token:", error);
+  }
+}
+
+// Call the function to request the FCM Token
+requestFCMToken();
+
+// Listen for foreground push notifications
+onMessage(messaging, (payload) => {
+  console.log("📩 Foreground Notification Received:", payload);
+  alert(`📢 New Notification: ${payload.notification.title} - ${payload.notification.body}`);
+});
 
 
 
@@ -471,6 +510,45 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
     res.status(500).send('Error updating results');
   }
 });
+
+const admin = require("firebase-admin");
+const cron = require("node-cron");
+
+// Initialize Firebase Admin SDK
+const serviceAccount = require("./firebase-service-account.json"); // Download this from Firebase Console
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const messaging = admin.messaging();
+
+// Function to send push notifications
+async function sendPushNotifications() {
+  const tokens = await getUserTokensFromDatabase(); // Fetch stored FCM tokens from MongoDB
+
+  if (tokens.length === 0) return console.log("No users to notify.");
+
+  const message = {
+    notification: {
+      title: "Pick Your NFL Team!",
+      body: "It's Tuesday! Don't forget to select your NFL team for this week's game.",
+    },
+    tokens: tokens, // Send to multiple users
+  };
+
+  messaging
+    .sendMulticast(message)
+    .then((response) => console.log("Notifications sent:", response.successCount))
+    .catch((error) => console.error("Error sending notifications:", error));
+}
+
+// Schedule notification every Tuesday at 1 PM EST
+cron.schedule("0 13 * * 2", () => {
+  console.log("Sending weekly notifications...");
+  sendPushNotifications();
+});
+
 
 // Server
 
