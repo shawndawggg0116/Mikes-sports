@@ -33,18 +33,9 @@ const authenticateToken = (req, res, next) => {
 };
 
 
-const admin = require("firebase-admin");
 
-// Prevent duplicate Firebase Admin initialization
-if (!admin.apps.length) {
-    const serviceAccount = require("./firebase-service-account.json"); // Ensure this file exists
 
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
-}
 
-const messaging = admin.messaging();
 
 
 // WebSocket logic
