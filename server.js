@@ -30,38 +30,7 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
-const admin = require("firebase-admin");
-
-// Initialize Firebase Admin SDK for Server
-const serviceAccount = require("./firebase-service-account.json"); // Make sure this file exists
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-
-
-// Send a Test Notification Function
-async function sendTestNotification() {
-    const token = "PASTE_YOUR_FCM_TOKEN_HERE"; // Replace with the real token
-
-    const message = {
-        notification: {
-            title: "🏈 NFL Picks Notification!",
-            body: "This is a test push notification from the NFL Picks App.",
-        },
-        token: token,
-    };
-
-    messaging.send(message)
-        .then(response => console.log("✅ Notification Sent:", response))
-        .catch(error => console.error("❌ Error sending notification:", error));
-}
-
-sendTestNotification();
 
 
 
@@ -503,43 +472,6 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   }
 });
 
-const admin = require("firebase-admin");
-const cron = require("node-cron");
-
-// Initialize Firebase Admin SDK
-const serviceAccount = require("./firebase-service-account.json"); // Download this from Firebase Console
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-const messaging = admin.messaging();
-
-// Function to send push notifications
-async function sendPushNotifications() {
-  const tokens = await getUserTokensFromDatabase(); // Fetch stored FCM tokens from MongoDB
-
-  if (tokens.length === 0) return console.log("No users to notify.");
-
-  const message = {
-    notification: {
-      title: "Pick Your NFL Team!",
-      body: "It's Tuesday! Don't forget to select your NFL team for this week's game.",
-    },
-    tokens: tokens, // Send to multiple users
-  };
-
-  messaging
-    .sendMulticast(message)
-    .then((response) => console.log("Notifications sent:", response.successCount))
-    .catch((error) => console.error("Error sending notifications:", error));
-}
-
-// Schedule notification every Tuesday at 1 PM EST
-cron.schedule("0 13 * * 2", () => {
-  console.log("Sending weekly notifications...");
-  sendPushNotifications();
-});
 
 
 // Server
