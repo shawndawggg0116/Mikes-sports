@@ -14,6 +14,23 @@ const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
+const routes = require("./app");
+const routes = require("./src/app");
+
+const admin = require("firebase-admin");
+
+// ✅ Ensure Firebase Admin is initialized only once
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: "mikes-sport-picks",
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,  // Load from environment variables
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Ensure new lines are handled correctly
+    }),
+  });
+}
+
+const messaging = admin.messaging();
 
 
 // server.js (relevant part)
