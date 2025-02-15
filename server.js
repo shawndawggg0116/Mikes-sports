@@ -15,7 +15,7 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 const routes = require("./app");
-const routes = require("./src/app");
+
 
 const admin = require("firebase-admin");
 
