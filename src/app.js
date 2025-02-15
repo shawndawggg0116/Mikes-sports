@@ -51,6 +51,18 @@ async function requestNotificationPermission() {
 
 requestNotificationPermission();
 
+function requestNotificationPermission() {
+  Notification.requestPermission().then(permission => {
+    console.log("Notification Permission:", permission);
+    if (permission === "granted") {
+      alert("✅ Notifications enabled!");
+    } else {
+      alert("❌ Notifications blocked. Enable them in browser settings.");
+    }
+  });
+}
+
+
 // Handle incoming foreground messages
 onMessage(messaging, (payload) => {
   console.log("Message received: ", payload);
