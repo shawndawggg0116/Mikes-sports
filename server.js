@@ -472,21 +472,27 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   }
 });
 
-// Firebase Admin Setup
 const serviceAccount = {
   type: "service_account",
-  project_id: process.env.FIREBASE_PROJECT_ID,
-  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-    : console.error("❌ Missing FIREBASE_PRIVATE_KEY"),
-  client_email: process.env.FIREBASE_CLIENT_EMAIL,
-  client_id: process.env.FIREBASE_CLIENT_ID,
+  project_id: "mikes-sport-picks",
+  private_key_id: "f2eac62af4a83a5037453aba441aa6168e392dd2",
+  private_key: `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDXR7XmJLQoratP
+OtE6/8G2J7PFAjwZwK49kQKHiKMSqKq9MvkSXEOyH8TnJNrz2A49IpTevjHCaWs4
+QeH/R3k95OfdaN0Q+XTgNYmksYpcCE3jfOPyaIufMRFzqnHMNnvzswx+imAfVYcp
+-----END PRIVATE KEY-----\n`,
+  client_email: "firebase-adminsdk-fbsvc@mikes-sport-picks.iam.gserviceaccount.com",
+  client_id: "118407553526514843715",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+  client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40mikes-sport-picks.iam.gserviceaccount.com",
 };
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 
 console.log("🔥 Firebase Private Key Loaded:", serviceAccount.private_key ? "Yes" : "No");
 
