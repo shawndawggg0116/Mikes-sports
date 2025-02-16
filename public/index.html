@@ -13,15 +13,12 @@
     .error { color: red; margin-top: 10px; }
   </style>
   <link rel="manifest" href="/manifest.json">
-  <!-- Apple touch icon meta tags -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
 </head>
 <body>
   <h1>NFL Picks - Login</h1>
-  <!-- Image added here, before your login form -->
   <img src="/login-screen-image.png" alt="NFL Picks App Logo" style="width:200px; height:auto; display:block; margin:0 auto 20px;">
+  
   <div class="container">
     <input type="text" id="username" placeholder="Enter Username">
     <input type="password" id="password" placeholder="Enter Password">
@@ -34,87 +31,80 @@
   <script>
     if ('serviceWorker' in navigator && 'PushManager' in window) {
         navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log("Service Worker Registered!", registration);
+            .then(async registration => {
+                console.log("✅ Service Worker Registered!", registration);
             })
             .catch(error => {
-                console.error("Service Worker Registration Failed:", error);
+                console.error("❌ Service Worker Registration Failed:", error);
             });
     }
-    </script>
-    
 
-  <script>
-      if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js')
-              .then(reg => console.log("Service Worker Registered!", reg))
-              .catch(err => console.log("Service Worker Error:", err));
-      }
-  
-      document.getElementById('enableNotifications').addEventListener('click', async () => {
-          if (!("Notification" in window)) {
-              alert("This browser does not support notifications.");
-              return;
-          }
-  
-          const permission = await Notification.requestPermission();
-          if (permission !== "granted") {
-              alert("You need to allow notifications to receive reminders.");
-              return;
-          }
-  
-          // ✅ Subscribe to Push Notifications
-          navigator.serviceWorker.ready.then(async reg => {
-              const subscription = await reg.pushManager.subscribe({
-                  userVisibleOnly: true,
-                  applicationServerKey: "BM66W9LQiC019-wki_kTmAU-6SLS..." // Use your actual public key
-              });
-  
-              // ✅ Send subscription to the server
-              await fetch("/api/subscribe", {
-                  method: "POST",
-                  body: JSON.stringify(subscription),
-                  headers: {
-                      "Content-Type": "application/json"
-                  }
-              });
-  
-              alert("Notifications enabled!");
-          });
-      });
-  </script>
-  
-
-  <script>
-    async function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const errorMessage = document.getElementById('error-message');
-
-      errorMessage.textContent = ""; // Clear previous errors
-
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', result.token); // Store token
-        localStorage.setItem('username', result.username);
-        localStorage.setItem('role', result.role); // Store user role
-
-        // Redirect based on role
-        if (result.role === "admin") {
-          window.location.href = "/admin"; // Admins go to /admin
-        } else {
-          window.location.href = "/teams"; // Users go to /teams
+    document.getElementById('enableNotifications').addEventListener('click', async () => {
+        if (!("Notification" in window)) {
+            alert("❌ This browser does not support notifications.");
+            return;
         }
-      } else {
-        errorMessage.textContent = result.message; // Show error message
-      }
+
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+            alert("❌ You need to allow notifications to receive reminders.");
+            return;
+        }
+
+        navigator.serviceWorker.ready.then(async reg => {
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array("BM66W9lQicO19-wki_kTmAU-6SLsoMcmXGo4ANZirUErYtI4bmx4KBYmlT2iAMrM7Lav3L2v40P0SI8IaBrTqdA")
+            });
+
+            console.log("✅ Push Subscription:", subscription);
+
+            await fetch("/api/subscribe", {
+                method: "POST",
+                body: JSON.stringify(subscription),
+                headers: { "Content-Type": "application/json" }
+            });
+
+            alert("✅ Notifications enabled!");
+        });
+    });
+
+    // ✅ Function to Convert VAPID Public Key to Uint8Array
+    function urlBase64ToUint8Array(base64String) {
+        const padding = "=".repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const rawData = atob(base64);
+        return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
+    }
+
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('error-message');
+
+        errorMessage.textContent = ""; 
+
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem('token', result.token); 
+            localStorage.setItem('username', result.username);
+            localStorage.setItem('role', result.role); 
+
+            if (result.role === "admin") {
+                window.location.href = "/admin"; 
+            } else {
+                window.location.href = "/teams"; 
+            }
+        } else {
+            errorMessage.textContent = result.message; 
+        }
     }
   </script>
 </body>
