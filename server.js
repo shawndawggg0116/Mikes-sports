@@ -34,6 +34,29 @@ const authenticateToken = (req, res, next) => {
 
 const webpush = require('web-push');
 
+const notificationPayload = JSON.stringify({
+  title: "🏈 NFL Picks Reminder",
+  body: "Don't forget to pick your team for this week!",
+  icon: "/icon.png"
+});
+
+app.post('/api/send-test-notification', async (req, res) => {
+  try {
+      if (subscriptions.length === 0) {
+          return res.status(400).json({ message: "No subscriptions found" });
+      }
+      await Promise.all(
+          subscriptions.map(sub => webpush.sendNotification(sub, notificationPayload))
+      );
+      res.status(200).json({ message: "Notification sent!" });
+  } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Failed to send notification", error: error.message });
+  }
+});
+
+
+
 // ✅ Set up VAPID keys
 webpush.setVapidDetails(
     'mailto:your-email@example.com', // Change to your email
@@ -43,32 +66,14 @@ webpush.setVapidDetails(
 
 let subscriptions = []; // Store user subscriptions
 
-// ✅ Users subscribe to notifications
 app.post('/api/subscribe', (req, res) => {
     const subscription = req.body;
-    subscriptions.push(subscription);
-    res.status(201).json({ message: "Subscription successful" });
-});
-
-// ✅ Send test notification
-app.post('/api/send-test-notification', async (req, res) => {
-    const notificationPayload = {
-        notification: {
-            title: "🏈 Test Notification",
-            body: "This is a test notification from NFL Picks!",
-            icon: "/icon.png"
-        }
-    };
-
-    try {
-        await Promise.all(
-            subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(notificationPayload)))
-        );
-        res.status(200).json({ message: "Notification sent!" });
-    } catch (error) {
-        console.error("❌ Error sending notification:", error);
-        res.status(500).json({ message: "Failed to send notification", error: error.message });
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: "Invalid subscription data" });
     }
+    subscriptions.push(subscription);
+    console.log("New Subscription:", JSON.stringify(subscription)); // ✅ Logs subscription data
+    res.status(201).json({ message: "Subscription successful" });
 });
 
 
