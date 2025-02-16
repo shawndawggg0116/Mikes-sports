@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const admin = require("firebase-admin");
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -11,60 +10,9 @@ const moment = require('moment-timezone'); // Include moment-timezone
 const http = require('http'); // ✅ Make sure to require 'http' BEFORE using it
 const { Server } = require('socket.io'); // ✅ Import Socket.io
 
-
-
-
-
-
-
 const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
-
-console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY);
-
-app.use(bodyParser.json());
-app.use(cors());
-app.use(express.static("public"));
-
-
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-
-// ✅ Initialize Firebase using JSON credentials
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-  console.log("🔥 Firebase Initialized");
-}
-
-// ✅ API Endpoint: Send Notification
-app.post("/api/send-notification", async (req, res) => {
-  try {
-    const { token, title, body } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ success: false, message: "FCM Token is required." });
-    }
-
-    const message = {
-      notification: {
-        title: title || "🏈 NFL Picks Notification!",
-        body: body || "Reminder: Pick your team for this week!",
-      },
-      token: token,
-    };
-
-    const response = await admin.messaging().send(message);
-    console.log("✅ Notification Sent:", response);
-    res.status(200).json({ success: true, message: "Notification sent successfully!" });
-
-  } catch (error) {
-    console.error("❌ Error sending notification:", error);
-    res.status(500).json({ success: false, message: "Failed to send notification", error: error.message });
-  }
-});
 
 
 // server.js (relevant part)
