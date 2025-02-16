@@ -7,20 +7,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const moment = require('moment-timezone'); // Include moment-timezone
-const http = require('http'); // ✅ Make sure to require 'http' BEFORE using it
+const http = require('http'); // ✅ Require 'http' BEFORE using it
 const { Server } = require('socket.io'); // ✅ Import Socket.io
 const admin = require("firebase-admin");
-
-// Check if Firebase is already initialized to prevent duplicate instances
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-const app = express();
-const server = http.createServer(app); // ✅ Define the HTTP server correctly
-const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
 // server.js (relevant part)
