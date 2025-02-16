@@ -62,9 +62,11 @@ app.post("/api/send-test-notification", async (req, res) => {
   try {
       console.log("📢 Sending test notification...");
 
-      io.emit("notification", {
-          title: "🏈 Test Notification",
-          message: "This is a test notification from NFL Picks!",
+      // Use Service Workers for iOS compatibility
+      self.registration.showNotification("🏈 Test Notification", {
+          body: "This is a test notification from NFL Picks!",
+          icon: "/icon.png",
+          badge: "/icon.png"
       });
 
       res.json({ success: true, message: "Test notification sent!" });
