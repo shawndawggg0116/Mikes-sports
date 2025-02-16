@@ -31,49 +31,40 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-const schedule = require("node-schedule");
+// ✅ Set up VAPID keys
+webpush.setVapidDetails(
+  'mailto:your-email@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
-// Function to send notifications
-function sendNotificationToClients() {
-    console.log("📢 Sending NFL pick reminder...");
+let subscriptions = []; // Store user subscriptions
 
-    // This will execute for all connected users.
-    io.emit("notification", {
-        title: "🏈 NFL Picks Reminder",
-        message: "Don't forget to pick your team for this week!",
-    });
-}
-
-// Schedule job to run **every Tuesday at 1 PM EST**
-schedule.scheduleJob({ hour: 13, minute: 0, tz: "America/New_York" }, () => {
-    sendNotificationToClients();
+// ✅ Users subscribe to notifications
+app.post('/api/subscribe', (req, res) => {
+  const subscription = req.body;
+  subscriptions.push(subscription);
+  res.status(201).json({ message: "Subscription successful" });
 });
 
-app.get("/api/test-notification", (req, res) => {
-  io.emit("notification", {
-      title: "🏈 Test Notification",
-      message: "This is a test reminder for NFL Picks!",
-  });
-  console.log("📢 Test notification sent!");
-  res.json({ success: true, message: "Test notification sent!" });
-});
-
-app.post("/api/send-test-notification", async (req, res) => {
-  try {
-      console.log("📢 Sending test notification...");
-
-      // Use Service Workers for iOS compatibility
-      self.registration.showNotification("🏈 Test Notification", {
+// ✅ Send test notification
+app.post('/api/send-test-notification', async (req, res) => {
+  const notificationPayload = {
+      notification: {
+          title: "🏈 Test Notification",
           body: "This is a test notification from NFL Picks!",
-          icon: "/icon.png",
-          badge: "/icon.png"
-      });
+          icon: "/icon.png"
+      }
+  };
 
-      res.json({ success: true, message: "Test notification sent!" });
-
+  try {
+      await Promise.all(
+          subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(notificationPayload)))
+      );
+      res.status(200).json({ message: "Notification sent!" });
   } catch (error) {
-      console.error("❌ Error sending test notification:", error);
-      res.status(500).json({ success: false, message: "Failed to send test notification" });
+      console.error("❌ Error sending notification:", error);
+      res.status(500).json({ message: "Failed to send notification", error: error.message });
   }
 });
 

@@ -17,89 +17,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-precomposed.png">
   <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
-
 </head>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-   
-
-    socket.on("notification", (data) => {
-        if (localStorage.getItem("notificationsEnabled") === "true") {
-            new Notification(data.title, { body: data.message, icon: "/icon.png" });
-        }
-    });
-</script>
-
-
-<button id="testNotification">Send Test Notification</button>
-
-<script>
-    document.getElementById("testNotification").addEventListener("click", async () => {
-        const response = await fetch("/api/send-test-notification", {
-            method: "POST",
-        });
-
-        if (response.ok) {
-            alert("✅ Test notification sent!");
-        } else {
-            alert("❌ Failed to send notification.");
-        }
-    });
-</script>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-   
-
-  
-</script>
-
-
 <body>
-  <button id="enableNotifications">Enable Notifications</button>
-
-<script>
-    document.getElementById('enableNotifications').addEventListener('click', async () => {
-        if (!("Notification" in window)) {
-            alert("This browser does not support notifications.");
-            return;
-        }
-
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            localStorage.setItem("notificationsEnabled", "true");
-            alert("Notifications enabled!");
-        } else {
-            alert("You need to allow notifications to receive reminders.");
-        }
-    });
-
-    // Function to send a notification
-    function sendNotification() {
-        if (localStorage.getItem("notificationsEnabled") === "true") {
-            new Notification("🏈 NFL Picks Reminder", {
-                body: "Don't forget to pick your team for this week!",
-                icon: "/icon.png"
-            });
-        }
-    }
-
-    // Optional: Test the notification (remove after testing)
-    // setTimeout(sendNotification, 5000);
-</script>
-
-<script>
-  const socket = io(); // Connect to the server using Socket.io
-
-  socket.on("notification", (data) => {
-      if (localStorage.getItem("notificationsEnabled") === "true") {
-          new Notification(data.title, { body: data.message, icon: "/icon.png" });
-      }
-  });
-</script>
-
-
   <h1>NFL Picks - Login</h1>
   <!-- Image added here, before your login form -->
   <img src="/login-screen-image.png" alt="NFL Picks App Logo" style="width:200px; height:auto; display:block; margin:0 auto 20px;">
@@ -109,6 +28,49 @@
     <button onclick="login()">Login</button>
     <p class="error" id="error-message"></p>
   </div>
+
+  <button id="enableNotifications">Enable Notifications</button>
+
+  <script>
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js')
+              .then(reg => console.log("Service Worker Registered!", reg))
+              .catch(err => console.log("Service Worker Error:", err));
+      }
+  
+      document.getElementById('enableNotifications').addEventListener('click', async () => {
+          if (!("Notification" in window)) {
+              alert("This browser does not support notifications.");
+              return;
+          }
+  
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+              alert("You need to allow notifications to receive reminders.");
+              return;
+          }
+  
+          // ✅ Subscribe to Push Notifications
+          navigator.serviceWorker.ready.then(async reg => {
+              const subscription = await reg.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: "BM66W9LQiC019-wki_kTmAU-6SLS..." // Use your actual public key
+              });
+  
+              // ✅ Send subscription to the server
+              await fetch("/api/subscribe", {
+                  method: "POST",
+                  body: JSON.stringify(subscription),
+                  headers: {
+                      "Content-Type": "application/json"
+                  }
+              });
+  
+              alert("Notifications enabled!");
+          });
+      });
+  </script>
+  
 
   <script>
     async function login() {
