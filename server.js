@@ -49,6 +49,15 @@ schedule.scheduleJob({ hour: 13, minute: 0, tz: "America/New_York" }, () => {
     sendNotificationToClients();
 });
 
+app.get("/api/test-notification", (req, res) => {
+  io.emit("notification", {
+      title: "🏈 Test Notification",
+      message: "This is a test reminder for NFL Picks!",
+  });
+  console.log("📢 Test notification sent!");
+  res.json({ success: true, message: "Test notification sent!" });
+});
+
 
 
 // WebSocket logic
