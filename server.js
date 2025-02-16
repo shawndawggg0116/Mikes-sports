@@ -23,6 +23,12 @@ console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY);
 
 
 
+const app = express();
+const server = http.createServer(app); // ✅ Define the HTTP server correctly
+const io = new Server(server); // ✅ Attach Socket.io to the server
+
+console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY);
+
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static("public"));
@@ -30,40 +36,15 @@ app.use(express.static("public"));
 const admin = require("firebase-admin");
 const serviceAccount = require("./config/mikes-sport-picks-firebase-adminsdk-fbsvc-3f5ca2a3d6.json"); // Adjust the path if needed
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
-
-console.log("🔥 Firebase Initialized");
-
-
-const serviceAccount = {
-  type: "service_account",
-  project_id: process.env.FIREBASE_PROJECT_ID,
-  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
-  client_email: process.env.FIREBASE_CLIENT_EMAIL,
-  client_id: process.env.FIREBASE_CLIENT_ID,
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
-};
-
+// ✅ Initialize Firebase using JSON credentials
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
+  console.log("🔥 Firebase Initialized");
 }
 
-console.log("🔥 Firebase Private Key Loaded:", serviceAccount.private_key ? "Yes" : "No");
-
-
-
-
-
-
-
+// ✅ API Endpoint: Send Notification
 app.post("/api/send-notification", async (req, res) => {
   try {
     const { token, title, body } = req.body;
