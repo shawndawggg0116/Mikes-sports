@@ -16,8 +16,19 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
+console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY);
 
 
+const serviceAccount = {
+  // ... other fields
+  private_key: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n") : null,
+  // ... rest of the object
+};
+
+if (!serviceAccount.private_key) {
+  console.error('FIREBASE_PRIVATE_KEY is not set in the environment');
+  process.exit(1); // Exit the process if the key is not set
+}
 
 app.use(bodyParser.json());
 app.use(cors());
