@@ -476,11 +476,7 @@ const serviceAccount = {
   type: "service_account",
   project_id: "mikes-sport-picks",
   private_key_id: "f2eac62af4a83a5037453aba441aa6168e392dd2",
-  private_key: `-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDXR7XmJLQoratP
-OtE6/8G2J7PFAjwZwK49kQKHiKMSqKq9MvkSXEOyH8TnJNrz2A49IpTevjHCaWs4
-QeH/R3k95OfdaN0Q+XTgNYmksYpcCE3jfOPyaIufMRFzqnHMNnvzswx+imAfVYcp
------END PRIVATE KEY-----\n`,
+  private_key: FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDXR7XmJLQoratP\nOtE6/8G2J7PFAjwZwK49kQKHiKMSqKq9MvkSXEOyH8TnJNrz2A49IpTevjHCaWs4\nQeH/R3k95OfdaN0Q+XTgNYmksYpcCE3jfOPyaIufMRFzqnHMNnvzswx+imAfVYcp\nqyVmeD1Crbl/dIwxrfWh6VRluOtaskhOqhgueaKGPU9KCIRoMHM+ZXfUG8v3r+Hf\ne+EwKfwOPYh7cV+pLZJrodrzdEF8W2kXfrazMfHXen7on2s8MWOynYAMSYzn+uFd\n3/ZqcBMr1N2NN1IYFaPZ4yI97dUYhFpOHerZc6BaRZoMrF+KeLPPns8sih2zZX6l\n8/6K+b2/AgMBAAECggEAEY/Wijze4fcLVuFkwl9GpX4tcqCUV/Xf4PYS7EApX9mY\nybcLGl3V4ewoi0JDU4m1EHSuC1Idsg8Y5/p4t4zUZ0gX4cTu5jZLbzzyCrIddOHy\nixPPO24e5PCP5jOQQmLRdf4NwpO12rVTjoK/mgSsdRbB+ROzZujnjseyxfRk/4pB\nLgg0Sn0nodj5NXDQFhj54T8mu+7vqGFAIWqnAPCZ+6w/4WPkLLoO/tTaAgMrt9Ha\nm1aTLUyor58vMcl2DODpFOBq//GQHRu1HGV/yLe6oyQgspE9L3YlzfcDUTIdwW9I\nT+c/xa/MOr0Gkto7HS+sTgu7KZ/Jtl4BWszPbYFK1QKBgQDzhEeWbG86NrphqWJf\nRmaBfSK7wrfU9GrxJn5gOrPa5Rti+wemYx4rSeNZkhsVutuyE9ST9e2YrsOkc6C7\nje6Cu4t5dE2CBzO9LSOz1j47JLjsuBaVRWofxgg0jSgY/ZxH1QiACOmqzS4w9BKx\niQbaV0bXeqBxwiEAerOoWWP87QKBgQDiUOBM/F2OaVR6fGoaP1+E9lt3qYSfNnEs\nt7BKXfx8J7M59dqGVss8FvkPcqKkXFYqQFa4xjDWHyrulD20PMFNi+qjSi4nmtLh\nql+ij4tpia8/eg0y1P2iE3YyVz4shNoXuzU8r8dEv7TgB8dRtFVoNcxPVWnkfr+S\nXutcdMT72wKBgEc2Lq0ZhqlSacy3ePH9p2pEisy3k4St+TwOErTXVdM0Xn7ihAkv\nQRpNoDOIW21OWILJ88dVCqc0rDfCLIXMaqxGZfIdhbD5pDK1KZSkmUw4X++xocED\nLJagFbQwd0Jfn70N2k9+y75MBC8CoRjTxnJBRZEr5hF+QKJgP3uCsI+9AoGBANt2\n9FyTqiINEIgLGFVFuVpWENMUx3AhulRT+RfU1qCLWylMudHmXwVxfaq2TvQ2OrSU\nWcSrJPavmNFtXfznociSc0JQEDwFzpRZxI3+x4Hbq99Re3UcyKygVNFyeu9vEZNL\nzs9/4ixP/5X01RvtVZlN+kfAm4SiSSIm+/RXpCJbAoGBANalLJ5AjRcDT3Xvvm9F\nbBIvfye3a+fO+SrwvugAaj+qRSvC0t4BnBiZzPH9PamjGIDtcpevS/1hgS5DLVQL\n3nwZFCnCALvcEYFjUWH5efZAxOP3o0NbHd0lQdtctgIWfe5coUEjH7Y6qoBgTnN+\naniS+rJhw1ysJAF1l5DGNb5q\n-----END PRIVATE KEY-----\n",
   client_email: "firebase-adminsdk-fbsvc@mikes-sport-picks.iam.gserviceaccount.com",
   client_id: "118407553526514843715",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
