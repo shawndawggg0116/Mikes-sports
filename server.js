@@ -31,6 +31,23 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const schedule = require("node-schedule");
+
+// Function to send notifications
+function sendNotificationToClients() {
+    console.log("📢 Sending NFL pick reminder...");
+
+    // This will execute for all connected users.
+    io.emit("notification", {
+        title: "🏈 NFL Picks Reminder",
+        message: "Don't forget to pick your team for this week!",
+    });
+}
+
+// Schedule job to run **every Tuesday at 1 PM EST**
+schedule.scheduleJob({ hour: 13, minute: 0, tz: "America/New_York" }, () => {
+    sendNotificationToClients();
+});
 
 
 

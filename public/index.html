@@ -19,6 +19,49 @@
   <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
 </head>
 <body>
+  <button id="enableNotifications">Enable Notifications</button>
+
+<script>
+    document.getElementById('enableNotifications').addEventListener('click', async () => {
+        if (!("Notification" in window)) {
+            alert("This browser does not support notifications.");
+            return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            localStorage.setItem("notificationsEnabled", "true");
+            alert("Notifications enabled!");
+        } else {
+            alert("You need to allow notifications to receive reminders.");
+        }
+    });
+
+    // Function to send a notification
+    function sendNotification() {
+        if (localStorage.getItem("notificationsEnabled") === "true") {
+            new Notification("🏈 NFL Picks Reminder", {
+                body: "Don't forget to pick your team for this week!",
+                icon: "/icon.png"
+            });
+        }
+    }
+
+    // Optional: Test the notification (remove after testing)
+    // setTimeout(sendNotification, 5000);
+</script>
+
+<script>
+  const socket = io(); // Connect to the server using Socket.io
+
+  socket.on("notification", (data) => {
+      if (localStorage.getItem("notificationsEnabled") === "true") {
+          new Notification(data.title, { body: data.message, icon: "/icon.png" });
+      }
+  });
+</script>
+
+
   <h1>NFL Picks - Login</h1>
   <!-- Image added here, before your login form -->
   <img src="/login-screen-image.png" alt="NFL Picks App Logo" style="width:200px; height:auto; display:block; margin:0 auto 20px;">
