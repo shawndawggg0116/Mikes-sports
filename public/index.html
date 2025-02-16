@@ -32,6 +32,30 @@
 </script>
 
 
+<button id="testNotification">Send Test Notification</button>
+
+<script>
+    document.getElementById("testNotification").addEventListener("click", async () => {
+        const response = await fetch("/api/send-test-notification", {
+            method: "POST",
+        });
+
+        if (response.ok) {
+            alert("✅ Test notification sent!");
+        } else {
+            alert("❌ Failed to send notification.");
+        }
+    });
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+   
+
+  
+</script>
+
+
 <body>
   <button id="enableNotifications">Enable Notifications</button>
 

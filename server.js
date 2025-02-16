@@ -58,6 +58,22 @@ app.get("/api/test-notification", (req, res) => {
   res.json({ success: true, message: "Test notification sent!" });
 });
 
+app.post("/api/send-test-notification", async (req, res) => {
+  try {
+      console.log("📢 Sending test notification...");
+
+      io.emit("notification", {
+          title: "🏈 Test Notification",
+          message: "This is a test notification from NFL Picks!",
+      });
+
+      res.json({ success: true, message: "Test notification sent!" });
+
+  } catch (error) {
+      console.error("❌ Error sending test notification:", error);
+      res.status(500).json({ success: false, message: "Failed to send test notification" });
+  }
+});
 
 
 // WebSocket logic
