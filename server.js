@@ -31,41 +31,44 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+
+const webpush = require('web-push');
+
 // ✅ Set up VAPID keys
 webpush.setVapidDetails(
-  'mailto:your-email@example.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
+    'mailto:your-email@example.com', // Change to your email
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
 );
 
 let subscriptions = []; // Store user subscriptions
 
 // ✅ Users subscribe to notifications
 app.post('/api/subscribe', (req, res) => {
-  const subscription = req.body;
-  subscriptions.push(subscription);
-  res.status(201).json({ message: "Subscription successful" });
+    const subscription = req.body;
+    subscriptions.push(subscription);
+    res.status(201).json({ message: "Subscription successful" });
 });
 
 // ✅ Send test notification
 app.post('/api/send-test-notification', async (req, res) => {
-  const notificationPayload = {
-      notification: {
-          title: "🏈 Test Notification",
-          body: "This is a test notification from NFL Picks!",
-          icon: "/icon.png"
-      }
-  };
+    const notificationPayload = {
+        notification: {
+            title: "🏈 Test Notification",
+            body: "This is a test notification from NFL Picks!",
+            icon: "/icon.png"
+        }
+    };
 
-  try {
-      await Promise.all(
-          subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(notificationPayload)))
-      );
-      res.status(200).json({ message: "Notification sent!" });
-  } catch (error) {
-      console.error("❌ Error sending notification:", error);
-      res.status(500).json({ message: "Failed to send notification", error: error.message });
-  }
+    try {
+        await Promise.all(
+            subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(notificationPayload)))
+        );
+        res.status(200).json({ message: "Notification sent!" });
+    } catch (error) {
+        console.error("❌ Error sending notification:", error);
+        res.status(500).json({ message: "Failed to send notification", error: error.message });
+    }
 });
 
 
