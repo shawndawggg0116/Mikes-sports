@@ -24,6 +24,7 @@ app.use(cors());
 app.use(express.static("public"));
 
 
+
 const serviceAccount = {
   type: "service_account",
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -36,6 +37,13 @@ const serviceAccount = {
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
   client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
 };
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+console.log("🔥 Firebase Private Key Loaded:", serviceAccount.private_key ? "Yes" : "No");
+
 
 // Prevent Firebase from initializing more than once
 if (!admin.apps.length) {
