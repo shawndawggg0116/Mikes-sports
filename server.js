@@ -28,7 +28,8 @@ app.use(cors());
 app.use(express.static("public"));
 
 
-const serviceAccount = require("./config/mikes-sport-picks-firebase-adminsdk-fbsvc-3f5ca2a3d6.json"); // Adjust the path if needed
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
 
 // ✅ Initialize Firebase using JSON credentials
 if (!admin.apps.length) {
