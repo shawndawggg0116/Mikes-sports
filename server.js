@@ -67,13 +67,15 @@ webpush.setVapidDetails(
 let subscriptions = []; // Store user subscriptions
 
 app.post('/api/subscribe', (req, res) => {
-    const subscription = req.body;
-    if (!subscription || !subscription.endpoint) {
-        return res.status(400).json({ error: "Invalid subscription data" });
-    }
-    subscriptions.push(subscription);
-    console.log("New Subscription:", JSON.stringify(subscription)); // ✅ Logs subscription data
-    res.status(201).json({ message: "Subscription successful" });
+  console.log("📩 Received Subscription Request:", req.body);
+
+  if (!req.body || !req.body.endpoint) {
+      console.error("❌ Invalid Subscription Data:", req.body);
+      return res.status(400).json({ message: "Invalid subscription data" });
+  }
+
+  subscriptions.push(req.body);
+  res.status(201).json({ message: "Subscription successful" });
 });
 
 

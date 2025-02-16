@@ -40,34 +40,39 @@
     }
 
     document.getElementById('enableNotifications').addEventListener('click', async () => {
-        if (!("Notification" in window)) {
-            alert("❌ This browser does not support notifications.");
-            return;
-        }
+    if (!("Notification" in window)) {
+        alert("This browser does not support notifications.");
+        return;
+    }
 
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-            alert("❌ You need to allow notifications to receive reminders.");
-            return;
-        }
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        alert("You need to allow notifications to receive reminders.");
+        return;
+    }
 
-        navigator.serviceWorker.ready.then(async reg => {
-            const subscription = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array("BM66W9lQicO19-wki_kTmAU-6SLsoMcmXGo4ANZirUErYtI4bmx4KBYmlT2iAMrM7Lav3L2v40P0SI8IaBrTqdA")
-            });
-
-            console.log("✅ Push Subscription:", subscription);
-
-            await fetch("/api/subscribe", {
-                method: "POST",
-                body: JSON.stringify(subscription),
-                headers: { "Content-Type": "application/json" }
-            });
-
-            alert("✅ Notifications enabled!");
+    navigator.serviceWorker.ready.then(async reg => {
+        const subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: "BM66W9lQicO19-wki_kTmAU-6SLsoMcmXGo4ANZirUErYtI4bmx4KBYmlT2iAMrM7Lav3L2v40P0SI8IaBrTqdA" // Ensure this matches server
         });
+
+        console.log("🔔 Push Subscription Data:", JSON.stringify(subscription));
+
+        const response = await fetch("/api/subscribe", {
+            method: "POST",
+            body: JSON.stringify(subscription),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const result = await response.json();
+        console.log("📬 Server Response:", result);
+
+        alert("Notifications enabled!");
     });
+});
 
     // ✅ Function to Convert VAPID Public Key to Uint8Array
     function urlBase64ToUint8Array(base64String) {
