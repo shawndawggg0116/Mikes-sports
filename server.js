@@ -15,6 +15,11 @@ const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
 
 
+
+app.use(cors());
+app.use(bodyParser.json()); // ✅ Ensure JSON body parsing
+app.use(express.json()); // ✅ Make sure Express handles JSON properly
+
 // server.js (relevant part)
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -66,7 +71,7 @@ webpush.setVapidDetails(
 
 let subscriptions = []; // Store user subscriptions
 
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', express.json(), (req, res) => {
   console.log("📩 Received Subscription Request:", req.body);
 
   if (!req.body || !req.body.endpoint) {

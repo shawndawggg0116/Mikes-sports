@@ -52,25 +52,29 @@
     }
 
     navigator.serviceWorker.ready.then(async reg => {
-        const subscription = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: "BM66W9lQicO19-wki_kTmAU-6SLsoMcmXGo4ANZirUErYtI4bmx4KBYmlT2iAMrM7Lav3L2v40P0SI8IaBrTqdA" // Ensure this matches server
-        });
+        try {
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: "BM66W9lQicO19-wki_kTmAU-6SLsoMcmXGo4ANZirUErYtI4bmx4KBYmlT2iAMrM7Lav3L2v40P0SI8IaBrTqdA"
+            });
 
-        console.log("🔔 Push Subscription Data:", JSON.stringify(subscription));
+            console.log("🔔 Push Subscription Data:", subscription);
 
-        const response = await fetch("/api/subscribe", {
-            method: "POST",
-            body: JSON.stringify(subscription),
-            headers: {
-                "Content-Type": "application/json"
-            }
-        });
+            const response = await fetch("/api/subscribe", {
+                method: "POST",
+                body: JSON.stringify(subscription),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
 
-        const result = await response.json();
-        console.log("📬 Server Response:", result);
+            const result = await response.json();
+            console.log("📬 Server Response:", result);
 
-        alert("Notifications enabled!");
+            alert("Notifications enabled!");
+        } catch (error) {
+            console.error("❌ Subscription Error:", error);
+        }
     });
 });
 
