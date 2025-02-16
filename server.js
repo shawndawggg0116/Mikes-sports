@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const admin = require("firebase-admin");
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -13,6 +14,63 @@ const { Server } = require('socket.io'); // ✅ Import Socket.io
 const app = express();
 const server = http.createServer(app); // ✅ Define the HTTP server correctly
 const io = new Server(server); // ✅ Attach Socket.io to the server
+
+
+const admin = require("firebase-admin");
+
+
+app.use(bodyParser.json());
+app.use(cors());
+app.use(express.static("public"));
+
+
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+};
+
+// Prevent Firebase from initializing more than once
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
+console.log("🔥 Firebase Initialized:", admin.apps.length > 0 ? "Yes" : "No");
+
+app.post("/api/send-notification", async (req, res) => {
+  try {
+    const { token, title, body } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: "FCM Token is required." });
+    }
+
+    const message = {
+      notification: {
+        title: title || "🏈 NFL Picks Notification!",
+        body: body || "Reminder: Pick your team for this week!",
+      },
+      token: token,
+    };
+
+    const response = await admin.messaging().send(message);
+    console.log("✅ Notification Sent:", response);
+    res.status(200).json({ success: true, message: "Notification sent successfully!" });
+
+  } catch (error) {
+    console.error("❌ Error sending notification:", error);
+    res.status(500).json({ success: false, message: "Failed to send notification", error: error.message });
+  }
+});
 
 
 // server.js (relevant part)
