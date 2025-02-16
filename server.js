@@ -472,6 +472,7 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   }
 });
 
+// Firebase Admin Setup
 const serviceAccount = {
   type: "service_account",
   project_id: "mikes-sport-picks",
@@ -489,7 +490,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-
+// API Route to Send Notifications
 app.post("/api/send-notification", async (req, res) => {
   try {
     const { token, title, body } = req.body;
@@ -514,8 +515,7 @@ app.post("/api/send-notification", async (req, res) => {
     console.error("❌ Error sending notification:", error);
     res.status(500).json({ success: false, message: "Failed to send notification", error: error.message });
   }
-});
-   
+});  
 
 // Server
 
