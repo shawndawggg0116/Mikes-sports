@@ -147,10 +147,10 @@
         const picks = Array.isArray(user.picks) ? user.picks : [];
 
         // Only display picked teams AFTER results are recorded (win/loss)
-        const selectedTeams = picks
-            .filter(pick => pick.result !== "pending") // Only show teams after results
-            .map(pick => `${pick.team} (${pick.result})`)
-            .join(', ') || 'No selection';
+        const selectedTeams = user.selectedTeams.length > 0 
+  ? user.selectedTeams.map(pick => `${pick.team} (${pick.result})`).join(', ') 
+  : 'No selection';
+
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -163,7 +163,6 @@
         leaderboardBody.appendChild(row);
     });
 }
-
 
         function populateWeekSelector() {
             const currentWeek = moment().isoWeek();

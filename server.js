@@ -188,17 +188,24 @@ app.get('/api/leaderboard/:week', async (req, res) => {
           username: 1,
           totalScore: 1,
           selectedTeams: {
-            $filter: {
-              input: "$picks",
+            $map: {
+              input: {
+                $filter: {
+                  input: "$picks",
+                  as: "pick",
+                  cond: { 
+                    $eq: ["$$pick.week", week] // Ensure it's filtering the right week
+                  }
+                }
+              },
               as: "pick",
-              cond: { 
-                $and: [
-                  { $eq: ["$$pick.week", week] }, 
-                  { $ne: ["$$pick.result", "pending"] } // Show only after win/loss is recorded
-                ]
+              in: {
+                team: "$$pick.team",
+                result: "$$pick.result"
               }
             }
           }
+          
         }
       },
       {
