@@ -134,32 +134,36 @@
         }
 
         function displayLeaderboard(users) {
-            const leaderboardBody = document.getElementById('leaderboard-body');
-            if (!leaderboardBody) {
-                console.error("Error: leaderboardBody element not found in the DOM.");
-                return;
-            }
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    if (!leaderboardBody) {
+        console.error("Error: leaderboardBody element not found in the DOM.");
+        return;
+    }
 
-            leaderboardBody.innerHTML = ''; // Clear existing entries
+    leaderboardBody.innerHTML = ''; // Clear existing entries
 
-            users.forEach((user, index) => {
-                // Only display picked teams AFTER results are recorded (win/loss)
-                const selectedTeams = user.picks
-                    .filter(pick => pick.result !== "pending") // Only show teams after results
-                    .map(pick => `${pick.team} (${pick.result})`)
-                    .join(', ') || 'No selection';
+    users.forEach((user, index) => {
+        // Ensure picks is always treated as an array to avoid "undefined" errors
+        const picks = Array.isArray(user.picks) ? user.picks : [];
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${user.username}</td>
-                    <td>${user.totalScore}</td>
-                    <td>${selectedTeams}</td> <!-- Show picked teams after results -->
-                `;
+        // Only display picked teams AFTER results are recorded (win/loss)
+        const selectedTeams = picks
+            .filter(pick => pick.result !== "pending") // Only show teams after results
+            .map(pick => `${pick.team} (${pick.result})`)
+            .join(', ') || 'No selection';
 
-                leaderboardBody.appendChild(row);
-            });
-        }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${user.username}</td>
+            <td>${user.totalScore !== undefined ? user.totalScore : 0}</td>
+            <td>${selectedTeams}</td> <!-- Show picked teams after results -->
+        `;
+
+        leaderboardBody.appendChild(row);
+    });
+}
+
 
         function populateWeekSelector() {
             const currentWeek = moment().isoWeek();
