@@ -7,7 +7,6 @@
     <title>Leaderboard</title>
     <link rel="stylesheet" href="/styles.css">
     <style>
-        /* Your existing styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #1e1e1e;
@@ -83,20 +82,20 @@
 
     <div class="leaderboard-container">
         <h1>NFL Weekly Leaderboard</h1>
-        <!-- Add Week Selector -->
         <label for="week-select">Select Week:</label>
         <select id="week-select" onchange="fetchLeaderboard()">
             <!-- Weeks will be dynamically inserted here -->
         </select>
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>User</th>
-                <th>Score</th>
-                <th>Selected Teams</th> <!-- Updated Column Name -->
-            </tr>
-        </thead>
-        
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>User</th>
+                    <th>Score</th>
+                    <th>Selected Teams</th> <!-- Updated Column Name -->
+                </tr>
+            </thead>
             <tbody id="leaderboard-body">
                 <!-- Leaderboard data will be inserted here -->
             </tbody>
@@ -112,7 +111,6 @@
 
         const authHeader = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-        // Function to fetch leaderboard data
         async function fetchLeaderboard() {
             const week = document.getElementById('week-select').value;
             try {
@@ -135,32 +133,34 @@
             }
         }
 
-        // Function to display leaderboard data
-     // Function to display leaderboard data
-function displayLeaderboard(users) {
-    const leaderboardBody = document.getElementById('leaderboard-body');
-    leaderboardBody.innerHTML = ''; // Clear existing entries
+        function displayLeaderboard(users) {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            if (!leaderboardBody) {
+                console.error("Error: leaderboardBody element not found in the DOM.");
+                return;
+            }
 
-    users.forEach((user, index) => {
-        // Only display picked teams AFTER results are recorded (win/loss)
-        const selectedTeams = user.selectedTeams.map(pick => 
-            `${pick.team} (${pick.result})`
-        ).join(', ') || 'No selection';
+            leaderboardBody.innerHTML = ''; // Clear existing entries
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${user.username}</td>
-            <td>${user.totalScore}</td>
-            <td>${selectedTeams}</td> <!-- Only show picks with results -->
-        `;
+            users.forEach((user, index) => {
+                // Only display picked teams AFTER results are recorded (win/loss)
+                const selectedTeams = user.picks
+                    .filter(pick => pick.result !== "pending") // Only show teams after results
+                    .map(pick => `${pick.team} (${pick.result})`)
+                    .join(', ') || 'No selection';
 
-        leaderboardBody.appendChild(row);
-    });
-}
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>${user.totalScore}</td>
+                    <td>${selectedTeams}</td> <!-- Show picked teams after results -->
+                `;
 
+                leaderboardBody.appendChild(row);
+            });
+        }
 
-        // Function to populate the week selector
         function populateWeekSelector() {
             const currentWeek = moment().isoWeek();
             const select = document.getElementById('week-select');
@@ -174,7 +174,6 @@ function displayLeaderboard(users) {
             fetchLeaderboard(); // Fetch leaderboard for the current week initially
         }
 
-        // Fetch leaderboard data when the page loads
         document.addEventListener('DOMContentLoaded', populateWeekSelector);
     </script>
 
