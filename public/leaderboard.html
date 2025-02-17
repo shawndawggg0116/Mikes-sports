@@ -88,15 +88,15 @@
         <select id="week-select" onchange="fetchLeaderboard()">
             <!-- Weeks will be dynamically inserted here -->
         </select>
-        <table>
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>User</th>
-                    <th>Score</th>
-                    <th>Winning Teams of the Week</th>
-                </tr>
-            </thead>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Score</th>
+                <th>Selected Teams</th> <!-- Updated Column Name -->
+            </tr>
+        </thead>
+        
             <tbody id="leaderboard-body">
                 <!-- Leaderboard data will be inserted here -->
             </tbody>
@@ -136,24 +136,29 @@
         }
 
         // Function to display leaderboard data
-        function displayLeaderboard(users) {
-            const leaderboardBody = document.getElementById('leaderboard-body');
-            leaderboardBody.innerHTML = ''; // Clear existing entries
+     // Function to display leaderboard data
+function displayLeaderboard(users) {
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    leaderboardBody.innerHTML = ''; // Clear existing entries
 
-            users.forEach((user, index) => {
-                const row = document.createElement('tr');
-                const userWins = user.picks.filter(pick => pick.week == document.getElementById('week-select').value && pick.result == 'win').map(pick => pick.team).join(', ') || 'No wins this week';
+    users.forEach((user, index) => {
+        // Only display picked teams AFTER results are recorded (win/loss)
+        const selectedTeams = user.selectedTeams.map(pick => 
+            `${pick.team} (${pick.result})`
+        ).join(', ') || 'No selection';
 
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${user.username}</td>
-                    <td>${user.totalScore}</td>
-                    <td>${userWins}</td>
-                `;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${user.username}</td>
+            <td>${user.totalScore}</td>
+            <td>${selectedTeams}</td> <!-- Only show picks with results -->
+        `;
 
-                leaderboardBody.appendChild(row);
-            });
-        }
+        leaderboardBody.appendChild(row);
+    });
+}
+
 
         // Function to populate the week selector
         function populateWeekSelector() {

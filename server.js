@@ -187,25 +187,22 @@ app.get('/api/leaderboard/:week', async (req, res) => {
         $project: {
           username: 1,
           totalScore: 1,
-          picks: {
+          selectedTeams: {
             $filter: {
-              input: { $ifNull: ['$picks', []] }, // Ensure picks is treated as an array
-              as: 'pick',
-              cond: { $and: [
-                { $eq: ['$$pick.week', week] },
-                { $eq: ['$$pick.result', 'win'] }
-              ]}
+              input: "$picks",
+              as: "pick",
+              cond: { 
+                $and: [
+                  { $eq: ["$$pick.week", week] }, 
+                  { $ne: ["$$pick.result", "pending"] } // Show only after win/loss is recorded
+                ]
+              }
             }
           }
         }
       },
       {
-        $addFields: {
-          winsThisWeek: { $size: { $ifNull: ['$picks', []] } } // Use $ifNull here as well
-        }
-      },
-      {
-        $sort: { winsThisWeek: -1, totalScore: -1 }
+        $sort: { totalScore: -1 } // Sort by total score
       }
     ]);
 
@@ -215,6 +212,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
+
 
 
 
