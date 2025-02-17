@@ -147,9 +147,13 @@
         const picks = Array.isArray(user.picks) ? user.picks : [];
 
         // Only display picked teams AFTER results are recorded (win/loss)
-        const selectedTeams = user.selectedTeams.length > 0 
-  ? user.selectedTeams.map(pick => `${pick.team} (${pick.result})`).join(', ') 
+        const selectedTeams = (user.selectedTeams && user.selectedTeams.length > 0) 
+  ? user.selectedTeams
+      .filter(pick => pick.result !== "pending") // ✅ Filter out pending picks
+      .map(pick => `${pick.team} (${pick.result})`)
+      .join(', ') 
   : 'No selection';
+
 
 
         const row = document.createElement('tr');
