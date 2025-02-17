@@ -188,24 +188,26 @@ app.get('/api/leaderboard/:week', async (req, res) => {
           username: 1,
           totalScore: 1,
           selectedTeams: {
-            $map: {
-              input: {
-                $filter: {
-                  input: "$picks",
+            $ifNull: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: "$picks",
+                      as: "pick",
+                      cond: { $eq: ["$$pick.week", week] }
+                    }
+                  },
                   as: "pick",
-                  cond: { 
-                    $eq: ["$$pick.week", week] // Ensure it's filtering the right week
+                  in: {
+                    team: "$$pick.team",
+                    result: "$$pick.result"
                   }
                 }
               },
-              as: "pick",
-              in: {
-                team: "$$pick.team",
-                result: "$$pick.result"
-              }
-            }
+              [] // If null, return an empty array instead of null
+            ]
           }
-          
         }
       },
       {
@@ -219,6 +221,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
+
 
 
 
