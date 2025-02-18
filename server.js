@@ -178,8 +178,6 @@ const User = mongoose.model('User', UserSchema, 'users');
 app.get('/api/leaderboard/:week', async (req, res) => {
   try {
     const week = parseInt(req.params.week);
-    {
-     $match: { role: { $ne: "admin" } }
     if (isNaN(week)) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }

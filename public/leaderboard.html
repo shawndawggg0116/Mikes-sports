@@ -139,7 +139,7 @@
         console.error("Error: leaderboardBody element not found in the DOM.");
         return;
     }
-.filter(user => user.username.toLowerCase() !== 'admin')
+
     leaderboardBody.innerHTML = ''; // Clear existing entries
 
     users.forEach((user, index) => {
