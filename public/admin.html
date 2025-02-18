@@ -329,7 +329,8 @@
 
     // Function to populate the week selector
     function populateWeekSelector() {
-      const currentWeek = moment().isoWeek();
+      const currentWeek = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
+
       const select = document.getElementById('week-select');
       for (let i = 1; i <= currentWeek; i++) {
         const option = document.createElement('option');
@@ -344,7 +345,8 @@
 
     // Function to update week when selection changes
     function updateWeek() {
-      const selectedWeek = document.getElementById('week-select').value;
+      const week = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
+
       document.getElementById('current-week').textContent = selectedWeek;
       fetchTeams(); // Fetch teams for the newly selected week
     }

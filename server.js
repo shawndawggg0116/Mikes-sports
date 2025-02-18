@@ -177,7 +177,8 @@ const User = mongoose.model('User', UserSchema, 'users');
 // Add this to your server.js
 app.get('/api/leaderboard/:week', async (req, res) => {
   try {
-    const week = parseInt(req.params.week);
+    const week = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
+
     if (isNaN(week)) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
