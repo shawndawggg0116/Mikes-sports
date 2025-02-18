@@ -184,27 +184,31 @@ app.get('/api/leaderboard/:week', async (req, res) => {
 
     const users = await User.aggregate([
       {
-        $project: {
-          username: 1,
-          totalScore: 1,
-          selectedTeams: {
-            $filter: {
-              input: "$picks",
-              as: "pick",
-              cond: { 
-                $and: [
-                  { $eq: ["$$pick.week", week] }, 
-                  { $ne: ["$$pick.result", "pending"] } // ✅ Only show picks with results
-                ]
-              }
-            }
-          }
-        }
+          $match: { role: { $ne: "admin" } } // ✅ Exclude admins
       },
       {
-        $sort: { totalScore: -1 } // Sort by total score
+          $project: {
+              username: 1,
+              totalScore: 1,
+              selectedTeams: {
+                  $filter: {
+                      input: "$picks",
+                      as: "pick",
+                      cond: { 
+                          $and: [
+                              { $eq: ["$$pick.week", week] }, 
+                              { $ne: ["$$pick.result", "pending"] } // ✅ Only show picks with results
+                          ]
+                      }
+                  }
+              }
+          }
+      },
+      {
+          $sort: { totalScore: -1 } // Sort by total score
       }
-    ]);
+  ]);
+  
 
     res.json({ success: true, leaderboard: users });
   } catch (error) {

@@ -142,31 +142,32 @@
 
     leaderboardBody.innerHTML = ''; // Clear existing entries
 
-    users.forEach((user, index) => {
-        // Ensure picks is always treated as an array to avoid "undefined" errors
-        const picks = Array.isArray(user.picks) ? user.picks : [];
+    users
+        .filter(user => user.username.toLowerCase() !== 'admin') // ✅ Exclude admins
+        .forEach((user, index) => {
+            // Ensure picks is always treated as an array to avoid "undefined" errors
+            const picks = Array.isArray(user.picks) ? user.picks : [];
 
-        // Only display picked teams AFTER results are recorded (win/loss)
-        const selectedTeams = (user.selectedTeams && user.selectedTeams.length > 0) 
-  ? user.selectedTeams
-      .filter(pick => pick.result !== "pending") // ✅ Filter out pending picks
-      .map(pick => `${pick.team} (${pick.result})`)
-      .join(', ') 
-  : 'No selection';
+            // Only display picked teams AFTER results are recorded (win/loss)
+            const selectedTeams = (user.selectedTeams && user.selectedTeams.length > 0) 
+                ? user.selectedTeams
+                    .filter(pick => pick.result !== "pending") // ✅ Filter out pending picks
+                    .map(pick => `${pick.team} (${pick.result})`)
+                    .join(', ') 
+                : 'No selection';
 
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${user.username}</td>
+                <td>${user.totalScore !== undefined ? user.totalScore : 0}</td>
+                <td>${selectedTeams}</td> <!-- Show picked teams after results -->
+            `;
 
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${user.username}</td>
-            <td>${user.totalScore !== undefined ? user.totalScore : 0}</td>
-            <td>${selectedTeams}</td> <!-- Show picked teams after results -->
-        `;
-
-        leaderboardBody.appendChild(row);
-    });
+            leaderboardBody.appendChild(row);
+        });
 }
+
 
         function populateWeekSelector() {
             const currentWeek = moment().isoWeek();
