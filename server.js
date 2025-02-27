@@ -226,19 +226,18 @@ app.get('/api/leaderboard/:week', async (req, res) => {
 app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) => {
   console.log('Fetching matchups for admin for week:', req.params.week);
   try {
-    const week = parseInt(req.params.week);
-    if (isNaN(week)) {
+    const week = req.params.week;
+    if (!week) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
 
     const gamesCollection = mongoose.connection.db.collection('games');
-    const matchups = await gamesCollection.find({ week: week.toString() }).toArray();
+    const matchups = await gamesCollection.find({ week: week }).toArray();
 
     if (!matchups.length) {
       return res.status(404).json({ success: false, message: 'No games found for this week' });
     }
 
-    // Format the response to include home and away teams
     const formattedMatchups = matchups.map(game => ({
       homeTeam: game.homeTeam,
       awayTeam: game.awayTeam,
