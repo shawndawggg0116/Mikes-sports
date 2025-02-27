@@ -224,21 +224,33 @@ app.get('/api/leaderboard/:week', async (req, res) => {
 
 
 app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) => {
-  console.log('Fetching teams for admin for week:', req.params.week);
+  console.log('Fetching matchups for admin for week:', req.params.week);
   try {
     const week = parseInt(req.params.week);
     if (isNaN(week)) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
 
-    // Since we are not filtering teams by week in this example, we're just fetching all teams
-    const teamsCollection = mongoose.connection.db.collection('teams');
-    const allTeams = await teamsCollection.find().toArray();
+    const gamesCollection = mongoose.connection.db.collection('games');
+    const matchups = await gamesCollection.find({ week: week.toString() }).toArray();
 
-    res.json(allTeams);
+    if (!matchups.length) {
+      return res.status(404).json({ success: false, message: 'No games found for this week' });
+    }
+
+    // Format the response to include home and away teams
+    const formattedMatchups = matchups.map(game => ({
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      startTime: game.startTime,
+      endTime: game.endTime,
+      week: game.week
+    }));
+
+    res.json(formattedMatchups);
   } catch (error) {
-    console.error('Error fetching teams for admin:', error);
-    res.status(500).send('Error fetching teams');
+    console.error('Error fetching matchups for admin:', error);
+    res.status(500).json({ success: false, message: 'Error fetching matchups' });
   }
 });
 
@@ -506,16 +518,30 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   const { results } = req.body;
   try {
     for (const result of results) {
-      const { team, result: gameResult } = result;
-      const userPicks = await User.updateMany(
-        { 'picks.team': team, 'picks.result': 'pending' },
-        { $set: { 'picks.$.result': gameResult === 'win' ? 'win' : 'loss' } }
+      const { homeTeam, awayTeam, homeResult, awayResult } = result;
+
+      // Update picks for home team
+      await User.updateMany(
+        { 'picks.team': homeTeam, 'picks.result': 'pending' },
+        { $set: { 'picks.$.result': homeResult } }
+      );
+
+      // Update picks for away team
+      await User.updateMany(
+        { 'picks.team': awayTeam, 'picks.result': 'pending' },
+        { $set: { 'picks.$.result': awayResult } }
       );
 
       // Update totalScore for users who picked the winning team
-      if (gameResult === 'win') {
+      if (homeResult === 'win') {
         await User.updateMany(
-          { 'picks.team': team, 'picks.result': 'win' },
+          { 'picks.team': homeTeam, 'picks.result': 'win' },
+          { $inc: { totalScore: 1 } }
+        );
+      }
+      if (awayResult === 'win') {
+        await User.updateMany(
+          { 'picks.team': awayTeam, 'picks.result': 'win' },
           { $inc: { totalScore: 1 } }
         );
       }
@@ -523,7 +549,7 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Results updated successfully' });
   } catch (error) {
     console.error('Error updating results:', error);
-    res.status(500).send('Error updating results');
+    res.status(500).json({ success: false, message: 'Error updating results' });
   }
 });
 

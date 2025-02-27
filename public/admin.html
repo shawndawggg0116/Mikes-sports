@@ -182,90 +182,128 @@
     async function fetchTeams() {
   const week = document.getElementById('week-select').value;
   try {
-    console.log('Attempting to fetch teams for admin for week:', week);
+    console.log('Fetching matchups for admin for week:', week);
     const response = await fetch(`/api/teams-for-admin-week/${week}`, { headers: authHeader });
-    console.log('Fetch response status:', response.status);
     if (!response.ok) {
-      const errorText = await response.text(); // Get the error message from the server if any
+      const errorText = await response.text();
       console.error('Fetch response error:', errorText);
-      throw new Error(`Failed to fetch teams for admin for week ${week}. Status: ${response.status}, Error: ${errorText}`);
+      throw new Error(`Failed to fetch matchups for week ${week}. Status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Fetched teams data for admin:', data);
+    console.log('Fetched matchups data:', data);
 
     const teamsList = document.getElementById('teams-list');
     teamsList.innerHTML = "";
 
-    if (data.length === 0) {
-      teamsList.innerHTML = `<p>No teams found.</p>`;
-      console.log('No teams found in the database for admin for week:', week);
+    if (!data.length) {
+      teamsList.innerHTML = `<p>No matchups found for Week ${week}.</p>`;
+      console.log('No matchups found for week:', week);
     } else {
-      data.forEach(team => {
-        const teamCard = document.createElement('div');
-        teamCard.className = 'team-card';
-        teamCard.innerHTML = `
-          <span>${team.name}</span>
+      data.forEach(matchup => {
+        const matchupCard = document.createElement('div');
+        matchupCard.className = 'team-card';
+        matchupCard.innerHTML = `
+          <span>${matchup.homeTeam} vs ${matchup.awayTeam}</span>
           <div>
-            <button class="win-btn" data-team="${team.name}">Win</button>
-            <button class="loss-btn" data-team="${team.name}">Loss</button>
+            <strong>${matchup.homeTeam}</strong>
+            <button class="win-btn" data-team="${matchup.homeTeam}" data-opponent="${matchup.awayTeam}">Win</button>
+            <button class="loss-btn" data-team="${matchup.homeTeam}" data-opponent="${matchup.awayTeam}">Loss</button>
+          </div>
+          <div>
+            <strong>${matchup.awayTeam}</strong>
+            <button class="win-btn" data-team="${matchup.awayTeam}" data-opponent="${matchup.homeTeam}">Win</button>
+            <button class="loss-btn" data-team="${matchup.awayTeam}" data-opponent="${matchup.homeTeam}">Loss</button>
           </div>
         `;
-        teamsList.appendChild(teamCard);
+        teamsList.appendChild(matchupCard);
       });
-      console.log('Teams added to the list for admin for week:', week);
+      console.log('Matchups added to the list for week:', week);
     }
   } catch (error) {
-    console.error("Error fetching teams for admin:", error);
-    alert("Failed to load teams for admin. Please check console for details.");
+    console.error("Error fetching matchups:", error);
+    alert("Failed to load matchups. Check console for details.");
   }
 }
 
     // Function to handle the result submission
     async function submitResults() {
-      try {
-        const winButtons = document.querySelectorAll('.win-btn');
-        const results = [];
+  try {
+    const matchupCards = document.querySelectorAll('.team-card');
+    const results = [];
 
-        winButtons.forEach(button => {
-          const teamName = button.getAttribute('data-team');
-          const isWin = button.classList.contains('active');
-          results.push({ team: teamName, result: isWin ? 'win' : 'loss' });
-        });
+    matchupCards.forEach(card => {
+      const homeTeam = card.querySelector('.win-btn[data-team]').getAttribute('data-team');
+      const awayTeam = card.querySelector('.win-btn[data-team]').getAttribute('data-opponent');
 
-        const response = await fetch('/api/update-results', {
-          method: 'POST',
-          headers: {
-            ...authHeader,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ results })
-        });
+      const homeWinBtn = card.querySelector(`.win-btn[data-team="${homeTeam}"]`);
+      const homeLossBtn = card.querySelector(`.loss-btn[data-team="${homeTeam}"]`);
+      const awayWinBtn = card.querySelector(`.win-btn[data-team="${awayTeam}"]`);
+      const awayLossBtn = card.querySelector(`.loss-btn[data-team="${awayTeam}"]`);
 
-        if (!response.ok) throw new Error('Failed to update results');
-        alert('Results updated successfully');
-        // Optionally, refresh the page or fetch teams again to reflect changes
-      } catch (error) {
-        console.error("Error submitting results:", error);
-        alert("Failed to update results.");
+      let homeResult = 'loss'; // Default to loss
+      let awayResult = 'loss'; // Default to loss
+
+      if (homeWinBtn.classList.contains('active')) {
+        homeResult = 'win';
+        awayResult = 'loss'; // Opponent must lose if home wins
+      } else if (awayWinBtn.classList.contains('active')) {
+        awayResult = 'win';
+        homeResult = 'loss'; // Opponent must lose if away wins
       }
-    }
 
-    // Event listeners for win/loss buttons
-    document.getElementById('teams-container').addEventListener('click', function(e) {
-      if (e.target.classList.contains('win-btn') || e.target.classList.contains('loss-btn')) {
-        // Toggle 'active' class on clicked button
-        e.target.classList.toggle('active');
-        
-        // Ensure that only one button can be active at a time: either win or loss
-        const siblingButton = e.target.parentElement.querySelector(
-          e.target.classList.contains('win-btn') ? '.loss-btn' : '.win-btn'
-        );
-        
-        // Remove 'active' class from the sibling button if present
-        siblingButton.classList.remove('active');
-      }
+      results.push({
+        homeTeam: homeTeam,
+        awayTeam: awayTeam,
+        homeResult: homeResult,
+        awayResult: awayResult
+      });
     });
+
+    const response = await fetch('/api/update-results', {
+      method: 'POST',
+      headers: {
+        ...authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ results })
+    });
+
+    if (!response.ok) throw new Error('Failed to update results');
+    alert('Results updated successfully');
+    fetchTeams(); // Refresh the matchups after submission
+  } catch (error) {
+    console.error("Error submitting results:", error);
+    alert("Failed to update results.");
+  }
+}
+
+document.getElementById('teams-container').addEventListener('click', function(e) {
+  if (e.target.classList.contains('win-btn') || e.target.classList.contains('loss-btn')) {
+    const team = e.target.getAttribute('data-team');
+    const opponent = e.target.getAttribute('data-opponent');
+    const isWin = e.target.classList.contains('win-btn');
+    const matchupCard = e.target.closest('.team-card');
+
+    // Find buttons for this team and opponent in the same matchup card
+    const teamWinBtn = matchupCard.querySelector(`.win-btn[data-team="${team}"]`);
+    const teamLossBtn = matchupCard.querySelector(`.loss-btn[data-team="${team}"]`);
+    const opponentWinBtn = matchupCard.querySelector(`.win-btn[data-team="${opponent}"]`);
+    const opponentLossBtn = matchupCard.querySelector(`.loss-btn[data-team="${opponent}"]`);
+
+    if (isWin) {
+      teamWinBtn.classList.add('active');
+      teamLossBtn.classList.remove('active');
+      opponentWinBtn.classList.remove('active');
+      opponentLossBtn.classList.add('active');
+    } else {
+      teamLossBtn.classList.add('active');
+      teamWinBtn.classList.remove('active');
+      opponentWinBtn.classList.add('active');
+      opponentLossBtn.classList.remove('active');
+    }
+  }
+});
 
     // Event listener for submit button
     document.getElementById('submit-results').addEventListener('click', submitResults);
