@@ -179,7 +179,41 @@
       }
     }
 
-    async function fetchTeams() {
+    async function populateWeekSelector() {
+  try {
+    const response = await fetch('/api/available-weeks', { headers: authHeader });
+    if (!response.ok) throw new Error('Failed to fetch available weeks');
+    
+    const data = await response.json();
+    const weeks = data.weeks || []; // Expecting an array of weeks (e.g., ["7"])
+
+    const select = document.getElementById('week-select');
+    select.innerHTML = "";
+
+    if (weeks.length === 0) {
+      select.innerHTML = '<option value="">No weeks available</option>';
+    } else {
+      weeks.forEach(week => {
+        const option = document.createElement('option');
+        option.value = week;
+        option.textContent = `Week ${week}`;
+        select.appendChild(option);
+      });
+    }
+
+    // Set to the first available week or do nothing if none
+    if (weeks.length > 0) {
+      select.value = weeks[0];
+      document.getElementById('current-week').textContent = weeks[0];
+      fetchTeams(); // Fetch matchups for the first available week
+    }
+  } catch (error) {
+    console.error("Error fetching available weeks:", error);
+    alert("Failed to load available weeks.");
+  }
+}
+
+async function fetchTeams() {
   const week = document.getElementById('week-select').value;
   try {
     console.log('Fetching matchups for admin for week:', week);
@@ -366,33 +400,12 @@ document.getElementById('teams-container').addEventListener('click', function(e)
     }
 
     // Function to populate the week selector
-    function populateWeekSelector() {
-  const currentWeek = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
-  const select = document.getElementById('week-select');
-  select.innerHTML = "";
-
-  for (let i = 1; i <= 18; i++) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = `Week ${i}`;
-    select.appendChild(option);
-  }
-
-  select.value = currentWeek > 18 ? "1" : currentWeek;
-  document.getElementById('current-week').textContent = select.value;
-  fetchTeams();
-}
-
-function updateWeek() {
-  const selectedWeek = document.getElementById('week-select').value;
-  document.getElementById('current-week').textContent = selectedWeek;
-  fetchTeams();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
+ 
+    document.addEventListener('DOMContentLoaded', () => {
   fetchUsers();
-  populateWeekSelector();
+  populateWeekSelector(); // This will fetch available weeks and trigger fetchTeams
 });
+
   </script>
 </body>
 </html>

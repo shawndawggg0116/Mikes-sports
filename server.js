@@ -226,7 +226,7 @@ app.get('/api/leaderboard/:week', async (req, res) => {
 app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) => {
   console.log('Fetching matchups for admin for week:', req.params.week);
   try {
-    const week = req.params.week;
+    const week = req.params.week; // Keep as string
     if (!week) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
@@ -549,6 +549,18 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error updating results:', error);
     res.status(500).json({ success: false, message: 'Error updating results' });
+  }
+});
+
+app.get('/api/available-weeks', authenticateToken, async (req, res) => {
+  try {
+    const gamesCollection = mongoose.connection.db.collection('games');
+    const uniqueWeeks = await gamesCollection.distinct('week');
+    
+    res.json({ success: true, weeks: uniqueWeeks });
+  } catch (error) {
+    console.error('Error fetching available weeks:', error);
+    res.status(500).json({ success: false, message: 'Error fetching available weeks' });
   }
 });
 
