@@ -367,34 +367,36 @@ document.getElementById('teams-container').addEventListener('click', function(e)
 
     // Function to populate the week selector
     function populateWeekSelector() {
-      const currentWeek = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
+  const currentWeek = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
+  const select = document.getElementById('week-select');
+  select.innerHTML = ""; // Clear existing options
 
-      const select = document.getElementById('week-select');
-      for (let i = 1; i <= currentWeek; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = `Week ${i}`;
-        select.appendChild(option);
-      }
-      select.value = currentWeek; // Set to current week by default
-      document.getElementById('current-week').textContent = currentWeek;
-      fetchTeams(); // Fetch teams for the current week initially
-    }
+  // Populate weeks (adjust the range as needed, e.g., up to week 18 for NFL season)
+  for (let i = 1; i <= 18; i++) { // Assuming NFL season has 18 weeks
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `Week ${i}`;
+    select.appendChild(option);
+  }
+
+  // Set to current week or a default if data exists
+  select.value = currentWeek > 18 ? "1" : currentWeek; // Fallback to week 1 if beyond season
+  document.getElementById('current-week').textContent = select.value;
+  fetchTeams(); // Fetch teams for the default week
+}
 
     // Function to update week when selection changes
     function updateWeek() {
-      const week = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
-
-      document.getElementById('current-week').textContent = selectedWeek;
-      fetchTeams(); // Fetch teams for the newly selected week
-    }
+  const selectedWeek = document.getElementById('week-select').value;
+  document.getElementById('current-week').textContent = selectedWeek;
+  fetchTeams(); // Fetch matchups for the newly selected week
+}
 
     // Fetch teams, users, and populate week selector when the page loads
     document.addEventListener('DOMContentLoaded', () => {
-      fetchTeams();
-      fetchUsers();
-      populateWeekSelector();
-    });
+  fetchUsers();
+  populateWeekSelector(); // This will now trigger fetchTeams after setting the week
+});
   </script>
 </body>
 </html>
