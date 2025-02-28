@@ -177,8 +177,7 @@ const User = mongoose.model('User', UserSchema, 'users');
 // Add this to your server.js
 app.get('/api/leaderboard/:week', async (req, res) => {
   try {
-    const week = moment().tz("America/New_York").startOf('week').add(1, 'days').isoWeek();
-
+    const week = parseInt(req.params.week);
     if (isNaN(week)) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
@@ -224,32 +223,21 @@ app.get('/api/leaderboard/:week', async (req, res) => {
 
 
 app.get('/api/teams-for-admin-week/:week', authenticateToken, async (req, res) => {
-  console.log('Fetching matchups for admin for week:', req.params.week);
+  console.log('Fetching teams for admin for week:', req.params.week);
   try {
-    const week = req.params.week; // Keep as string
-    if (!week) {
+    const week = parseInt(req.params.week);
+    if (isNaN(week)) {
       return res.status(400).json({ success: false, message: 'Invalid week number' });
     }
 
-    const gamesCollection = mongoose.connection.db.collection('games');
-    const matchups = await gamesCollection.find({ week: week }).toArray();
+    // Since we are not filtering teams by week in this example, we're just fetching all teams
+    const teamsCollection = mongoose.connection.db.collection('teams');
+    const allTeams = await teamsCollection.find().toArray();
 
-    if (!matchups.length) {
-      return res.status(404).json({ success: false, message: 'No games found for this week' });
-    }
-
-    const formattedMatchups = matchups.map(game => ({
-      homeTeam: game.homeTeam,
-      awayTeam: game.awayTeam,
-      startTime: game.startTime,
-      endTime: game.endTime,
-      week: game.week
-    }));
-
-    res.json(formattedMatchups);
+    res.json(allTeams);
   } catch (error) {
-    console.error('Error fetching matchups for admin:', error);
-    res.status(500).json({ success: false, message: 'Error fetching matchups' });
+    console.error('Error fetching teams for admin:', error);
+    res.status(500).send('Error fetching teams');
   }
 });
 
@@ -517,30 +505,16 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
   const { results } = req.body;
   try {
     for (const result of results) {
-      const { homeTeam, awayTeam, homeResult, awayResult } = result;
-
-      // Update picks for home team
-      await User.updateMany(
-        { 'picks.team': homeTeam, 'picks.result': 'pending' },
-        { $set: { 'picks.$.result': homeResult } }
-      );
-
-      // Update picks for away team
-      await User.updateMany(
-        { 'picks.team': awayTeam, 'picks.result': 'pending' },
-        { $set: { 'picks.$.result': awayResult } }
+      const { team, result: gameResult } = result;
+      const userPicks = await User.updateMany(
+        { 'picks.team': team, 'picks.result': 'pending' },
+        { $set: { 'picks.$.result': gameResult === 'win' ? 'win' : 'loss' } }
       );
 
       // Update totalScore for users who picked the winning team
-      if (homeResult === 'win') {
+      if (gameResult === 'win') {
         await User.updateMany(
-          { 'picks.team': homeTeam, 'picks.result': 'win' },
-          { $inc: { totalScore: 1 } }
-        );
-      }
-      if (awayResult === 'win') {
-        await User.updateMany(
-          { 'picks.team': awayTeam, 'picks.result': 'win' },
+          { 'picks.team': team, 'picks.result': 'win' },
           { $inc: { totalScore: 1 } }
         );
       }
@@ -548,19 +522,7 @@ app.post('/api/update-results', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Results updated successfully' });
   } catch (error) {
     console.error('Error updating results:', error);
-    res.status(500).json({ success: false, message: 'Error updating results' });
-  }
-});
-
-app.get('/api/available-weeks', authenticateToken, async (req, res) => {
-  try {
-    const gamesCollection = mongoose.connection.db.collection('games');
-    const uniqueWeeks = await gamesCollection.distinct('week');
-    
-    res.json({ success: true, weeks: uniqueWeeks });
-  } catch (error) {
-    console.error('Error fetching available weeks:', error);
-    res.status(500).json({ success: false, message: 'Error fetching available weeks' });
+    res.status(500).send('Error updating results');
   }
 });
 
